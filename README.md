@@ -1,6 +1,6 @@
-# SysCapBench: A Benchmark Suite for Evaluating LLM's System Capabilities
+# System Intelligence Benchmark: A Benchmark Suite for Evaluating LLM's System Capabilities
 
-SysCapBench is a comprehensive benchmarking framework for evaluating the performance of Large Language Models (LLMs) and AI systems across critical system capabilities. It features example benchmarks for system course exams, course projects, and cache algorithm design, and offers both CLI tools and an SDK for further development.
+It is a comprehensive benchmarking framework for evaluating the performance of Large Language Models (LLMs) and AI systems across critical system capabilities. It features example benchmarks for system course exams, course projects, and cache algorithm design, and offers both CLI tools and an SDK for further development.
 
 ## Benchmark Overview
 ### Benchmark Concept
@@ -10,10 +10,10 @@ A benchmark is a standard or point of reference against which things may be comp
 
 ### Benchmarks
 
-SysCapBench currently includes the following benchmarks:
-- **Cache Benchmark** (`benchmarks/cache_bench/`) - Evaluates AI performance on cache algorithm design tasks
+System Intelligence Benchmark currently includes the following example benchmarks. Some examples are still under development — we're actively updating them. Stay tuned!
 - **Course Exam Benchmark** (`benchmarks/course_exam_bench/`) - Tests LLM understanding of system concepts through university course exams (54 questions across 4 exams)
 - **Course Project Benchmark** (`benchmarks/course_project_bench/`) - Assesses AI capability on practical system course projects
+- **Cache Benchmark** (`benchmarks/cache_bench/`) - Evaluates AI performance on cache algorithm design tasks
 - **Example Benchmark** (`benchmarks/example_bench/`) - Template and reference implementation for creating new benchmarks
 
 ## Quick Start
@@ -34,8 +34,8 @@ SysCapBench currently includes the following benchmarks:
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/microsoft/syscapbench.git
-   cd syscapbench
+   git clone https://github.com/systemintelligence/system_intelligence_benchmark.git
+   cd system_intelligence_benchmark
    ```
 
 2. Install dependencies for a specific benchmark:
