@@ -1,0 +1,73 @@
+{
+  "config": {
+    "Threads": ["t1", "t2", "t3"],
+    "MaxSpins": 10
+  },
+  "events": {
+    "TryAcquireBlocking": "AcquireLock",
+    "TryAcquireNonBlocking": "TryLock",
+    "AcquireSuccess": "TryAcquireLock",
+    "StopSpinning": "SpinWait",
+    "Release": "ReleaseLock"
+  },
+  "variables": {
+    "lockState": {
+      "system_path": ["state"],
+      "value_mapping": {
+        "unlocked": "unlocked",
+        "locked": "locked"
+      },
+      "default_value": "unlocked"
+    },
+    "guardState": {
+      "type": "function",
+      "default_value": {
+        "t1": "none",
+        "t2": "none",
+        "t3": "none"
+      },
+      "update_rules": {
+        "TryAcquireBlocking": {"acting_thread": "PreemptDisabled"},
+        "TryAcquireNonBlocking": {"acting_thread": "PreemptDisabled"},
+        "Release": {"acting_thread": "none"}
+      }
+    },
+    "spinning": {
+      "type": "function",
+      "default_value": {
+        "t1": 0,
+        "t2": 0,
+        "t3": 0
+      },
+      "update_rules": {
+        "StopSpinning": {"acting_thread": "+1"},
+        "Release": {"acting_thread": 0}
+      }
+    },
+    "waitQueue": {
+      "type": "sequence",
+      "default_value": [],
+      "update_rules": {}
+    },
+    "pc": {
+      "type": "function",
+      "default_value": {
+        "t1": "idle",
+        "t2": "idle",
+        "t3": "idle"
+      },
+      "update_rules": {
+        "TryAcquireBlocking": {"acting_thread": "acquiring"},
+        "TryAcquireNonBlocking": {"acting_thread": "acquiring"},
+        "AcquireSuccess": {"acting_thread": "locked"},
+        "StopSpinning": {"acting_thread": "acquiring"},
+        "Release": {"acting_thread": "idle"}
+      }
+    }
+  },
+  "thread_mapping": {
+    "0": "t1",
+    "1": "t2",
+    "2": "t3"
+  }
+}

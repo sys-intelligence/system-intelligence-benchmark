@@ -1,0 +1,107 @@
+{
+  "format": "action-based",
+  "description": "Mapping for simpleLoop spin lock TLA+ specification with action-based trace validation",
+
+  "constants": {
+    "Threads": ["t1", "t2", "t3"],
+    "MaxSpins": 10
+  },
+
+  "action_mapping": {
+    "TryAcquireBlocking": {
+      "tla_action": "AcquireLock",
+      "parameters": {
+        "t": {
+          "source": "thread",
+          "mapping": {"0": "t1", "1": "t2", "2": "t3"}
+        }
+      },
+      "precondition": "pc[t] = \"idle\"",
+      "postcondition": "pc'[t] = \"acquiring\" /\\ guardState'[t] = \"PreemptDisabled\""
+    },
+
+    "TryAcquireNonBlocking": {
+      "tla_action": "TryLock",
+      "parameters": {
+        "t": {
+          "source": "thread",
+          "mapping": {"0": "t1", "1": "t2", "2": "t3"}
+        }
+      },
+      "precondition": "pc[t] = \"idle\"",
+      "postcondition": "(lockState = \"unlocked\" => pc'[t] = \"locked\") /\\ (lockState = \"locked\" => pc'[t] = \"idle\")"
+    },
+
+    "AcquireSuccess": {
+      "tla_action": "TryAcquireLock",
+      "parameters": {
+        "t": {
+          "source": "thread",
+          "mapping": {"0": "t1", "1": "t2", "2": "t3"}
+        }
+      },
+      "precondition": "pc[t] = \"acquiring\" /\\ lockState = \"unlocked\"",
+      "postcondition": "pc'[t] = \"locked\" /\\ lockState' = \"locked\""
+    },
+
+    "StopSpinning": {
+      "tla_action": "SpinWait",
+      "parameters": {
+        "t": {
+          "source": "thread",
+          "mapping": {"0": "t1", "1": "t2", "2": "t3"}
+        }
+      },
+      "precondition": "pc[t] = \"spinning\"",
+      "postcondition": "pc'[t] = \"acquiring\" /\\ spinning'[t] = spinning[t] + 1"
+    },
+
+    "Release": {
+      "tla_action": "ReleaseLock",
+      "parameters": {
+        "t": {
+          "source": "thread",
+          "mapping": {"0": "t1", "1": "t2", "2": "t3"}
+        }
+      },
+      "precondition": "pc[t] = \"locked\" /\\ lockState = \"locked\"",
+      "postcondition": "pc'[t] = \"idle\" /\\ lockState' = \"unlocked\" /\\ guardState'[t] = \"none\""
+    }
+  },
+
+  "state_mapping": {
+    "lockState": {
+      "type": "derived",
+      "derivation": "IF \\E t \\in Threads : pc[t] = \"locked\" THEN \"locked\" ELSE \"unlocked\""
+    },
+    "guardState": {
+      "type": "function",
+      "domain": "Threads",
+      "default": "none"
+    },
+    "spinning": {
+      "type": "function",
+      "domain": "Threads",
+      "default": 0
+    },
+    "waitQueue": {
+      "type": "sequence",
+      "default": "<<>>"
+    },
+    "pc": {
+      "type": "function",
+      "domain": "Threads",
+      "default": "idle"
+    }
+  },
+
+  "trace_processing": {
+    "handle_missing_transitions": true,
+    "infer_intermediate_states": true,
+    "comments": [
+      "TryAcquireBlocking -> AcquireSuccess: Direct lock acquisition (no spinning)",
+      "TryAcquireBlocking -> StopSpinning -> AcquireSuccess: Lock acquisition after spinning",
+      "The system trace may not explicitly show the 'spinning' state, it's inferred from StopSpinning event"
+    ]
+  }
+}

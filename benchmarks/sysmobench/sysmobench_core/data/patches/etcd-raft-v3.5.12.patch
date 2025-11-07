@@ -1,0 +1,25 @@
+diff --git a/rafttest/node.go b/rafttest/node.go
+index 1234567..abcdefg 100644
+--- a/rafttest/node.go
++++ b/rafttest/node.go
+@@ -41,6 +41,10 @@ type node struct {
+ }
+ 
+ func startNode(id uint64, peers []raft.Peer, iface iface) *node {
++	return startNodeWithTracer(id, peers, iface, nil)
++}
++
++func startNodeWithTracer(id uint64, peers []raft.Peer, iface iface, tracer raft.TraceLogger) *node {
+ 	st := raft.NewMemoryStorage()
+ 	c := &raft.Config{
+ 		ID:                        id,
+@@ -51,6 +55,9 @@ func startNode(id uint64, peers []raft.Peer, iface iface) *node {
+ 		MaxInflightMsgs:           256,
+ 		MaxUncommittedEntriesSize: 1 << 30,
+ 	}
++	if tracer != nil {
++		c.TraceLogger = tracer
++	}
+ 	rn := raft.StartNode(c, peers)
+ 	n := &node{
+ 		Node:    rn,

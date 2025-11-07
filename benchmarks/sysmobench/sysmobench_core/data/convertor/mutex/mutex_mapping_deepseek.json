@@ -1,0 +1,52 @@
+{
+    "model": "deepseek",
+    "config": {
+        "Threads": ["Thread0", "Thread1", "Thread2", "Thread3"],
+        "Mutexes": ["Mutex0", "Mutex1", "Mutex2", "Mutex3"],
+        "MaxSteps": 1000,
+        "Description": "DeepSeek Mutex trace validation configuration"
+    },
+    "events": {
+        "Lock": "Acquire",
+        "TryLock": "TryAcquire",
+        "Unlock": "Unlock",
+        "TryAcquireBlocking": "Acquire",
+        "TryAcquireNonBlocking": "TryAcquire",
+        "AcquireSuccess": "Acquire",
+        "AcquireFailNonBlocking": "TryLockFailed",
+        "Release": "Unlock"
+    },
+    "output_format": {
+        "header": {
+            "Threads": "config.Threads",
+            "None": ["NULL"]
+        },
+        "variables": {
+            "lock_state": {
+                "type": "boolean",
+                "source": "mutex_state",
+                "mapping": {"Locked": true, "Unlocked": false}
+            },
+            "holder": {
+                "type": "constant",
+                "source": "mutex_owner",
+                "null_value": "NULL"
+            },
+            "wait_queue": {
+                "type": "sequence",
+                "source": "queue",
+                "default": []
+            }
+        }
+    },
+    "metadata": {
+        "primitive_type": "mutex",
+        "model": "deepseek",
+        "version": "1.0",
+        "description": "DeepSeek Mutex trace conversion mapping - validated working configuration",
+        "semantics": "Exclusive mutual exclusion with boolean lock_state, holder tracking, and wait_queue",
+        "validation_status": "verified_working",
+        "test_trace": "data/sys_traces/mutex/trace_01.jsonl",
+        "expected_events": ["Acquire", "TryAcquire", "Unlock"]
+    }
+}

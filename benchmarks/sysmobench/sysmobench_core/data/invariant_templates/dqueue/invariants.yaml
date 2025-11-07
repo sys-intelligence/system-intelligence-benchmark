@@ -1,0 +1,17 @@
+# High-Quality Invariants for dqueue
+# Based on the existing dqueue.tla specification in Modular PlusCal
+
+invariants:
+  - name: "ConsumerAlwaysConsumes"
+    type: "liveness"
+    natural_language: "Once a consumer has made a request, it will receive a response from the producer no matter what"
+    formal_description: "For every consumer ID self, if its program counter achieves c1, the label where it requests data, then it will always eventually achieve c2, where it receives a response"
+    tla_example: |
+      ConsumerAlwaysConsumes ==
+        \A self \in 1 .. NUM_CONSUMERS :
+          pc[self] = "c1" ~> pc[self] = "c2" 
+
+metadata:
+  total_invariants: 1
+  safety_invariants: 0
+  liveness_invariants: 1

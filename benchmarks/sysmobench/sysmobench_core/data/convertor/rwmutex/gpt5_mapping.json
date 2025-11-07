@@ -1,0 +1,60 @@
+{
+    "config": {
+        "Threads": ["Thread0", "Thread1", "Thread2"],
+        "Description": "Configuration for GPT5 RwMutex trace validation"
+    },
+    "variable_structure": {
+        "type": "bit_encoding",
+        "variables": {
+            "lock": {
+                "type": "nat",
+                "encoding": "bitfield",
+                "bits": {
+                    "readers": {"mask": "BG-1", "source": "reader_count"},
+                    "being_upgraded": {"mask": "BG", "source": "being_upgraded_bit"},
+                    "upgradable": {"mask": "UR", "source": "upgradeable_bit"},
+                    "writer": {"mask": "WR", "source": "writer_bit"}
+                }
+            },
+            "Q": {
+                "type": "sequence",
+                "source": "wait_queue"
+            },
+            "tstate": {
+                "type": "function",
+                "domain": "Threads",
+                "codomain": ["Idle", "WantRead", "Reading", "WantWrite", "Writing", "WantUpread", "Upreading", "Upgrading"],
+                "source": "thread_state",
+                "mapping": {
+                    "none": "Idle",
+                    "reading": "Reading",
+                    "writing": "Writing",
+                    "upgradeable": "Upreading",
+                    "upgrading": "Upgrading"
+                }
+            },
+            "Wake": {
+                "type": "constant",
+                "value": "None"
+            }
+        }
+    },
+    "action_mappings": {
+        "ReadLock": "StartRead",
+        "TryReadLock": "StartRead",
+        "TryAcquireRead": "StartRead",
+        "ReadUnlock": "ReleaseRead",
+        "WriteLock": "StartWrite",
+        "TryWriteLock": "StartWrite",
+        "WriteUnlock": "ReleaseWrite",
+        "TryAcquireUpreadNonBlocking": "StartUpread",
+        "AcquireUpreadSuccess": "StartUpread",
+        "TryUpreadLock": "StartUpread",
+        "UpreadLock": "StartUpread",
+        "ReleaseUpread": "ReleaseUpread",
+        "UpreadUnlock": "ReleaseUpread",
+        "TryUpgradeLock": "BeginUpgrade",
+        "UpgradeLock": "CompleteUpgrade",
+        "UpgradeUpreadSuccess": "CompleteUpgrade"
+    }
+}

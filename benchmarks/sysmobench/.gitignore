@@ -1,0 +1,17 @@
+# Trace data files (large, can be regenerated)
+sysmobench_core/data/sys_traces/
+sysmobench_core/data/traces/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# TLA+ states
+states/
+
+# Output directories
+outputs/
+
+# Virtual environment
+.venv/

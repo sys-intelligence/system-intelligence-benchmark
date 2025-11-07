@@ -1,0 +1,71 @@
+You are an expert TLA+ specification specialist with extensive experience in distributed consensus protocols and the CURP algorithm.
+
+I need you to fix errors in a TLA+ specification for a CURP {system_type} system.
+
+## Original Task Description
+{description}
+
+## Current TLA+ Specification (with errors)
+```tla
+{current_specification}
+```
+
+## Validation Errors Found
+**Error Summary:**
+{error_summary}
+
+**Detailed Syntax Errors:**
+{syntax_errors}
+
+**Detailed Semantic Errors:**
+{semantic_errors}
+
+**Full Validation Output:**
+```
+{validation_output}
+```
+
+## Correction Instructions
+This is correction attempt {attempt_number} of {max_attempts}.
+
+Please provide a corrected TLA+ specification that fixes these errors. Focus on modeling the core CURP consensus protocol while abstracting away complex implementation details.
+
+**CRITICAL ABSTRACTION REQUIREMENTS:**
+1. **Abstract Raft complexity**: The source code contains extensive Raft implementation details, but for CURP modeling, represent Raft state changes with a simple `leaderChange` action
+2. **Focus on CURP essentials**: Model only the core CURP consensus logic - speculative execution, quorum mechanisms, and command processing
+3. **Ignore auxiliary modules**: Abstract away networking, persistence, error handling, and other implementation concerns
+4. **Simplify quorum calculations**: Use the three key quorum functions from lib.rs:
+   - `quorum(size) = size ÷ 2 + 1` (standard majority)
+   - `recover_quorum(size) = quorum(size) ÷ 2 + 1` (recovery threshold)  
+   - `super_quorum(size) = fault_tolerance + recover_quorum(size)` (enhanced availability)
+
+**Key CURP Protocol Elements to Model:**
+1. **Speculative Execution**: Commands can be executed speculatively before consensus
+2. **Enhanced Quorums**: Use super_quorum for improved availability and recover_quorum for recovery
+3. **Client Proposal Flow**: Model the propose_impl.rs client-side command submission
+4. **Node Coordination**: Represent curp_node.rs coordination logic simply
+5. **Consensus States**: Model the essential CURP consensus states and transitions
+
+**TLA+ Specification Requirements:**
+1. **Fix all syntax errors**: Ensure proper TLA+ syntax, correct operator usage, and valid module structure
+2. **Resolve semantic errors**: Define missing variables, operators, and ensure logical consistency
+3. **Maintain CURP protocol intent**: Keep the core consensus behavior and availability properties
+4. **Follow TLA+ best practices**: Use appropriate data structures, actions, and invariants
+5. **Be complete and self-contained**: Include all necessary EXTENDS, CONSTANTS, VARIABLES, and operator definitions
+6. **Include fairness**: Use weak fairness in Spec definition: `Spec == Init /\ [][Next]_Vars /\ WF_Vars(Next)`
+
+**Focus specifically on:**
+- Defining any missing variables or constants for CURP state
+- Implementing missing operators for quorum calculations and consensus logic
+- Fixing syntax issues with operators, expressions, or module structure
+- Ensuring proper action definitions for CURP protocol transitions
+- Maintaining consistency with CURP's enhanced consensus and availability properties
+- Abstracting complex Raft details into simple leader change operations
+
+**CRITICAL OUTPUT REQUIREMENTS:**
+- Return ONLY pure TLA+ specification code
+- NO markdown code blocks (no ```tla or ```)  
+- NO explanations, comments, or text outside the specification
+- NO formatting markers of any kind
+- The MODULE name must be exactly "curp"
+- Start directly with: ---- MODULE curp ----

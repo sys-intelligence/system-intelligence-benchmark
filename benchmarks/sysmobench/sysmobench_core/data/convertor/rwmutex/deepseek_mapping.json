@@ -1,0 +1,66 @@
+{
+    "config": {
+        "Threads": ["Thread0", "Thread1", "Thread2"],
+        "Description": "Configuration for DeepSeek RwMutex trace validation"
+    },
+    "variable_structure": {
+        "type": "nested_record",
+        "variables": {
+            "lock": {
+                "type": "record",
+                "fields": {
+                    "writer": {"type": "boolean", "source": "writer_bit"},
+                    "upreader": {"type": "boolean", "source": "upgradeable_bit"},
+                    "being_upgraded": {"type": "boolean", "source": "being_upgraded_bit"},
+                    "reader_count": {"type": "nat", "source": "reader_count"}
+                }
+            },
+            "waitQueue": {
+                "type": "sequence",
+                "source": "wait_queue"
+            },
+            "writerThread": {
+                "type": "constant",
+                "value": "NULL"
+            },
+            "upreaderThread": {
+                "type": "constant",
+                "value": "NULL"
+            },
+            "threadState": {
+                "type": "function",
+                "domain": "Threads",
+                "codomain": ["idle", "waiting", "holding_read", "holding_write", "holding_upread", "upgrading"],
+                "source": "thread_state",
+                "mapping": {
+                    "none": "idle",
+                    "reading": "holding_read",
+                    "writing": "holding_write",
+                    "upgradeable": "holding_upread",
+                    "upgrading": "upgrading"
+                }
+            }
+        }
+    },
+    "action_mappings": {
+        "TryAcquireRead": "StartRead",
+        "ReadLock": "StartRead",
+        "TryReadLock": "StartRead",
+        "ReleaseRead": "ReleaseRead",
+        "ReadUnlock": "ReleaseRead",
+        "TryAcquireWrite": "StartWrite",
+        "WriteLock": "StartWrite",
+        "TryWriteLock": "StartWrite",
+        "ReleaseWrite": "ReleaseWrite",
+        "WriteUnlock": "ReleaseWrite",
+        "TryAcquireUpreadNonBlocking": "StartUpread",
+        "AcquireUpreadSuccess": "StartUpread",
+        "TryUpreadLock": "StartUpread",
+        "UpreadLock": "StartUpread",
+        "ReleaseUpread": "ReleaseUpread",
+        "UpreadUnlock": "ReleaseUpread",
+        "TryUpgradeLock": "BeginUpgrade",
+        "UpgradeLock": "CompleteUpgrade",
+        "UpgradeUpreadSuccess": "CompleteUpgrade"
+    }
+}

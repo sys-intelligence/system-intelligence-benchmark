@@ -1,0 +1,98 @@
+You are tasked with generating a JSON mapping file that defines how to convert etcd Raft system traces to TLA+ specification format for trace validation.
+
+## System Overview
+etcd Raft is a distributed consensus algorithm implementation that supports:
+- Leader election with terms and prevoting/voting
+- Log replication across multiple nodes
+- State transitions between Follower, Candidate, and Leader roles
+- Message passing between nodes
+
+## Code Analysis
+Before generating the mapping, you need to analyze the relevant code to understand the system behavior:
+
+**CRITICAL**: You MUST base your mapping on the actual TLA+ specification content, NOT on the examples below. The examples are for format reference only. Always use the actual variables and actions defined in the provided specification.
+
+### TLA+ Specification Code
+```tla+
+{TLA_SPEC_CODE_PLACEHOLDER}
+```
+
+### Implementation Code
+```go
+{IMPLEMENTATION_CODE_PLACEHOLDER}
+```
+
+## Input: System Trace Format
+System traces are in JSONL format with events like:
+```json
+{"conf":[["1","2","3"],[]],"log":0,"name":"InitState","nid":"1","role":"StateFollower","state":{"commit":0,"term":0,"vote":"0"}}
+{"conf":[["1","2","3"],[]],"log":1,"name":"BecomeCandidate","nid":"1","role":"StateCandidate","state":{"commit":0,"term":1,"vote":"0"}}
+{"conf":[["1","2","3"],[]],"log":1,"name":"BecomeCandidate","nid":"2","role":"StateCandidate","state":{"commit":0,"term":1,"vote":"0"}}
+```
+
+Common actions in system traces:
+- BecomeFollower: Transition to follower role
+- BecomeCandidate: Transition to candidate role
+- BecomeLeader: Transition to leader role
+- Ready: Node is ready for operations
+- PreVote/Vote: Cast prevote/vote during election
+- AppendEntries: Replicate log entries
+- Heartbeat: Send/receive heartbeat messages
+
+## Target: TLA+ Specification Variables
+The TLA+ specification tracks these state variables:
+- currentTerm: Current term number for each node
+- state: Node role (Follower, Candidate, Leader)
+- votedFor: Which candidate this node voted for in current term
+- commitIndex: Index of highest log entry known to be committed
+- nextIndex: For leaders, next log entry to send to each server
+- matchIndex: For leaders, highest log entry known to be replicated on server
+
+## Required Mapping Structure
+Generate a JSON file with this structure:
+
+```json
+{
+  "config": {
+    "Server": ["Server1", "Server2", "Server3"]  // List of node identifiers
+  },
+  "events": {
+    // Map system actions to TLA+ events
+    "InitState": "Init",
+    "BecomeFollower": "BecomeFollower",
+    "BecomeCandidate": "BecomeCandidate",
+    "BecomeLeader": "BecomeLeader",
+    "Ready": "Ready",
+    "Vote": "Vote",
+    "AppendEntries": "AppendEntries",
+    "Heartbeat": "Heartbeat",
+    // Add other mappings as needed based on code analysis
+  },
+  "node_mapping": {
+    // Map string node IDs to node names
+    "1": "Node1",
+    "2": "Node2",
+    "3": "Node3",
+    // Continue as needed
+  },
+  "role_mapping": {
+    // Map system roles to TLA+ states
+    "StateFollower": "Follower",
+    "StateCandidate": "Candidate",
+    "StateLeader": "Leader"
+  }
+}
+```
+
+## Implementation Notes
+1. The mapping will be used by a state tracker that maintains complete system state
+2. Server IDs in traces are numeric (0, 1, 2...) and must be mapped to "Server1", "Server2", etc.
+3. The state tracker will automatically handle state transitions based on actions
+4. Focus on correctly mapping actions and Server states
+5. The config section should list all possible Server that might appear in traces
+
+## Your Task
+Generate a complete etcd_mapping.json file that:
+1. Maps all common etcd Raft actions to their TLA+ equivalents
+2. Provides server ID mappings for all servers that appear in traces
+3. Ensures compatibility with the state tracking implementation

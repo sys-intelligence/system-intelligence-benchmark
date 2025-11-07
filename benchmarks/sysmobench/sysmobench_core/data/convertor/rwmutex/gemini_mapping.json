@@ -1,0 +1,55 @@
+{
+    "config": {
+        "Threads": ["Thread0", "Thread1", "Thread2"],
+        "Description": "Configuration for Gemini RwMutex trace validation"
+    },
+    "variable_structure": {
+        "type": "nested_record",
+        "variables": {
+            "lock": {
+                "type": "record",
+                "fields": {
+                    "writer": {"type": "boolean", "source": "writer_bit"},
+                    "upgradable": {"type": "boolean", "source": "upgradeable_bit"},
+                    "upgrading": {"type": "boolean", "source": "being_upgraded_bit"},
+                    "readers": {"type": "nat", "source": "reader_count"}
+                }
+            },
+            "queue": {
+                "type": "sequence",
+                "source": "wait_queue"
+            },
+            "thread_state": {
+                "type": "function",
+                "domain": "Threads",
+                "codomain": ["idle", "waiting", "reading", "writing", "upreading", "upgrading"],
+                "source": "thread_state",
+                "mapping": {
+                    "none": "idle",
+                    "reading": "reading",
+                    "writing": "writing",
+                    "upgradeable": "upreading",
+                    "upgrading": "upgrading"
+                }
+            }
+        }
+    },
+    "action_mappings": {
+        "ReadLock": "StartRead",
+        "TryReadLock": "StartRead",
+        "TryAcquireRead": "StartRead",
+        "ReadUnlock": "ReleaseRead",
+        "WriteLock": "StartWrite",
+        "TryWriteLock": "StartWrite",
+        "WriteUnlock": "ReleaseWrite",
+        "TryAcquireUpreadNonBlocking": "StartUpread",
+        "AcquireUpreadSuccess": "StartUpread",
+        "TryUpreadLock": "StartUpread",
+        "UpreadLock": "StartUpread",
+        "ReleaseUpread": "ReleaseUpread",
+        "UpreadUnlock": "ReleaseUpread",
+        "TryUpgradeLock": "BeginUpgrade",
+        "UpgradeLock": "CompleteUpgrade",
+        "UpgradeUpreadSuccess": "CompleteUpgrade"
+    }
+}

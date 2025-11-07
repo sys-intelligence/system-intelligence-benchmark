@@ -1,0 +1,74 @@
+# Invariants for Asterinas Mutex Systems
+# Includes both generic mutex properties and Asterinas-specific features
+
+invariants:
+  # Generic Mutex Invariants (applicable to all mutex implementations)
+  - name: "MutualExclusion"
+    type: "safety"
+    natural_language: "At most one thread can hold the mutex (be in critical section) at any given time"
+    formal_description: "The fundamental safety property: no two threads can hold the mutex simultaneously"
+    tla_example: |
+      MutualExclusion ==
+        Cardinality({t \in Threads : pc[t] = "in_cs"}) <= 1
+
+  - name: "LockConsistency"
+    type: "safety"
+    natural_language: "The atomic lock state is consistent with mutex ownership"
+    formal_description: "Lock state consistency: the AtomicBool lock state must be consistent with whether any thread holds the mutex"
+    tla_example: |
+      LockConsistency ==
+        (lock_state = TRUE) <=> (\E t \in Threads : pc[t] = "in_cs")
+
+  - name: "DeadlockFreedom"
+    type: "safety"
+    natural_language: "No thread can be stuck waiting forever when the mutex is available"
+    formal_description: "Deadlock freedom: if a thread is waiting on the mutex, the lock must be currently held by someone"
+    tla_example: |
+      DeadlockFreedom ==
+        \A t \in Threads : (pc[t] = "waiting") => (lock_state = TRUE)
+
+  # Asterinas-specific Mutex Invariants
+  - name: "TryLockNoBlocking"
+    type: "safety"
+    natural_language: "try_lock() operations never block - they succeed or fail immediately"
+    formal_description: "Asterinas-specific: try_lock() is non-blocking and should never cause a thread to wait"
+    tla_example: |
+      TryLockNoBlocking ==
+        \A t \in Threads : 
+          pc[t] = "req_try_lock" => pc[t] \notin {"waiting", "blocked"}
+
+  - name: "FIFOWakeupOrder"
+    type: "safety"
+    natural_language: "WaitQueue maintains FIFO ordering for thread wakeup"
+    formal_description: "Asterinas WaitQueue semantics: wake_one() uses pop_front() providing FIFO fairness - first waiting thread gets awakened first"
+    tla_example: |
+      FIFOWakeupOrder ==
+        \A t1, t2 \in Threads :
+          /\ WaitingBefore(t1, t2)  \* t1 started waiting before t2
+          /\ pc[t1] = "waiting" 
+          /\ pc[t2] = "waiting"
+          => WakeupBefore(t1, t2)   \* t1 will be awakened before t2
+
+  - name: "GuardLifecycle"
+    type: "safety"
+    natural_language: "Every successful lock acquisition creates a guard that will eventually be dropped"
+    formal_description: "RAII MutexGuard semantics: every mutex lock acquisition must be paired with exactly one release via guard drop"
+    tla_example: |
+      GuardLifecycle ==
+        \A t \in Threads :
+          pc[t] = "in_cs" => guard_held[t] = TRUE
+
+  # Generic Liveness Property
+  - name: "EventualAccess"
+    type: "liveness"
+    natural_language: "A thread waiting for the mutex will eventually acquire it under fair scheduling"
+    formal_description: "Under fair scheduling, any thread waiting for the mutex will eventually gain access"
+    tla_example: |
+      EventualAccess == \A t \in Threads : (pc[t] = "waiting") ~> (pc[t] = "in_cs")
+
+metadata:
+  total_invariants: 7
+  safety_invariants: 6
+  liveness_invariants: 1
+  generic_invariants: 4  # MutualExclusion, LockConsistency, DeadlockFreedom, EventualAccess
+  asterinas_specific_invariants: 3  # TryLockNoBlocking, FIFOWakeupOrder, GuardLifecycle

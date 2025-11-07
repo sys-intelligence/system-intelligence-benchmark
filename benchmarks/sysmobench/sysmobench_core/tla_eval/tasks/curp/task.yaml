@@ -1,0 +1,50 @@
+# curp task configuration
+name: "curp"
+description: "CURP consensus protocol with reduced latency and improved availability"
+system_type: "distributed"
+language: "rust"
+
+# Source code repository information
+repository:
+  url: "https://github.com/xline-kv/Xline.git"
+  branch: "master"
+  commit: "71479a4fabdd12fe67eec0bee95e652976937541"
+  have_submodule: true
+
+# Files to extract from the repository
+source_files:
+  - path: "crates/curp/src/server/raw_curp/mod.rs"
+    description: "Core server logic of CURP and Raft"
+  - path: "crates/curp/src/server/curp_node.rs"
+    description: "Core server logic of CURP"
+  - path: "crates/curp/src/client/unary/propose_impl.rs"
+    description: "Core client logic of CURP"
+  - path: "crates/curp/src/lib.rs"
+    description: "Quorum value definitions of CURP"
+
+# Default file to use if not specified
+default_source_file: "crates/curp/src/server/raw_curp/mod.rs"
+
+# TLA+ specification module name
+specModule: "curp"
+
+traces_folder: "data/sys_traces/curp"
+trace_format: "curp_based"
+trace_sample: 5
+
+# Metadata
+metadata:
+  original_project: "curp"
+  protocol_type: "consensus"
+  key_features:
+    - "reduced_latency"
+    - "improved_availability" 
+    - "speculative_execution"
+    - "quorum_optimization"
+  
+# Phase 3 specific configuration
+phase3:
+  trace_generation: false
+  patch_required: true
+  patch_file: "data/patches/xline-instrumented.patch"
+  description: "CURP replication protocol with abstracted Raft for reduced complexity"

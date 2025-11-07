@@ -1,0 +1,83 @@
+You are a TLA+ expert specializing in distributed systems and Raft consensus. Your task is to implement a set of expert-written invariants for the given distributed producer-consumer queue TLA+ specification.
+
+## Target Specification
+
+$tla_specification
+
+## Invariants to Implement
+
+$invariant_templates
+
+## Implementation Requirements
+
+1. **Deep Analysis**: First, thoroughly understand both the invariant template's semantic intent and the specification's modeling approach:
+   - What distributed consensus/safety property does each template aim to verify?
+   - How does the specification represent server states, logs, terms, and leadership?
+   - What are the semantic equivalents between template concepts and specification implementation?
+
+2. **Semantic Mapping**: For each invariant, identify the conceptual mapping between template and specification:
+   - Template server state concepts → Specification's server state representation
+   - Template log structure → Specification's log data structures and indexing
+   - Template leadership concepts → Specification's leader election and term management
+   - Template node/server sets → Specification's server constants and domains
+
+3. **Creative Adaptation**: Translate the invariant while preserving its core consensus safety meaning:
+   - **DO NOT** simply replace variable names - understand the underlying distributed systems logic
+   - **DO** redesign the predicate logic to fit the specification's data structure granularity
+   - **DO** use equivalent semantic concepts even if data representations differ
+   - **PRESERVE** the original Raft safety/liveness guarantees without weakening the property
+
+4. **TLA+ Property Type Constraints**:
+   
+   **FOR SAFETY PROPERTIES** (type: "safety"):
+   - **MUST** be STATE PREDICATES (describe single states only)
+   - **NEVER** use primed variables (`currentTerm'`, `log'`)
+   - **NEVER** use temporal operators (`[]`, `<>`, `~>`)
+   - **NEVER** reference actions (like `RequestVote(s)`, `AppendEntries(s,t)`) - only use state variables
+   - **ONLY** use unprimed variables (`currentTerm[s]`, `log[s]`) and constants
+   - **CORRECT**: `LeaderUniqueness == \A term \in Terms : Cardinality({s \in Servers : state[s] = "leader" /\ currentTerm[s] = term}) <= 1` 
+   - **INCORRECT**: `state[s] = "candidate" => RequestVote(s)`  (references action RequestVote)
+
+   **FOR LIVENESS PROPERTIES** (type: "liveness"): 
+   - **MUST** be TEMPORAL FORMULAS (describe execution traces)
+   - **MUST** use temporal operators (`<>`, `~>`) to express "eventually" or "leads-to"
+   - **CORRECT**: `EventualLeaderElection == <>(\E s \in Servers : state[s] = "leader")` 
+
+5. **Constraint Compliance**:
+   - Use ONLY variables, constants, and operators that exist in the specification
+   - Generate complete, syntactically valid TLA+ invariant definitions
+   - Maintain the exact invariant names from templates
+
+6. **Output format**: Return a JSON object containing an array of complete TLA+ invariant definitions
+
+7. **EXACT naming requirement**: You MUST use the exact invariant names specified in the templates above. Do not create your own names.
+
+## Example Output Format
+
+```json
+{
+  "invariants": [
+    "LeaderUniqueness == \\A term \\in 1..MaxTerm : Cardinality({n \\in Servers : state[n].role = \"leader\" /\\ state[n].currentTerm = term}) <= 1",
+    "LogConsistency == \\A n1, n2 \\in Servers : \\A i \\in DOMAIN log[n1] : (i \\in DOMAIN log[n2] /\\ log[n1][i].term = log[n2][i].term) => (\\A j \\in 1..i : log[n1][j] = log[n2][j])"
+  ]
+}
+```
+
+**CRITICAL REQUIREMENTS**: 
+- **SEMANTIC PRESERVATION**: Each translated invariant MUST verify the same distributed consensus property as the original template
+- **CREATIVE ADAPTATION**: Do NOT simply omit invariants - find creative ways to express the same property using available specification elements
+- **COMPLETENESS**: Aim to translate ALL invariants by understanding their semantic intent, not just their syntactic form
+- Use ONLY variables, constants, and operators that exist in the provided specification
+- Use EXACTLY the invariant names from the templates (preserve exact names for evaluation consistency)
+- Return ONLY valid JSON, no explanatory text before or after
+- Each array element must be a complete TLA+ invariant definition: "InvariantName == <expression>"
+- For complex invariants, you may use multiline format within the JSON string (use actual line breaks)
+- For simple invariants, single line format is preferred
+- **LAST RESORT**: Only omit an invariant if its core concept is fundamentally incompatible with the specification's design
+- **CRITICAL JSON ESCAPING RULES**: 
+  - TLA+ operators like `\A`, `\E`, `\in` contain ONE backslash in the final TLA+ code
+  - In JSON strings, use EXACTLY ONE backslash escape: write `"\\A"` to get `\A` in TLA+
+  - **DO NOT double-escape**: `"\\\\A"` is WRONG and will produce `\\A` in TLA+
+  - **CORRECT**: `"LeaderUniqueness == \\A term \\in 1..MaxTerm : state[term] = \"leader\""`
+  - **WRONG**: `"LeaderUniqueness == \\\\A term \\\\in 1..MaxTerm : state[term] = \"leader\""`
+- Start your response immediately with the opening brace {

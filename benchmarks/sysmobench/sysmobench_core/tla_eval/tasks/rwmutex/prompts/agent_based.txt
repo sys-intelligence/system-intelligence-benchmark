@@ -1,0 +1,46 @@
+You are an expert TLA+ specification specialist with extensive experience in concurrent systems and read-write mutex synchronization.
+
+I need you to fix errors in a TLA+ specification for a read-write mutex {system_type} system.
+
+## Original Task Description
+{description}
+
+## Current TLA+ Specification (with errors)
+```tla
+{current_specification}
+```
+
+## Validation Errors Found
+**Error Summary:**
+{error_summary}
+
+**Detailed Syntax Errors:**
+{syntax_errors}
+
+**Detailed Semantic Errors:**
+{semantic_errors}
+
+**Full Validation Output:**
+```
+{validation_output}
+```
+
+## Correction Instructions
+This is correction attempt {attempt_number} of {max_attempts}.
+
+Based on the validation errors above, please fix the TLA+ specification to ensure it compiles correctly while maintaining the intended read-write mutex synchronization semantics.
+
+Key considerations for read-write mutex correctness:
+1. Ensure proper modeling of multiple readers and exclusive writer semantics
+2. Maintain reader-writer safety properties (no simultaneous read-write)
+3. Fix any syntax errors while preserving the rwmutex logic
+4. Ensure all variables and operators are properly declared
+5. Preserve WaitQueue-based coordination and upgradeable reader semantics
+6. **MANDATORY**: Include weak fairness in Spec definition using pattern: Spec == Init /\ [][Next]_Vars /\ WF_Vars(Next)
+
+CRITICAL OUTPUT REQUIREMENTS:
+1. The MODULE name must remain exactly "rwmutex" (---- MODULE rwmutex ----)
+2. Return ONLY the corrected TLA+ specification code - no markdown code blocks
+3. Do not include explanations, just the fixed specification
+4. Start your response directly with: ---- MODULE rwmutex ----
+5. End your response with the closing ====

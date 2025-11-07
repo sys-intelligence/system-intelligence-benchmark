@@ -1,0 +1,27 @@
+{
+  "model": "gemini",
+  "Thread": ["t1", "t2", "t3"],
+  "Nil": "Nil",
+  "event_mapping": {
+    "Lock": "Lock",
+    "TryLock": "TryLock",
+    "Unlock": "Unlock"
+  },
+  "thread_mapping": {
+    "Thread0": "t1",
+    "Thread1": "t2",
+    "Thread2": "t3",
+    "Thread3": "t1"
+  },
+  "variable_mapping": {
+    "lock": "lock",
+    "holder": "holder",
+    "queue": "queue",
+    "pc": "pc"
+  },
+  "pc_states": {
+    "idle": "idle",
+    "in_cs": "in_cs",
+    "waiting": "waiting"
+  }
+}

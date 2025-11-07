@@ -1,0 +1,24 @@
+{
+    "config": {
+        "Threads": ["Thread0", "Thread1", "Thread2", "Thread3"],
+        "Mutexes": ["Mutex0", "Mutex1", "Mutex2", "Mutex3"],
+        "MaxSteps": 1000,
+        "Description": "Configuration for Mutex trace validation in TLA+"
+    },
+    "events": {
+        "Lock": "Acquire",
+        "TryLock": "TryAcquire",
+        "Unlock": "Unlock",
+        "TryAcquireBlocking": "Acquire",
+        "TryAcquireNonBlocking": "TryAcquire",
+        "AcquireSuccess": "Acquire",
+        "AcquireFailNonBlocking": "TryLockFailed",
+        "Release": "Unlock"
+    },
+    "metadata": {
+        "primitive_type": "mutex",
+        "version": "1.0",
+        "description": "Asterinas Mutex trace conversion mapping",
+        "semantics": "Exclusive mutual exclusion - only one thread can hold the mutex at a time"
+    }
+}

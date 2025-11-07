@@ -1,0 +1,98 @@
+{
+    "config": {
+        "Threads": ["Thread0", "Thread1", "Thread2"],
+        "RwMutexes": ["RwMutex0", "RwMutex1", "RwMutex2", "RwMutex3"],
+        "MaxSteps": 1000,
+        "Description": "Configuration for RwMutex trace validation in TLA+"
+    },
+    "tla_variables": {
+        "writer": "BOOLEAN",
+        "upreader": "BOOLEAN",
+        "being_upgraded": "BOOLEAN",
+        "reader_count": "Nat",
+        "queue": "Seq({\"read\", \"write\", \"upread\"})"
+    },
+    "action_mappings": {
+        "ReadLock": "StartRead",
+        "TryReadLock": "StartRead",
+        "TryAcquireRead": "StartRead",
+        "ReadUnlock": "ReleaseRead",
+        "WriteLock": "StartWrite",
+        "TryWriteLock": "StartWrite",
+        "WriteUnlock": "ReleaseWrite",
+        "TryAcquireUpreadNonBlocking": "StartUpread",
+        "AcquireUpreadSuccess": "StartUpread",
+        "TryUpreadLock": "StartUpread",
+        "UpreadLock": "StartUpread",
+        "ReleaseUpread": "ReleaseUpread",
+        "UpreadUnlock": "ReleaseUpread",
+        "TryUpgradeLock": "BeginUpgrade",
+        "UpgradeLock": "CompleteUpgrade",
+        "UpgradeUpreadSuccess": "CompleteUpgrade"
+    },
+    "state_mapping": {
+        "unlocked": {
+            "writer": false,
+            "upreader": false,
+            "being_upgraded": false,
+            "reader_count": 0
+        },
+        "1_reader": {
+            "writer": false,
+            "upreader": false,
+            "being_upgraded": false,
+            "reader_count": 1
+        },
+        "multi_readers": {
+            "writer": false,
+            "upreader": false,
+            "being_upgraded": false,
+            "reader_count": 2
+        },
+        "write_locked": {
+            "writer": true,
+            "upreader": false,
+            "being_upgraded": false,
+            "reader_count": 0
+        },
+        "upread_locked": {
+            "writer": false,
+            "upreader": true,
+            "being_upgraded": false,
+            "reader_count": 0
+        },
+        "upread_and_1_reader": {
+            "writer": false,
+            "upreader": true,
+            "being_upgraded": false,
+            "reader_count": 1
+        },
+        "upread_and_multi_readers": {
+            "writer": false,
+            "upreader": true,
+            "being_upgraded": false,
+            "reader_count": 2
+        }
+    },
+    "trace_format": {
+        "description": "",
+        "structure": {
+            "variables": ["writer", "upreader", "being_upgraded", "reader_count", "queue"],
+            "operation_format": {
+                "op": "Update",
+                "path": [],
+                "args": ["new_value"]
+            },
+            "event_format": {
+                "event": "TLA_action_name"
+            }
+        }
+    },
+    "metadata": {
+        "primitive_type": "rwmutex",
+        "version": "",
+        "description": "",
+        "semantics": "",
+        "tla_spec": "rwmutex.tla"
+    }
+}

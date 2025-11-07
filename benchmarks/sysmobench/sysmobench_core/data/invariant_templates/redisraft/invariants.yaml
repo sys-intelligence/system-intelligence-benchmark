@@ -1,0 +1,195 @@
+# High-Quality Invariants for RedisRaft Core Raft Implementation
+# Based on deep analysis of deps/raft/src/raft_server.c with concrete state predicates
+
+invariants:
+  # Core Raft Safety Invariants - From raft_server.c Implementation
+  - name: "LogInv"
+    type: "safety"
+    natural_language: "Committed log entries should never conflict between servers"
+    formal_description: "All committed logs across nodes must be consistent - either one is a prefix of another. Uses commitIndex[n] to define committed portion of log[n]."
+    tla_example: |
+      LogInv ==
+        \A i, j \in Server :
+          \A k \in 1..min(commitIndex[i], commitIndex[j]) :
+            log[i][k] = log[j][k]
+
+  - name: "MoreThanOneLeaderInv"
+    type: "safety"
+    natural_language: "At most one leader can exist in any given term"
+    formal_description: "There is only ever one leader per term. Multiple servers can be leaders simultaneously only if they are in different terms."
+    tla_example: |
+      MoreThanOneLeaderInv ==
+        \A i, j \in Server :
+          (/\ currentTerm[i] = currentTerm[j]
+           /\ state[i] = LEADER
+           /\ state[j] = LEADER)
+          => i = j
+
+  - name: "LogMatchingInv"
+    type: "safety"
+    natural_language: "Every (index, term) pair determines a log prefix"
+    formal_description: "If two logs contain an entry with the same index and term, then the logs are identical in all preceding entries."
+    tla_example: |
+      LogMatchingInv ==
+        \A i, j \in Server : i /= j =>
+          \A n \in 1..min(Len(log[i]), Len(log[j])) :
+            log[i][n].term = log[j][n].term =>
+              SubSeq(log[i], 1, n) = SubSeq(log[j], 1, n)
+
+  # Raft-Specific State Machine Invariants - Based on raft_server.c
+  - name: "RaftStateTransitionInv"
+    type: "safety"
+    natural_language: "State transitions follow raft_server.c's strict state machine rules"
+    formal_description: "raft_server.c has strict state transition rules and consistent state variables. currentTerm[n]: current term of node n. votedFor[n]: candidate this node voted for (None if no vote)."
+    tla_example: |
+      RaftStateTransitionInv ==
+        \A n \in Server :
+          /\ state[n] \in {FOLLOWER, PRECANDIDATE, CANDIDATE, LEADER}
+          /\ (state[n] = LEADER) => (currentTerm[n] > 0)
+          /\ (state[n] = CANDIDATE) => (votedFor[n] = n /\ currentTerm[n] > 0)
+          /\ (state[n] = PRECANDIDATE) => (currentTerm[n] >= 0)
+
+  - name: "PreCandidateTermStabilityInv" 
+    type: "safety"
+    natural_language: "PreCandidate mechanism maintains term stability"
+    formal_description: "PreCandidates maintain valid terms without incrementing. Based on raft_become_precandidate() which doesn't increment term unlike raft_become_candidate()."
+    tla_example: |
+      PreCandidateTermStabilityInv ==
+        \A n \in Server :
+          (state[n] = PRECANDIDATE) => 
+            /\ currentTerm[n] >= 0
+            /\ votedFor[n] \in Server \cup {None}
+
+  - name: "ElectionTimeoutConsistencyInv"
+    type: "safety" 
+    natural_language: "Election timeout tracking is within valid bounds"
+    formal_description: "electionElapsed and timeout tracking are non-negative and within bounds. Based on raft_periodic_internal() timeout management."
+    tla_example: |
+      ElectionTimeoutConsistencyInv ==
+        \A n \in Server :
+          /\ electionElapsed[n] >= 0
+          /\ electionElapsed[n] <= 2 * electionTimeout  
+          /\ (state[n] = LEADER) => (heartbeatElapsed[n] >= 0)
+          /\ randomizedElectionTimeout[n] >= electionTimeout
+
+  - name: "VoteConsistencyInv"
+    type: "safety"
+    natural_language: "Vote tracking is consistent across terms and states"
+    formal_description: "Each node maintains consistent vote state. votedFor[n]: the candidate this node voted for in current term (None if no vote). Based on raft_recv_requestvote() logic."
+    tla_example: |
+      VoteConsistencyInv ==
+        \A n \in Server :
+          /\ (votedFor[n] /= None) => (currentTerm[n] > 0)
+          /\ (state[n] = CANDIDATE) => (votedFor[n] = n)
+          /\ (votedFor[n] \in Server \cup {None})
+
+  - name: "LeaderLogCompletenessInv"
+    type: "safety"
+    natural_language: "Leaders have the most complete logs"
+    formal_description: "A leader must have all committed entries from previous terms. Based on raft_recv_requestvote() log completeness check."
+    tla_example: |
+      LeaderLogCompletenessInv ==
+        \A leader \in Server :
+          (state[leader] = LEADER) =>
+            \A follower \in Server :
+              \A i \in 1..commitIndex[follower] :
+                /\ i <= Len(log[leader])
+                /\ log[leader][i].term >= log[follower][i].term
+
+  - name: "TermValidityInv"
+    type: "safety"
+    natural_language: "Terms are valid and non-negative"
+    formal_description: "All node terms are non-negative integers. Leaders must have positive terms to ensure valid leadership."
+    tla_example: |
+      TermValidityInv ==
+        \A n \in Server :
+          /\ currentTerm[n] >= 0
+          /\ (state[n] = LEADER) => (currentTerm[n] > 0)
+
+  - name: "CommitIndexConsistencyInv"
+    type: "safety"
+    natural_language: "Commit indices are consistent with log contents"
+    formal_description: "Commit index never exceeds log length and committed entries have valid terms."
+    tla_example: |
+      CommitIndexConsistencyInv ==
+        \A n \in Server :
+          /\ commitIndex[n] <= Len(log[n])
+          /\ commitIndex[n] >= 0
+          /\ (commitIndex[n] > 0) => 
+               log[n][commitIndex[n]].term <= currentTerm[n]
+
+  # Raft-Specific Message Protocol Invariants
+  - name: "AppendEntriesConsistencyInv"
+    type: "safety"
+    natural_language: "AppendEntries messages maintain log consistency"
+    formal_description: "AppendEntries requests follow prevLogIndex/prevLogTerm consistency rules. Based on raft_recv_appendentries() validation logic."
+    tla_example: |
+      AppendEntriesConsistencyInv ==
+        \A msg \in messages :
+          (msg.type = "AppendEntries" /\ msg.prevLogIndex > 0) =>
+            /\ msg.prevLogIndex <= Len(log[msg.dest])
+            /\ msg.prevLogTerm = log[msg.dest][msg.prevLogIndex].term
+
+  - name: "RequestVoteTermConsistencyInv"
+    type: "safety"
+    natural_language: "RequestVote messages have consistent term information"
+    formal_description: "RequestVote messages maintain term consistency. Based on raft_recv_requestvote() term validation."
+    tla_example: |
+      RequestVoteTermConsistencyInv ==
+        \A msg \in messages :
+          (msg.type = "RequestVote") =>
+            /\ msg.term >= 0
+            /\ msg.lastLogTerm >= 0
+            /\ msg.lastLogIndex >= 0
+
+  - name: "NextIndexConsistencyInv"
+    type: "safety"
+    natural_language: "Leader next indices are within valid bounds"
+    formal_description: "nextIndex tracking for followers is consistent. Based on raft_become_leader() and raft_send_appendentries() logic."
+    tla_example: |
+      NextIndexConsistencyInv ==
+        \A leader \in Server :
+          (state[leader] = LEADER) =>
+            \A follower \in Server :
+              follower /= leader =>
+                /\ nextIndex[leader][follower] >= 1
+                /\ nextIndex[leader][follower] <= Len(log[leader]) + 1
+
+  - name: "MatchIndexConsistencyInv"
+    type: "safety"
+    natural_language: "Leader match indices track successful replication"
+    formal_description: "matchIndex tracking reflects successful log replication. Based on raft_recv_appendentries_response() updating logic."
+    tla_example: |
+      MatchIndexConsistencyInv ==
+        \A leader \in Server :
+          (state[leader] = LEADER) =>
+            \A follower \in Server :
+              follower /= leader =>
+                /\ matchIndex[leader][follower] <= Len(log[follower])
+                /\ matchIndex[leader][follower] <= nextIndex[leader][follower] - 1
+
+  # Liveness Properties - Simplified without undefined predicates
+  - name: "EventualLeaderElectionLiveness"
+    type: "liveness"
+    natural_language: "Eventually a leader will be elected in stable network"
+    formal_description: "Under fairness assumptions, each term eventually gets a leader or advances to a higher term."
+    tla_example: |
+      EventualLeaderElectionLiveness ==
+        []<>(\E n \in Server : state[n] = LEADER)
+
+  - name: "ElectionProgressLiveness"
+    type: "liveness"
+    natural_language: "Election timeouts eventually trigger campaigns"
+    formal_description: "Followers with high election elapsed counters eventually become candidates, ensuring system progress."
+    tla_example: |
+      ElectionProgressLiveness ==
+        \A n \in Server :
+          [](state[n] = FOLLOWER /\ electionElapsed[n] >= electionTimeout) ~>
+            (state[n] \in {PRECANDIDATE, CANDIDATE})
+
+metadata:
+  total_invariants: 16
+  safety_invariants: 14
+  liveness_invariants: 2
+  core_raft_invariants: 3  # LogInv, MoreThanOneLeaderInv, LogMatchingInv
+  raft_server_specific_invariants: 13  # All others are raft_server.c-specific based on actual implementation

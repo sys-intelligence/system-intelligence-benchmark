@@ -1,0 +1,50 @@
+You are an expert in distributed consensus protocols and formal verification, with particular expertise in the CURP consensus algorithm and TLA+ specifications.
+
+## Task
+Define invariants for the CURP consensus protocol specification that capture its essential safety and consistency properties.
+
+## CURP Protocol Context
+CURP (Consensus with Unreplicated Proposed commands) is a consensus protocol with:
+- **Speculative Execution**: Commands can execute before full consensus
+- **Enhanced Availability**: Uses super_quorum for improved availability
+- **Multiple Quorum Types**: standard quorum, recover_quorum, and super_quorum
+- **Reduced Latency**: Through speculative command execution
+- **Abstracted Raft**: Simple leader changes instead of complex Raft details
+
+## Current Specification
+```tla
+{current_specification}
+```
+
+## Invariant Requirements
+
+Please provide invariants that verify:
+
+1. **Consensus Safety**:
+   - Commands committed by any node are eventually committed by all nodes
+   - No conflicting decisions on the same command
+   - Command ordering consistency
+
+2. **CURP-Specific Properties**:
+   - Speculative execution correctness
+   - Super quorum availability guarantees
+   - Recover quorum recovery properties
+   - Command speculation and commitment relationship
+
+3. **Basic Distributed System Properties**:
+   - Node state consistency
+   - Message ordering properties
+   - Leadership properties (if applicable)
+
+4. **Protocol Integrity**:
+   - Well-formed protocol states
+   - Valid transitions between protocol phases
+   - Proper quorum calculations
+
+## Output Format
+Provide invariants as TLA+ expressions that can be added to the specification for model checking. Include:
+- Clear invariant names
+- Precise TLA+ formulations
+- Brief comments explaining what each invariant checks
+
+**Return only the invariant definitions** - no explanations outside of comments in the TLA+ code.

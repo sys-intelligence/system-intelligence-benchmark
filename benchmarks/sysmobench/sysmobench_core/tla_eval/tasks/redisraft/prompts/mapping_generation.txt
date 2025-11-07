@@ -1,0 +1,149 @@
+You are tasked with generating a JSON mapping file that defines how to convert RedisRaft system traces to TLA+ specification format for trace validation.
+
+## System Overview
+RedisRaft is a Redis module that implements the Raft consensus algorithm supporting:
+- Leader election with prevote and vote phases
+- Log replication across multiple nodes
+- State transitions between Follower, Candidate, and Leader roles
+- Message passing between nodes for consensus operations
+
+## Code Analysis
+Before generating the mapping, you need to analyze the relevant code to understand the system behavior:
+
+**CRITICAL**: You MUST base your mapping on the actual TLA+ specification content, NOT on the examples below. The examples are for format reference only. Always use the actual variables and actions defined in the provided specification.
+
+### TLA+ Specification Code
+```tla+
+{TLA_SPEC_CODE_PLACEHOLDER}
+```
+
+### Implementation Code
+```c
+{IMPLEMENTATION_CODE_PLACEHOLDER}
+```
+
+## Input: System Trace Format
+System traces are in JSONL format with events like:
+```json
+{"timestamp":82244.520673,"name":"InitState","nid":2,"role":"follower","state":{"term":0,"vote":-1,"commit":0}}
+{"timestamp":82245.724446,"name":"BecomePreCandidate","nid":3,"role":"precandidate","term":0,"leader":-1}
+{"timestamp":82245.774296,"name":"PreVoteResponse","nid":1,"vote_granted":1,"term":0,"prevote":1}
+{"timestamp":82246.125599,"name":"RequestVote","nid":3,"msg":{"type":"MsgVote","from":3,"to":1,"term":1,"candidate_id":3,"last_log_idx":0,"last_log_term":0}}
+```
+
+Common actions in system traces:
+- InitState: Node initialization
+- BecomePreCandidate: Start prevote phase
+- BecomeCandidate: Transition to candidate role
+- BecomeFollower: Transition to follower role
+- BecomeLeader: Transition to leader role
+- RequestVote: Send vote request to other nodes
+- PreVoteResponse: Response to prevote request
+- VoteResponse: Response to vote request
+- ReceivedPreVoteResponse: Received prevote response
+- ReceivedVoteResponse: Received vote response
+- PersistState: Persist current state
+- AppendEntries: Send log entries to followers
+
+## Target: TLA+ Specification Variables
+The TLA+ specification tracks these state variables:
+- currentTerm: Current term number for each node
+- state: Node role (Follower, Candidate, Leader)
+- votedFor: Which candidate this node voted for in current term
+- commitIndex: Index of highest log entry known to be committed
+- log: Log entries for each node
+- messages: In-flight messages between nodes
+
+## Required Mapping Structure
+Generate a JSON file with this structure:
+
+```json
+{
+  "config": {
+    "Servers": ["n1", "n2", "n3"],
+    "MaxTerm": 10,
+    "MaxLogLen": 100,
+    "Nil": "Nil",
+    "Values": [1, 2, 3]
+  },
+  "events": {
+    "InitState": "Init",
+    "BecomePreCandidate": "BecomeCandidate",
+    "BecomeCandidate": "BecomeCandidate",
+    "BecomeFollower": "BecomeFollower",
+    "BecomeLeader": "BecomeLeader",
+    "RequestVote": "RequestVote",
+    "PreVoteResponse": "HandlePreVoteResponse",
+    "VoteResponse": "HandleVoteResponse",
+    "ReceivedPreVoteResponse": "ReceiveVoteResponse",
+    "ReceivedVoteResponse": "ReceiveVoteResponse",
+    "PersistState": "PersistState",
+    "AppendEntries": "AppendEntries"
+  },
+  "variables": {
+    "currentTerm": {
+      "system_path": ["state", "term"],
+      "tla_variable": "currentTerm",
+      "type": "function",
+      "default_value": 0
+    },
+    "state": {
+      "system_path": ["role"],
+      "tla_variable": "state",
+      "type": "function",
+      "value_mapping": {
+        "follower": "Follower",
+        "precandidate": "Candidate",
+        "candidate": "Candidate",
+        "leader": "Leader"
+      },
+      "default_value": "Follower"
+    },
+    "votedFor": {
+      "system_path": ["state", "vote"],
+      "tla_variable": "votedFor",
+      "type": "function",
+      "value_mapping": {
+        "-1": "Nil",
+        "0": "Nil"
+      },
+      "default_value": "Nil"
+    },
+    "commitIndex": {
+      "system_path": ["state", "commit"],
+      "tla_variable": "commitIndex",
+      "type": "function",
+      "default_value": 0
+    },
+    "log": {
+      "system_path": ["log"],
+      "tla_variable": "log",
+      "type": "function",
+      "default_value": "<<>>"
+    }
+  },
+  "node_mapping": {
+    "1": "n1",
+    "2": "n2",
+    "3": "n3"
+  }
+}
+```
+
+## Implementation Notes
+1. The mapping will be used by a state tracker that maintains complete system state
+2. Node IDs in traces are numeric (1, 2, 3...) and must be mapped to "n1", "n2", etc.
+3. The state tracker will automatically handle state transitions based on actions
+4. Focus on correctly mapping actions and node states
+5. The config section should list all possible nodes that might appear in traces
+6. Extract values using "system_path" from RedisRaft trace events
+7. Provide appropriate default values and value mappings
+8. The "type" field indicates how the variable is used in TLA+ (function, bag, scalar)
+
+## Your Task
+Generate a complete redisraft_mapping.json file that:
+1. Maps all common RedisRaft Raft actions to their TLA+ equivalents
+2. Maps all TLA+ state variables to trace extraction paths
+3. Provides node ID mappings for all nodes that appear in traces
+4. Ensures compatibility with the state tracking implementation
+5. Uses EXACT variable and action names from the TLA+ specification

@@ -1,0 +1,69 @@
+# Invariants for Asterinas Spinlock Systems
+# Includes both generic spinlock properties and Asterinas-specific features
+
+invariants:
+  # Generic Spinlock Invariants (applicable to all spinlock implementations)
+  - name: "MutualExclusion"
+    type: "safety"
+    natural_language: "At most one process can be in the critical section at any given time"
+    formal_description: "The fundamental safety property: no two processes can be in their critical section simultaneously"
+    tla_example: |
+      MutualExclusion ==
+        Cardinality({p \in Proc : pc[p] = "in_cs"}) <= 1
+
+  - name: "LockConsistency"
+    type: "safety"
+    natural_language: "The lock state is consistent with critical section occupancy"
+    formal_description: "Lock state consistency: the atomic boolean lock state must be consistent with whether any process is in the critical section"
+    tla_example: |
+      LockConsistency ==
+        (lock_state = TRUE) <=> (\E p \in Proc : pc[p] = "in_cs")
+
+  - name: "NoDeadlock"
+    type: "safety"
+    natural_language: "Not all threads can be spinning simultaneously - avoids global deadlock"
+    formal_description: "Deadlock freedom: prevents the situation where all threads are stuck spinning simultaneously, which would indicate a global deadlock"
+    tla_example: |
+      NoDeadlock ==
+        ~(\A t \in Threads : pc[t] = "spinning")
+
+  - name: "TryLockNoSpinning"
+    type: "safety"
+    natural_language: "try_lock() operations never enter the spinning state - they succeed or fail immediately"
+    formal_description: "Asterinas-specific: try_lock() is non-blocking and should never cause a process to spin. If call_type tracks the type of lock request, then threads making try_lock() requests should never be in spinning state."
+    tla_example: |
+      TryLockNoSpinning ==
+        \A t \in Threads : 
+          (call_type[t] = "try_lock" /\ pc[t] = "trying") => pc[t] # "spinning"
+
+  - name: "BlockingVsNonBlockingSemantics"
+    type: "safety"
+    natural_language: "Only lock() requests can lead to spinning, try_lock() requests cannot"
+    formal_description: "Asterinas dual-interface semantics: spinning state can only be reached via lock(), not try_lock(). If call_type tracks the request type, then any thread in spinning state must have made a blocking lock() request."
+    tla_example: |
+      BlockingVsNonBlockingSemantics ==
+        \A t \in Threads :
+          pc[t] = "spinning" => call_type[t] = "lock"
+
+  - name: "GuardLifecycle"
+    type: "liveness"
+    natural_language: "No process can hold the lock permanently - every thread eventually releases"
+    formal_description: "RAII Guard semantics: no thread can hold the lock forever, ensuring that every thread eventually exits the locked state"
+    tla_example: |
+      GuardLifecycle ==
+        \A t \in Threads : []<>(pc[t] # "locked")
+
+  # Generic Liveness Property
+  - name: "EventualRelease"
+    type: "liveness"
+    natural_language: "The lock will eventually be released if it is acquired"
+    formal_description: "Under fair scheduling, if the lock is held, it will eventually be released - ensuring the lock doesn't stay acquired forever"
+    tla_example: |
+      EventualRelease == [](lock_held => <>~lock_held)
+
+metadata:
+  total_invariants: 7
+  safety_invariants: 6
+  liveness_invariants: 1
+  generic_invariants: 4  # MutualExclusion, LockConsistency, NoDeadlock, EventualRelease
+  asterinas_specific_invariants: 3  # TryLockNoSpinning, BlockingVsNonBlockingSemantics, GuardLifecycle

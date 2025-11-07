@@ -1,0 +1,152 @@
+# High-Quality Invariants for etcd/Raft Systems
+# Based on deep analysis of etcd raft.go implementation with concrete state predicates
+
+invariants:
+  # Core Raft Safety Invariants - From etcd Implementation
+  - name: "LogInv"
+    type: "safety"
+    natural_language: "Committed log entries should never conflict between servers"
+    formal_description: "All committed logs across nodes must be consistent - either one is a prefix of another. Uses commitIndex[n] to define committed portion of log[n]."
+    tla_example: |
+      LogInv ==
+        \A i, j \in Nodes :
+          \A k \in 1..min(commitIndex[i], commitIndex[j]) :
+            log[i][k] = log[j][k]
+
+  - name: "MoreThanOneLeaderInv"
+    type: "safety"
+    natural_language: "At most one leader can exist in any given term"
+    formal_description: "There is only ever one leader per term. Multiple servers can be leaders simultaneously only if they are in different terms."
+    tla_example: |
+      MoreThanOneLeaderInv ==
+        \A i, j \in Nodes :
+          (/\ currentTerm[i] = currentTerm[j]
+           /\ state[i] = StateLeader
+           /\ state[j] = StateLeader)
+          => i = j
+
+  - name: "LogMatchingInv"
+    type: "safety"
+    natural_language: "Every (index, term) pair determines a log prefix"
+    formal_description: "If two logs contain an entry with the same index and term, then the logs are identical in all preceding entries."
+    tla_example: |
+      LogMatchingInv ==
+        \A i, j \in Nodes : i /= j =>
+          \A n \in 1..min(Len(log[i]), Len(log[j])) :
+            log[i][n].term = log[j][n].term =>
+              SubSeq(log[i], 1, n) = SubSeq(log[j], 1, n)
+
+  # etcd-Specific State Machine Invariants
+  - name: "EtcdStateTransitionInv"
+    type: "safety"
+    natural_language: "State transitions follow etcd's strict state machine rules"
+    formal_description: "etcd has strict state transition rules and consistent state variables. lead[n]: current leader known by node n (None if unknown). state[n]: current Raft state of node n."
+    tla_example: |
+      EtcdStateTransitionInv ==
+        \A n \in Nodes :
+          /\ state[n] \in {StateFollower, StatePreCandidate, StateCandidate, StateLeader}
+          /\ (state[n] = StateLeader) => (currentTerm[n] > 0 /\ lead[n] = n)
+          /\ (state[n] = StateCandidate) => (vote[n] = n /\ currentTerm[n] > 0)
+          /\ (state[n] = StateFollower /\ lead[n] /= None) => (lead[n] \in Nodes)
+
+  - name: "PreVoteTermStabilityInv" 
+    type: "safety"
+    natural_language: "PreVote mechanism maintains term stability"
+    formal_description: "PreCandidates maintain valid terms. Based on etcd's becomePreCandidate() which doesn't increment term unlike becomeCandidate()."
+    tla_example: |
+      PreVoteTermStabilityInv ==
+        \A n \in Nodes :
+          (state[n] = StatePreCandidate) => 
+            /\ currentTerm[n] >= 0
+            /\ vote[n] \in Nodes \cup {None}
+
+  - name: "ElectionTimeoutConsistencyInv"
+    type: "safety" 
+    natural_language: "Election timeout counters are within valid bounds"
+    formal_description: "electionElapsed and heartbeatElapsed counters are non-negative and within reasonable bounds. electionElapsed: tracks time since last leader contact, heartbeatElapsed: tracks time since last heartbeat (leader only)."
+    tla_example: |
+      ElectionTimeoutConsistencyInv ==
+        \A n \in Nodes :
+          /\ electionElapsed[n] >= 0
+          /\ electionElapsed[n] <= 2 * electionTimeout  
+          /\ (state[n] = StateLeader) => (heartbeatElapsed[n] >= 0)
+          /\ randomizedElectionTimeout[n] >= electionTimeout
+
+  - name: "CheckQuorumConfigConsistencyInv"
+    type: "safety"
+    natural_language: "CheckQuorum configuration is globally consistent"
+    formal_description: "CheckQuorum configuration flag is boolean and consistent across the system. Based on etcd Config.CheckQuorum field."
+    tla_example: |
+      CheckQuorumConfigConsistencyInv ==
+        checkQuorum \in BOOLEAN
+
+  - name: "VoteConsistencyInv"
+    type: "safety"
+    natural_language: "Vote tracking is consistent across terms and states"
+    formal_description: "Each node maintains consistent vote state. vote[n]: the candidate this node voted for in current term (None if no vote). Based on etcd's reset() logic - vote persists across same-term state changes."
+    tla_example: |
+      VoteConsistencyInv ==
+        \A n \in Nodes :
+          /\ (vote[n] /= None) => (currentTerm[n] > 0)
+          /\ (state[n] = StateCandidate) => (vote[n] = n)
+          /\ (vote[n] \in Nodes \cup {None})
+
+  - name: "LeaderTransferConstraintInv"
+    type: "safety"
+    natural_language: "Leader transfer state is consistent"
+    formal_description: "During leader transfer, state is consistent. leadTransferee[n]: target node for leadership transfer (None if no transfer). Leaders must have valid transfer targets."
+    tla_example: |
+      LeaderTransferConstraintInv ==
+        \A n \in Nodes :
+          (state[n] = StateLeader /\ leadTransferee[n] /= None) =>
+            /\ leadTransferee[n] \in Nodes
+            /\ leadTransferee[n] /= n
+            /\ electionElapsed[n] >= 0
+
+  - name: "TermValidityInv"
+    type: "safety"
+    natural_language: "Terms are valid and non-negative"
+    formal_description: "All node terms are non-negative integers. Leaders must have positive terms to ensure valid leadership."
+    tla_example: |
+      TermValidityInv ==
+        \A n \in Nodes :
+          /\ currentTerm[n] >= 0
+          /\ (state[n] = StateLeader) => (currentTerm[n] > 0)
+
+  - name: "CommitIndexConsistencyInv"
+    type: "safety"
+    natural_language: "Commit indices are consistent with log contents"
+    formal_description: "Commit index never exceeds log length and committed entries have valid terms."
+    tla_example: |
+      CommitIndexConsistencyInv ==
+        \A n \in Nodes :
+          /\ commitIndex[n] <= Len(log[n])
+          /\ commitIndex[n] >= 0
+          /\ (commitIndex[n] > 0) => 
+               log[n][commitIndex[n]].term <= currentTerm[n]
+
+  # Liveness Properties - Simplified without undefined predicates
+  - name: "EventualLeaderElectionLiveness"
+    type: "liveness"
+    natural_language: "Eventually a leader will be elected in each term"
+    formal_description: "Under fairness assumptions, each term eventually gets a leader or advances to a higher term."
+    tla_example: |
+      EventualLeaderElectionLiveness ==
+        []<>(\E n \in Nodes : state[n] = StateLeader)
+
+  - name: "ElectionProgressLiveness"
+    type: "liveness"
+    natural_language: "Election timeouts eventually trigger campaigns"
+    formal_description: "Followers with high election elapsed counters eventually become candidates, ensuring system progress."
+    tla_example: |
+      ElectionProgressLiveness ==
+        \A n \in Nodes :
+          [](state[n] = StateFollower /\ electionElapsed[n] >= electionTimeout) ~>
+            (state[n] \in {StatePreCandidate, StateCandidate})
+
+metadata:
+  total_invariants: 13
+  safety_invariants: 11
+  liveness_invariants: 2
+  core_raft_invariants: 3  # LogInv, MoreThanOneLeaderInv, LogMatchingInv
+  etcd_specific_invariants: 10  # All others are etcd-specific based on actual implementation

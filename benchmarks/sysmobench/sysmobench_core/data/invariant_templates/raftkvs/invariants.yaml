@@ -1,0 +1,139 @@
+# High-Quality Invariants for PGo Raft KV store Systems
+# Based on deep analysis of PGo-generated raftkvs.go implementation with concrete state predicates
+
+invariants:
+  - name: "LimitTerm"
+    type: "safety"
+    natural_language: "Each node's term is strictly below MaxTerm"
+    formal_description: "Bounds checking: enforces upper limit on Raft term values to prevent integer overflow and maintain model finiteness"
+    tla_example: |
+      LimitTerm == \A i \in ServerSet: currentTerm[i] < MaxTerm
+
+  - name: "LimitCommitIndex"
+    type: "safety"
+    natural_language: "Each node's commit index is strictly below MaxCommitIndex"
+    formal_description: "Bounds checking: enforces upper limit on commit index values to maintain model finiteness and prevent unbounded growth"
+    tla_example: |
+      LimitCommitIndex == \A i \in ServerSet: commitIndex[i] < MaxCommitIndex
+
+  - name: "LimitNodeFailure"
+    type: "safety"
+    natural_language: "At most MaxNodeFail nodes can be disabled"
+    formal_description: "Failure model bounds: limits the number of simultaneously failed nodes to maintain system operability and model finiteness"
+    tla_example: |
+      LimitNodeFailure == Cardinality({i \in ServerSet: \lnot network[i].enabled}) <= MaxNodeFail
+
+  # Core Raft safety
+  - name: "ElectionSafety"
+    type: "safety"
+    natural_language: "No two leaders exist in the same term"
+    formal_description: "Core Raft safety property: ensures at most one leader per term to maintain consensus correctness"
+    tla_example: |
+      ElectionSafety == \lnot (\E i, j \in ServerSet:
+                                  /\ i /= j
+                                  /\ currentTerm[i] = currentTerm[j]
+                                  /\ state[i] = Leader
+                                  /\ state[j] = Leader)
+
+  - name: "LogMatching"
+    type: "safety"
+    natural_language: "Same (index,term) implies identical prefixes"
+    formal_description: "Raft log consistency: if two logs contain entries with the same index and term, then all preceding entries are identical"
+    tla_example: |
+      LogMatching == \A i, j \in ServerSet:
+                        \A k \in 1..Min({Len(log[i]), Len(log[j])}):
+                            log[i][k].term = log[j][k].term
+                              => SubSeq(log[i], 1, k) = SubSeq(log[j], 1, k)
+
+  - name: "LeaderCompleteness"
+    type: "safety"
+    natural_language: "Committed entries appear in leaders with ≥ that term"
+    formal_description: "Raft leader completeness property: leaders in term T must contain all entries committed in terms ≤ T"
+    tla_example: |
+      LeaderCompleteness == \A i \in ServerSet:
+                              \A logIdx \in DOMAIN log[i]:
+                                logIdx <= commitIndex[i] =>
+                                  \A j \in ServerSet:
+                                    state[j] = Leader /\ currentTerm[j] >= log[i][logIdx].term =>
+                                      /\ logIdx \in DOMAIN log[j]
+                                      /\ log[i][logIdx] = log[j][logIdx]
+
+  - name: "StateMachineSafety"
+    type: "safety"
+    natural_language: "Committed prefixes are identical across servers"
+    formal_description: "Raft state machine safety: committed log prefixes are identical across all servers, ensuring consistent replicated state"
+    tla_example: |
+      StateMachineSafety == \A i, j \in ServerSet:
+                               \A k \in 1..Min({commitIndex[i], commitIndex[j]}):
+                                 log[i][k] = log[j][k]
+
+  # Model-specific safety
+  - name: "ApplyLogConsistency"
+    type: "safety"
+    natural_language: "Equal commit index implies equal state machine state & domain"
+    formal_description: "State machine consistency: servers with the same commit index must have identical applied state machine states and key domains"
+    tla_example: |
+      ApplyLogOK == \A i, j \in ServerSet:
+                       commitIndex[i] = commitIndex[j] =>
+                         /\ sm[i] = sm[j]
+                         /\ smDomain[i] = smDomain[j]
+
+  - name: "PersistentLogEquality"
+    type: "safety"
+    natural_language: "Volatile and persistent logs match"
+    formal_description: "Persistence consistency: the volatile in-memory log must exactly match the persistent on-disk log representation"
+    tla_example: |
+      plogOK == \A i \in ServerSet: log[i] = plog[i]
+
+  - name: "TermBounded"
+    type: "safety"
+    natural_language: "Terms never exceed MaxTerm"
+    formal_description: "Term upper bound: ensures current terms remain within the specified maximum limit for model correctness"
+    tla_example: |
+      TermOK == \A i \in ServerSet: currentTerm[i] <= MaxTerm
+
+  - name: "CommitIndexBounded"
+    type: "safety"
+    natural_language: "Commit index never exceeds MaxCommitIndex"
+    formal_description: "Commit index upper bound: ensures commit indices remain within the specified maximum limit for model correctness"
+    tla_example: |
+      CommitIndexOK == \A i \in ServerSet: commitIndex[i] <= MaxCommitIndex
+
+  - name: "NodeFailureBounded"
+    type: "safety"
+    natural_language: "Disabled nodes bounded by MaxNodeFail + 1"
+    formal_description: "Node failure upper bound: limits the number of disabled nodes to maintain system availability and model bounds"
+    tla_example: |
+      NodeFailOK == Cardinality({i \in ServerSet: \lnot network[i].enabled}) <= MaxNodeFail+1
+
+  - name: "LeaderAppendOnly"
+    type: "safety"
+    natural_language: "Leaders only append to their logs"
+    formal_description: "Raft leader append-only property: leaders never overwrite or delete existing log entries, only append new ones"
+    tla_example: |
+      LeaderAppendOnly == [][\A i \in ServerSet:
+                                (state[i] = Leader /\ state'[i] = Leader)
+                                  => log[i] = SubSeq(log'[i], 1, Len(log[i]))]_vars
+
+  # Liveness
+  - name: "ClientsLiveness"
+    type: "liveness"
+    natural_language: "Clients that receive a response progress to the loop"
+    formal_description: "Client progress guarantee: clients receiving responses will eventually return to their request loop to continue operation"
+    tla_example: |
+      ClientRcvResp(i) == pc[i] = "rcvResp" ~> pc[i] = "clientLoop"
+      ClientsOK == \A i \in ClientSet: ClientRcvResp(i)
+
+  - name: "ElectionLiveness"
+    type: "liveness"
+    natural_language: "Eventually some server becomes Leader"
+    formal_description: "Leader election progress: the system will eventually elect a leader, ensuring continued operation and availability"
+    tla_example: |
+      ElectionLiveness == []<>(\E i \in ServerSet: state[i] = Leader)
+
+metadata:
+  total_invariants: 15
+  safety_invariants: 13
+  liveness_invariants: 2
+  core_raft_invariants: 4   # ElectionSafety, LogMatching, LeaderCompleteness, StateMachineSafety
+  etcd_specific_invariants: 0

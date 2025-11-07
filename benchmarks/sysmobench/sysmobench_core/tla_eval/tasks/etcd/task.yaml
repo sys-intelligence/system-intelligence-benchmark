@@ -1,0 +1,39 @@
+# etcd task configuration
+name: "etcd"
+description: "etcd distributed key-value store with Raft consensus"
+system_type: "distributed"
+language: "go"
+
+# Source code repository information
+repository:
+  url: "https://github.com/etcd-io/raft.git"
+  branch: "main"
+  # Fixed version for trace generation stability
+  version: "v3.5.12"  # Last tested stable version
+  
+# Files to extract from the repository
+source_files:
+  - path: "raft.go" 
+    description: "Main Raft consensus algorithm implementation"
+
+# Default file to use if not specified
+default_source_file: "raft.go"
+
+# TLA+ specification module name
+specModule: "etcdraft"
+
+# Traces folder location
+traces_folder: "data/sys_traces/etcd"
+trace_format: "etcd_based"
+trace_sample: 3
+
+# Metadata
+metadata:
+  original_project: "etcd"
+  version: "v3.5.12"  # Fixed for stability
+
+# Phase 3 specific configuration
+phase3:
+  trace_generation: true
+  patch_required: false  # No patch needed - TraceLogger is built-in
+  description: "etcd raft has built-in TraceLogger support, just needs with_tla build tag"

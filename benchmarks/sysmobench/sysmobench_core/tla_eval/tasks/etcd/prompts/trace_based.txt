@@ -1,0 +1,51 @@
+You are an expert in formal verification and TLA+ specifications with deep expertise in distributed systems, particularly etcd and Raft consensus.
+
+Convert the following traces from an execution of etcd to a comprehensive TLA+ specification.
+
+System: etcd distributed key-value store
+Focus: {focus}
+
+Traces:
+{traces}
+
+Trace format interpretation:
+{trace_format}
+
+etcd-specific modeling requirements:
+
+MANDATORY CORE ACTIONS (must include all):
+1. 【Message Types】MsgHup (election timeout), MsgVote/MsgVoteResp (voting), MsgApp/MsgAppResp (log replication)  
+2. 【Node States】Four states: StateFollower, StateCandidate, StateLeader, StatePreCandidate (prevote enabled)
+3. 【Leader Election】Complete prevote + vote phases: PreCandidate → Candidate → Leader transitions
+4. 【Log Operations】Log entry appending, consistency checks, commitment with majority quorum
+5. 【Heartbeat/Timeout】Election timeouts triggering campaigns, heartbeat prevention of elections
+6. 【Client Proposals】MsgProp message handling and log entry creation by leaders
+
+EXPLICITLY EXCLUDED (do not model):
+- Configuration changes and joint consensus (ConfChange messages)  
+- Log compaction and snapshots (MsgSnap)
+- ReadIndex optimizations (MsgReadIndex) 
+- Async storage operations (LocalAppendThread, LocalApplyThread)
+- Advanced flow control and progress tracking details
+
+REQUIRED BEHAVIORAL SCOPE:
+- Prevote phase (StatePreCandidate) must be modeled as it's enabled by default in etcd
+- State transition constraints: Follower → PreCandidate → Candidate → Leader (strict transitions)
+- Message processing by state: only valid message types handled in each node state
+- Term advancement rules: nodes advance term when receiving messages with higher term
+- Voting restrictions: one vote per term, term must be current or newer
+- Heartbeat mechanism: leaders send heartbeats, followers reset election timeout on receipt
+- Log consistency checks: prevLogIndex/prevLogTerm validation in MsgApp processing
+- Majority-based leader election and log commitment
+- Basic network message delays and losses
+
+Generate a TLA+ specification that accurately models etcd's distributed behavior.
+
+CRITICAL OUTPUT REQUIREMENTS:
+1. The MODULE name must be exactly "etcdraft" (---- MODULE etcdraft ----)
+2. Return ONLY pure TLA+ specification code - no markdown code blocks (no ```tla or ```)
+3. Do not include any explanations, comments, or formatting markers
+4. Start your response directly with: ---- MODULE etcdraft ----
+5. End your response with the closing ====
+6. **DO NOT define invariants** (like MutualExclusion, Invariant, etc.) - focus on modeling the system behavior
+7. **MUST include EXTENDS statement**: The specification must extend at least these modules: TLC, Sequences, SequencesExt, Naturals, FiniteSets, Bags

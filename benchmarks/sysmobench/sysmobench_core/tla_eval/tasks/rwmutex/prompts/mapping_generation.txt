@@ -1,0 +1,95 @@
+You are tasked with generating a JSON mapping file that defines how to convert RWMutex system traces to TLA+ specification format for trace validation.
+
+## System Overview
+RWMutex (Read-Write-Upgradeable Mutex) is a sophisticated locking mechanism that supports:
+- Multiple concurrent readers
+- Exclusive writers
+- Upgradeable readers that can upgrade to writers
+- Thread blocking and wait queues
+
+## Input: System Trace Format
+System traces are in JSONL format with events like:
+```json
+{"seq": 0, "thread": 2, "rwmutex": 0, "state": "1_reader", "lock_type": "read", "action": "TryReadLock", "actor": 2}
+{"seq": 1, "thread": 1, "rwmutex": 0, "state": "multi_readers", "lock_type": "read", "action": "ReadLock", "actor": 1}
+{"seq": 2, "thread": 1, "rwmutex": 0, "state": "unlocked", "lock_type": "write", "action": "WriteUnlock", "actor": 1}
+```
+
+Common actions in system traces:
+- ReadLock, TryReadLock: Acquire read lock
+- ReadUnlock: Release read lock
+- WriteLock, TryWriteLock: Acquire write lock
+- WriteUnlock: Release write lock
+- UpreadLock, TryUpreadLock: Acquire upgradeable read lock
+- UpreadUnlock, ReleaseUpread: Release upgradeable read lock
+- TryUpgradeLock: Start upgrading from upread to write
+- UpgradeLock: Complete upgrade to write lock
+
+## Target: TLA+ Specification Variables
+The TLA+ specification tracks these state variables:
+- writer_bit: Boolean indicating if a writer holds the lock
+- upgradeable_bit: Boolean indicating if an upgradeable reader holds the lock
+- being_upgraded_bit: Boolean indicating if upgrade is in progress
+- reader_count: Natural number of active readers
+- wait_queue: Sequence of waiting threads
+- thread_state: Mapping from thread ID to state ("none", "reading", "writing", "upgradeable", "upgrading")
+
+## Required Mapping Structure
+Generate a JSON file with this structure:
+
+```json
+{
+  "config": {
+    "Threads": ["Thread0", "Thread1", "Thread2", ...]  // List of thread identifiers
+  },
+  "events": {
+    // Map system actions to TLA+ events
+    "ReadLock": "TryAcquireRead",
+    "TryReadLock": "TryAcquireRead",
+    "ReadUnlock": "ReleaseRead",
+    "WriteLock": "TryAcquireWrite",
+    "TryWriteLock": "TryAcquireWrite",
+    "WriteUnlock": "ReleaseWrite",
+    "UpreadLock": "TryAcquireUpread",
+    "TryUpreadLock": "TryAcquireUpread",
+    "UpreadUnlock": "ReleaseUpread",
+    "ReleaseUpread": "ReleaseUpread",
+    "TryUpgradeLock": "StartUpgrade",
+    "UpgradeLock": "CompleteUpgrade",
+    // Add other mappings as needed
+  },
+  "thread_mapping": {
+    // Map numeric thread IDs to thread names
+    "0": "Thread0",
+    "1": "Thread1",
+    "2": "Thread2",
+    "3": "Thread3",
+    // Continue as needed
+  },
+  "state_mapping": {
+    // Map system states to internal representations
+    "unlocked": {"writer_bit": false, "upgradeable_bit": false, "reader_count": 0},
+    "1_reader": {"writer_bit": false, "reader_count": 1},
+    "multi_readers": {"writer_bit": false, "reader_count": 2}, // Note: This is simplified
+    "write_locked": {"writer_bit": true, "reader_count": 0},
+    "upread_locked": {"upgradeable_bit": true},
+    // Add other state mappings as needed
+  }
+}
+```
+
+## Implementation Notes
+1. The mapping will be used by a state tracker that maintains complete system state
+2. Thread IDs in traces are numeric (0, 1, 2...) and must be mapped to "Thread0", "Thread1", etc.
+3. The state tracker will automatically handle state transitions based on actions
+4. Focus on correctly mapping actions and thread identifiers
+5. The config section should list all possible threads that might appear in traces
+
+## Your Task
+Generate a complete rwmutex_mapping.json file that:
+1. Maps all common RWMutex actions to their TLA+ equivalents
+2. Provides thread ID mappings for at least 10 threads (Thread0 through Thread9)
+3. Includes any additional configuration needed for trace conversion
+4. Ensures compatibility with the state tracking implementation
+
+The mapping file should be saved at: data/convertor/rwmutex/rwmutex_mapping.json

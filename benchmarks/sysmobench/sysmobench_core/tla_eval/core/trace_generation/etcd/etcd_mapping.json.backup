@@ -1,0 +1,69 @@
+{
+  "config": {
+    "Servers": ["n1", "n2", "n3"],
+    "MaxTerm": 10,
+    "MaxLogLen": 100,
+    "MaxCommittedEntries": 50,
+    "Nil": "Nil",
+    "Value": [1, 2, 3],
+    "NoLimit": "NoLimit"
+  },
+  "events": {
+    "InitState": "Init",
+    "BecomeFollower": "Step",
+    "BecomeCandidate": "Step", 
+    "BecomeLeader": "Step",
+    "ApplyConfChange": "Step",
+    "Ready": "Step",
+    "Tick": "tickElection",
+    "SendMessage": "Step",
+    "ReceiveMessage": "Step",
+    "default": "Step"
+  },
+  "variables": {
+    "currentTerm": {
+      "system_path": ["state", "term"],
+      "tla_variable": "currentTerm",
+      "type": "function",
+      "default_value": 0
+    },
+    "state": {
+      "system_path": ["role"],
+      "tla_variable": "state", 
+      "type": "function",
+      "value_mapping": {
+        "StateFollower": "Follower",
+        "StateCandidate": "Candidate", 
+        "StateLeader": "Leader",
+        "StatePreCandidate": "PreCandidate"
+      },
+      "default_value": "Follower"
+    },
+    "votedFor": {
+      "system_path": ["state", "vote"],
+      "tla_variable": "votedFor",
+      "type": "function",
+      "value_mapping": {
+        "0": "Nil"
+      },
+      "default_value": "Nil"
+    },
+    "log": {
+      "system_path": ["log"],
+      "tla_variable": "log",
+      "type": "function", 
+      "default_value": 0
+    },
+    "commitIndex": {
+      "system_path": ["state", "commit"],
+      "tla_variable": "commitIndex",
+      "type": "function",
+      "default_value": 0
+    }
+  },
+  "node_mapping": {
+    "1": "n1",
+    "2": "n2", 
+    "3": "n3"
+  }
+}

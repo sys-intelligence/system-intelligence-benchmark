@@ -1,0 +1,16 @@
+{
+  "model": "gpt5",
+  "Thread": ["t1", "t2", "t3"],
+  "Nil": "None",
+  "thread_mapping": {
+    "Thread0": "t1",
+    "Thread1": "t2",
+    "Thread2": "t3",
+    "Thread3": "t1"
+  },
+  "event_mapping": {
+    "Lock": "LockStep",
+    "TryLock": "TryLock",
+    "Unlock": "Unlock"
+  }
+}

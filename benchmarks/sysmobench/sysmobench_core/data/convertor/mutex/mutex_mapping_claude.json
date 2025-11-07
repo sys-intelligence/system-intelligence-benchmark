@@ -1,0 +1,61 @@
+{
+    "model": "claude",
+    "config": {
+        "Threads": ["Thread0", "Thread1", "Thread2", "Thread3"],
+        "Mutexes": ["Mutex0", "Mutex1", "Mutex2", "Mutex3"],
+        "MaxSteps": 1000,
+        "Description": "Claude Mutex trace validation configuration"
+    },
+    "events": {
+        "Lock": "Lock",
+        "TryLock": "TryLock",
+        "Unlock": "Unlock",
+        "TryAcquireBlocking": "Lock",
+        "TryAcquireNonBlocking": "TryLock",
+        "AcquireSuccess": "Lock",
+        "AcquireFailNonBlocking": "TryLockFail",
+        "Release": "Unlock"
+    },
+    "output_format": {
+        "header": {
+            "Threads": "config.Threads"
+        },
+        "variables": {
+            "lock": {
+                "type": "boolean",
+                "source": "mutex_state",
+                "mapping": {"Locked": true, "Unlocked": false}
+            },
+            "guards": {
+                "type": "set",
+                "source": "mutex_owner_set",
+                "default": []
+            },
+            "waitQueue": {
+                "type": "sequence",
+                "source": "queue",
+                "default": []
+            },
+            "threadState": {
+                "type": "function",
+                "source": "thread_state",
+                "default_state": "running",
+                "state_mapping": {
+                    "acquiring": "running",
+                    "holding": "running",
+                    "waiting": "waiting",
+                    "releasing": "running"
+                }
+            }
+        }
+    },
+    "metadata": {
+        "primitive_type": "mutex",
+        "model": "claude",
+        "version": "1.0",
+        "description": "Claude Mutex trace conversion mapping with lock, guards, waitQueue, and threadState",
+        "semantics": "Mutex with thread guards set and wait queue management",
+        "validation_status": "pending",
+        "expected_events": ["Lock", "TryLock", "TryLockFail", "Unlock"]
+    }
+}
