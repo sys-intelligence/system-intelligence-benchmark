@@ -50,8 +50,3 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
-
-# Project specific
-outputs/
-*.jsonl
-!benchmarks/*/data/**/*.jsonl
