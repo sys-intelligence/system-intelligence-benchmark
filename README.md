@@ -11,10 +11,11 @@ A benchmark is a standard or point of reference against which things may be comp
 ### Benchmarks
 
 System Intelligence Benchmark currently includes the following example benchmarks. Some examples are still under development — we're actively updating them. Stay tuned!
-- **Course Exam Benchmark** (`benchmarks/course_exam_bench/`) - Tests LLM understanding of system concepts through university course exams (54 questions across 4 exams)
-- **Course Project Benchmark** (`benchmarks/course_project_bench/`) - Assesses AI capability on practical system course projects
-- **Cache Benchmark** (`benchmarks/cache_bench/`) - Evaluates AI performance on cache algorithm design tasks
-- **Example Benchmark** (`benchmarks/example_bench/`) - Template and reference implementation for creating new benchmarks
+- **Course Exam Benchmark** ([benchmarks/course_exam_bench/](benchmarks/course_exam_bench/)) - Tests LLM understanding of system concepts through university course exams (54 questions across 4 exams)
+- **Course Project Benchmark** ([benchmarks/course_project_bench/](benchmarks/course_project_bench/)) - Assesses AI capability on practical system course projects
+- **Cache Benchmark** ([benchmarks/cache_bench/](benchmarks/cache_bench/)) - Evaluates AI performance on cache algorithm design tasks
+- **ArtEval Benchmark** ([benchmarks/arteval_bench/](benchmarks/arteval_bench/)) - Evaluates AI performance on writing Kusto Query Language (KQL) queries for platform operations
+- **Example Benchmark** ([benchmarks/example_bench/](benchmarks/example_bench/)) - Template and reference implementation for creating new benchmarks
 
 ## Quick Start
 ### Repo Structure
