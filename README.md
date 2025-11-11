@@ -49,11 +49,23 @@ System Intelligence Benchmark currently includes the following example benchmark
 
 ### Running Benchmarks
 
-#### Using CLI
+#### Run All Benchmarks
+
+To run all benchmarks sequentially:
 
 ```bash
 cd cli
 ./run_all_local.sh <model_name>
+```
+
+#### Run a Single Benchmark
+
+To run just one benchmark locally:
+
+```bash
+cd benchmarks/<benchmark_name>
+./install.sh  # Only needed the first time
+./run.sh <model_name>
 ```
 
 #### Output Format
