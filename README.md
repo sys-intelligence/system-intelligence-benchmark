@@ -30,6 +30,8 @@ System Intelligence Benchmark currently includes the following example benchmark
 - Python 3.9+
 - Docker (optional, for containerized execution)
 
+> Docker images currently only support x86_64/AMD64 architecture. ARM64 (Apple Silicon M1/M2/M3) is not yet supported
+
 ### Installation
 
 1. Clone the repository:
