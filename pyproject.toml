@@ -49,3 +49,6 @@ convention = "google"
 [tool.ruff.format]
 docstring-code-format = true
 quote-style = "single"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

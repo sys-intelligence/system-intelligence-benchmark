@@ -15,11 +15,12 @@ jobs:
       fail-fast: false
       matrix:
         benchmark:
-          - arteval_bench
-          - cache_bench
-          - course_exam_bench
-          - course_project_bench
           - example_bench
+          # TODO: For now, we comment out other benchmarks as they have no tests
+          # - arteval_bench
+          # - cache_bench
+          # - course_exam_bench
+          # - course_project_bench
 
     steps:
     - name: Checkout code
@@ -30,7 +31,7 @@ jobs:
       with:
         python-version: '3.9'
 
-    - name: Install dependencies for ${{ matrix.benchmark }}
+    - name: Install dependencies
       working-directory: benchmarks/${{ matrix.benchmark }}
       run: |
         python -m venv env${{ matrix.benchmark }}
@@ -40,16 +41,10 @@ jobs:
         if [ -f requirements.txt ]; then
           pip install -r requirements.txt
         fi
-        pip install -e ../../sdk
         deactivate
 
-    - name: Run tests for ${{ matrix.benchmark }}
-      working-directory: benchmarks/${{ matrix.benchmark }}
+    - name: Run tests
       run: |
-        source env${{ matrix.benchmark }}/bin/activate
-        pytest --version
-        pytest -v
+        source benchmarks/${{ matrix.benchmark }}/env${{ matrix.benchmark }}/bin/activate
+        pytest benchmarks/${{ matrix.benchmark }}/tests -v
         deactivate
-
-    - name: Test completed
-      run: echo "${{ matrix.benchmark }} tests completed successfully."
