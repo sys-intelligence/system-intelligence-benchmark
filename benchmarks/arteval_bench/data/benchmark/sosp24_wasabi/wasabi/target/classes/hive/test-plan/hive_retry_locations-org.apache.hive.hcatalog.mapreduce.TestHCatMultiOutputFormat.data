@@ -1,0 +1,2 @@
+Retry location!!!Retry caller!!!Injection site!!!Injection location!!!Exception
+https://github.com/apache/hive/blob/e08a60029f93e52182908b61fff32e8659e78daa/standalone-metastore/metastore-common/src/main/java/org/apache/hadoop/hive/metastore/HiveMetaStoreClient.java#L753!!!org.apache.hadoop.hive.metastore.HiveMetaStoreClient.open!!!org.apache.hadoop.hive.metastore.utils.SecurityUtils.getUGI!!!HiveMetaStoreClient.java:848!!!java.io.IOException

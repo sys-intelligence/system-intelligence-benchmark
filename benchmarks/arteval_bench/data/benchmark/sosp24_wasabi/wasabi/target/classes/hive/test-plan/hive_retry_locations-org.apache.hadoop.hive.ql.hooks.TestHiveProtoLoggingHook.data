@@ -1,0 +1,2 @@
+Retry location!!!Retry caller!!!Injection site!!!Injection location!!!Exception
+https://github.com/apache/hive/blob/e08a60029f93e52182908b61fff32e8659e78daa/ql/src/java/org/apache/hadoop/hive/ql/hooks/HiveProtoLoggingHook.java#L315!!!org.apache.hadoop.hive.ql.hooks.HiveProtoLoggingHook$EventLogger.writeEvent!!!org.apache.hadoop.hive.ql.hooks.HiveProtoLoggingHook$EventLogger.maybeRolloverWriterForDay!!!HiveProtoLoggingHook.java:327!!!java.io.IOException

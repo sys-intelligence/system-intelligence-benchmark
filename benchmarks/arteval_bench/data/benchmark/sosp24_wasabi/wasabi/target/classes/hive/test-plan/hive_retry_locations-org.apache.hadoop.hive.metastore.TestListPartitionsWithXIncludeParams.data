@@ -1,0 +1,2 @@
+Retry location!!!Retry caller!!!Injection site!!!Injection location!!!Exception
+https://github.com/apache/hive/blob/e08a60029f93e52182908b61fff32e8659e78daa/standalone-metastore/metastore-server/src/main/java/org/apache/hadoop/hive/metastore/RetryingHMSHandler.java#L83!!!org.apache.hadoop.hive.metastore.RetryingHMSHandler.invokeInternal!!!org.apache.hadoop.hive.metastore.Deadline.startTimer!!!RetryingHMSHandler.java:89!!!org.apache.hadoop.hive.metastore.api.MetaException
