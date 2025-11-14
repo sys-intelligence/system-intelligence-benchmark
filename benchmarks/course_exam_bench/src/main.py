@@ -16,8 +16,6 @@ from sdk.evaluator import ExamEvaluator
 from sdk.executor import SimpleExecutor
 from sdk.utils import set_llm_endpoint_from_config
 
-set_llm_endpoint_from_config("env.toml")
-
 FORMAT_INSTRUCTIONS = {
     "SingleChoice": """
 This is a Single-choice problem.
@@ -344,6 +342,9 @@ def main(data_dir, output_dir, model_name, agent_name):
 
 
 if __name__ == "__main__":
+    # Load LLM endpoint configuration
+    set_llm_endpoint_from_config("env.toml")
+
     parser = argparse.ArgumentParser(description="Course Exam Benchmark")
     parser.add_argument(
         "-d",
