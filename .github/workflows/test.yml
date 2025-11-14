@@ -1,0 +1,52 @@
+name: Run Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [created, published, edited]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      # If one benchmark fails, continue running the others
+      fail-fast: false
+      matrix:
+        benchmark:
+          - example_bench
+          # TODO: For now, we comment out other benchmarks as they have no tests
+          # - arteval_bench
+          # - cache_bench
+          # - course_exam_bench
+          # - course_project_bench
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      working-directory: benchmarks/${{ matrix.benchmark }}
+      run: |
+        python -m venv env${{ matrix.benchmark }}
+        source env${{ matrix.benchmark }}/bin/activate
+        pip install --upgrade pip
+        pip install pytest
+        if [ -f requirements.txt ]; then
+          pip install -r requirements.txt
+        fi
+        deactivate
+
+    - name: Run tests
+      run: |
+        source benchmarks/${{ matrix.benchmark }}/env${{ matrix.benchmark }}/bin/activate
+        pytest benchmarks/${{ matrix.benchmark }}/tests -v
+        deactivate

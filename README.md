@@ -11,11 +11,13 @@ A benchmark is a standard or point of reference against which things may be comp
 ### Benchmarks
 
 System Intelligence Benchmark currently includes the following example benchmarks. Some examples are still under development — we're actively updating them. Stay tuned!
-- **Course Exam Benchmark** (`benchmarks/course_exam_bench/`) - Tests LLM understanding of system concepts through university course exams (54 questions across 4 exams)
-- **Course Project Benchmark** (`benchmarks/course_project_bench/`) - Assesses AI capability on practical system course projects
-- **Cache Benchmark** (`benchmarks/cache_bench/`) - Evaluates AI performance on cache algorithm design tasks
-- **Example Benchmark** (`benchmarks/example_bench/`) - Template and reference implementation for creating new benchmarks
+
+- **Course Exam Benchmark** ([benchmarks/course_exam_bench/](benchmarks/course_exam_bench/)) - Tests LLM understanding of system concepts through university course exams (54 questions across 4 exams)
+- **Course Project Benchmark** ([benchmarks/course_project_bench/](benchmarks/course_project_bench/)) - Assesses AI capability on practical system course projects
+- **Cache Benchmark** ([benchmarks/cache_bench/](benchmarks/cache_bench/)) - Evaluates AI performance on cache algorithm design tasks
+- **ArtEval Benchmark** ([benchmarks/arteval_bench/](benchmarks/arteval_bench/)) - Evaluates AI performance on writing Kusto Query Language (KQL) queries for platform operations
 - **SysMoBench** (`benchmarks/sysmobench/`) - Evaluates an agent's ability to produce correct TLA+ models for real-world concurrent and distributed systems
+- **Example Benchmark** ([benchmarks/example_bench/](benchmarks/example_bench/)) - Template and reference implementation for creating new benchmarks
 
 ## Quick Start
 ### Repo Structure
@@ -29,6 +31,8 @@ System Intelligence Benchmark currently includes the following example benchmark
 
 - Python 3.9+
 - Docker (optional, for containerized execution)
+
+> Docker images currently only support x86_64/AMD64 architecture. ARM64 (Apple Silicon M1/M2/M3) is not yet supported
 
 ### Installation
 
@@ -49,11 +53,23 @@ System Intelligence Benchmark currently includes the following example benchmark
 
 ### Running Benchmarks
 
-#### Using CLI
+#### Run All Benchmarks
+
+To run all benchmarks sequentially:
 
 ```bash
 cd cli
 ./run_all_local.sh <model_name>
+```
+
+#### Run a Single Benchmark
+
+To run just one benchmark locally:
+
+```bash
+cd benchmarks/<benchmark_name>
+./install.sh  # Only needed the first time
+./run.sh <model_name>
 ```
 
 #### Output Format
