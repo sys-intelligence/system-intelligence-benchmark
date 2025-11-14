@@ -1,4 +1,4 @@
-"""This script evaluates a course exam benchmark using a specified LLM model."""
+"""Evaluate LLM performance on course exam benchmark."""
 
 import argparse
 import json
@@ -6,304 +6,366 @@ import os
 import sys
 from datetime import datetime
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
+import pandas as pd
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../")))
 
 from loguru import logger
-from pyspark.sql import SparkSession
-from pyspark.sql import functions as F
-from pyspark.sql.types import FloatType, IntegerType, LongType, StringType, StructField, StructType
 
+from sdk.evaluator import ExamEvaluator
+from sdk.executor import SimpleExecutor
 from sdk.utils import set_llm_endpoint_from_config
 
-set_llm_endpoint_from_config('env.toml')
+set_llm_endpoint_from_config("env.toml")
 
-from sdk.evaluator import ExamEvaluator  # noqa: E402
-from sdk.executor import SimpleExecutor  # noqa: E402
+FORMAT_INSTRUCTIONS = {
+    "SingleChoice": """
+This is a Single-choice problem.
+
+Please return your response in the following JSON format:
+```json
+{"answer": "A", "explanation": "Your explanation here."}
+```
+""",
+    "MultipleChoice": """
+This is a MultipleChoice problem.
+
+Please return your response in the following JSON format:
+```json
+{"answer": "A,B,C", "explanation": "Your explanation here."}
+```
+
+answer is capital letters separated by commas, without spaces
+""",
+    "True/False Questions": """
+This is a True/False problem.
+
+Please return your response in the following JSON format:
+```json
+{"answer": "True,False,True", "explanation": "Your explanation here."}
+```
+
+answer is each item corresponds to a sub-question
+""",
+    "ShortAnswerQuestion": """
+This is a ShortAnswerQuestion problem.
+
+Please return your response in the following JSON format:
+```json
+{"answer": "Your answer here.", "explanation": "Your explanation here."}
+```
+""",
+}
 
 
-# Spark is used for aggregating results.
-def create_sparksession() -> SparkSession:
-    """Create a Spark session for processing data."""
-    return SparkSession.builder.getOrCreate()
-
-
-def problem_format(problem_type: str) -> str:
-    """Generate the format description based on the problem type.
+def load_benchmark_data(data_dir):
+    """Load benchmark data from exam metadata and questions files.
 
     Args:
-        problem_type (str): The type of the problem (e.g., 'SingleChoice', 'MultipleChoice', 'True/False Questions', 'ShortAnswerQuestion').
+        data_dir: Directory containing exams_metadata.json and questions.jsonl
 
     Returns:
-        str: The format description for the problem type.
+        Tuple of (questions list, exams metadata dict)
     """
-    FORMAT_DESCRIPTION_SINGLE_CHOCIE = """
-    This is a Single-choice problem.
+    metadata_file = os.path.join(data_dir, "exams_metadata.json")
+    questions_file = os.path.join(data_dir, "questions.jsonl")
 
-    Please return your response in the following JSON format:
-    ```json
-    {"answer": "A", "explanation": "Your explanation here."}
-    ```
-    """
-    FORMAT_DESCRIPTION_MULTIPLE_CHOICE = """
-    This is a MultipleChoice problem.
+    with open(metadata_file, encoding="utf-8") as f:
+        metadata = json.load(f)
+        exams_dict = {exam["exam_id"]: exam for exam in metadata["exams"]}
 
-    Please return your response in the following JSON format:
-    ```json
-    {"answer": "A,B,C", "explanation": "Your explanation here."}
-    ```
+    # Load questions and join with exam metadata
+    questions = []
+    with open(questions_file, encoding="utf-8") as f:
+        for line in f:
+            question = json.loads(line)
+            exam = exams_dict[question["exam_id"]]
 
-    answer is capital letters separated by commas, without Spaces
-    """
-
-    FORMAT_DESCRIPTION_TRUE_FALSE_QUESTIONS = """
-    This is a True/False problem.
-
-    Please return your response in the following JSON format:
-    ```json
-    {"answer": "True,False,True", "explanation": "Your explanation here."}
-    ```
-
-    answer is each item corresponds to a sub-question
-    """
-    FORMAT_DESCRIPTION_SHORT_ANSWER_QUESTION = """
-    This is a ShortAnswerQuestion problem.
-
-    Please return your response in the following JSON format:
-    ```json
-    {"answer": "Youe answer here.", "explanation": "Your explanation here."}
-    ```
-    """
-
-    if problem_type == 'SingleChoice':
-        format_description = FORMAT_DESCRIPTION_SINGLE_CHOCIE
-    elif problem_type == 'MultipleChoice':
-        format_description = FORMAT_DESCRIPTION_MULTIPLE_CHOICE
-    elif problem_type == 'True/False Questions':
-        format_description = FORMAT_DESCRIPTION_TRUE_FALSE_QUESTIONS
-    elif problem_type == 'ShortAnswerQuestion':
-        format_description = FORMAT_DESCRIPTION_SHORT_ANSWER_QUESTION
-    else:
-        raise ValueError(f'Unknown problem type: {problem_type}')
-
-    return format_description
-
-
-def main(input_file, output_dir, model_name, agent_name):
-    """Main function for running the course exam benchmark."""
-    results = []
-    with open(input_file, encoding='utf-8') as f:
-        data = [json.loads(line) for line in f]
-
-    for groundtruth in data:
-        try:
-            logger.info(f"============ {groundtruth['instance_id']} ============")
-
-            problem_type = groundtruth['type']
-            format_description = problem_format(problem_type)
-
-            system_prompt = (
-                f"You are a university student who has completed the {groundtruth['course']} course. You are now answering a final exam question."
-                + format_description
-            )
-            user_prompt = 'Below is the problem description:\n' + groundtruth['problem']
-
-            if agent_name == 'llm':
-                executor = SimpleExecutor(model_name, system_prompt)
-            else:
-                # You can add more agents here
-                raise ValueError(f'Unknown agent name: {agent_name}')
-            response = executor.run(user_prompt, lang='json')
-            response = json.loads(response)
-
-            answer = str(response.get('answer', ''))
-            explanation = response.get('explanation', '')
-            logger.info(f'Model Answer: {answer}')
-            logger.info(f'Model Explanation: {explanation}')
-
-            evaluator = ExamEvaluator()
-            offline_metrics = evaluator.eval(llm_answer=answer, groundtruth=groundtruth, model_name=model_name)
-
-            result = {
-                'id': groundtruth['instance_id'],
-                'test_paper_name': groundtruth['test_paper_name'],
-                'course': groundtruth['course'],
-                'year': groundtruth['year'],
-                'problem_num': groundtruth['problem_num'],
-                'points': groundtruth['points'],
-                'score_total': groundtruth['score_total'],
-                'score_max': float(groundtruth['score_max']),
-                'score_avg': float(groundtruth['score_avg']),
-                'score_median': float(groundtruth['score_median']),
-                'problem': groundtruth['problem'],
-                'type': groundtruth['type'],
-                'answer': groundtruth['answer'],
-                'llm_answer': answer,
-                'explanation': groundtruth['explanation'],
-                'llm_explanation': explanation,
-                'llm_score': int(offline_metrics['llm_score']),
-                'llmjudger_explanation': offline_metrics['llmjudger_explanation'],
-                'llmjudger_system_prompt': offline_metrics['llmjudger_system_prompt'],
-                'system_prompt': system_prompt,
-                'user_prompt': user_prompt,
+            # Merge question with exam metadata
+            groundtruth = {
+                "instance_id": question["instance_id"],
+                "exam_id": question["exam_id"],
+                "test_paper_name": exam["test_paper_name"],
+                "course": exam["course"],
+                "year": exam["year"],
+                "problem_num": question["problem_num"],
+                "points": question["points"],
+                "score_total": exam["score_total"],
+                "score_max": exam["score_max"],
+                "score_avg": exam["score_avg"],
+                "score_median": exam["score_median"],
+                "problem": question["problem"],
+                "answer": question["answer"],
+                "explanation": question["explanation"],
+                "type": question["type"],
             }
-            results.append(result)
+            questions.append(groundtruth)
 
-            logger.info('Evaluation Result:')
-            logger.info(result)
+    return questions, exams_dict
 
-        except Exception as e:
-            logger.error(f"Error processing instance {groundtruth['instance_id']}: {e}")
-            result = {
-                'id': groundtruth['instance_id'],
-                'test_paper_name': groundtruth['test_paper_name'],
-                'course': groundtruth['course'],
-                'year': groundtruth['year'],
-                'problem_num': groundtruth['problem_num'],
-                'points': groundtruth['points'],
-                'score_total': groundtruth['score_total'],
-                'score_max': float(groundtruth['score_max']),
-                'score_avg': float(groundtruth['score_avg']),
-                'score_median': float(groundtruth['score_median']),
-                'problem': groundtruth['problem'],
-                'type': groundtruth['type'],
-                'answer': groundtruth['answer'],
-                'llm_answer': None,
-                'explanation': groundtruth['explanation'],
-                'llm_explanation': None,
-                'llm_score': 0,
-                'llmjudger_explanation': None,
-                'llmjudger_system_prompt': None,
-                'system_prompt': system_prompt,
-                'user_prompt': user_prompt,
-                'error': str(e),
-            }
-            results.append(result)
 
-        with open(os.path.join(output_dir, 'result.jsonl'), 'a+', encoding='utf-8') as output_file:
-            output_file.write(json.dumps(result))
-            output_file.write('\n')
+def process_question(groundtruth, model_name, agent_name, exam_id):
+    """Process a single question: prompt LLM and evaluate response.
 
-    spark = create_sparksession()
+    Args:
+        groundtruth: Question data with correct answer
+        model_name: Name of the LLM model
+        agent_name: Type of agent to use
+        exam_id: Exam identifier
 
-    data_schema = StructType(
-        [
-            StructField('answer', StringType(), True),
-            StructField('cosine_similarity', FloatType(), True),
-            StructField('course', StringType(), True),
-            StructField('embeddings_similarity', FloatType(), True),
-            StructField('exact_match', FloatType(), True),
-            StructField('explanation', StringType(), True),
-            StructField('id', LongType(), True),
-            StructField('jaccard_similarity', FloatType(), True),
-            StructField('llm_answer', StringType(), True),
-            StructField('llm_score', IntegerType(), True),
-            StructField('llm_explanation', StringType(), True),
-            StructField('llmjudger_explanation', StringType(), True),
-            StructField('llmjudger_system_prompt', StringType(), True),
-            StructField('points', LongType(), True),
-            StructField('score_total', LongType(), True),
-            StructField('score_max', FloatType(), True),
-            StructField('score_avg', FloatType(), True),
-            StructField('score_median', FloatType(), True),
-            StructField('problem', StringType(), True),
-            StructField('problem_num', LongType(), True),
-            StructField('system_prompt', StringType(), True),
-            StructField('test_paper_name', StringType(), True),
-            StructField('type', StringType(), True),
-            StructField('user_prompt', StringType(), True),
-            StructField('year', LongType(), True),
-        ]
+    Returns:
+        Tuple of (minimal_result, detailed_result)
+    """
+    format_instruction = FORMAT_INSTRUCTIONS.get(
+        groundtruth["type"], FORMAT_INSTRUCTIONS["ShortAnswerQuestion"]
     )
-    score_data = (
-        spark.createDataFrame(results, schema=data_schema)
-        .groupBy(F.lit(1))
-        .agg(
-            F.count('id').alias('question_count'),
-            F.sum('points').alias('full_score'),
-            F.sum('llm_score').alias('llm_score'),
-        )
-        .drop('1')
-        .toPandas()
-        .to_dict(orient='records')[0]
+    system_prompt = (
+        f"You are a university student who has completed the {groundtruth['course']} course. "
+        f"You are now answering a final exam question." + format_instruction
     )
-    ref_data = (
-        spark.read.json(input_file)
-        .groupBy('test_paper_name')
-        .agg(
-            F.max('score_avg').alias('score_avg'),
-            F.max('score_total').alias('score_total'),
-            F.count('instance_id').alias('question_count'),
-        )
-        .groupBy(F.lit(1))
-        .agg(
-            F.sum('question_count').alias('question_count'),
-            F.sum('score_total').alias('full_score'),
-            F.sum('score_avg').alias('avg_score'),
-        )
-        .drop('1')
-        .toPandas()
-        .to_dict(orient='records')[0]
-    )
+    user_prompt = f"Below is the problem description:\n{groundtruth['problem']}"
 
-    score_by_test_paper_data = (
-        spark.createDataFrame(results, schema=data_schema)
-        .groupBy('test_paper_name')
-        .agg(
-            F.count('id').alias('question_count'),
-            F.sum('llm_score').alias('llm_score'),
-            F.sum('points').alias('full_score'),
-            F.max('score_total').alias('reference_score_total'),
-            F.max('score_max').alias('reference_score_max'),
-            F.max('score_avg').alias('reference_score_avg'),
-            F.max('score_median').alias('reference_score_median'),
+    try:
+        if agent_name == "llm":
+            executor = SimpleExecutor(model_name, system_prompt)
+        else:
+            raise ValueError(f"Unknown agent name: {agent_name}")
+
+        response_text = executor.run(user_prompt, lang="json")
+        response = json.loads(response_text)
+        llm_answer = str(response.get("answer", ""))
+        llm_explanation = response.get("explanation", "")
+
+        logger.info(f'Question {groundtruth["instance_id"]}: Answer={llm_answer}')
+
+        evaluator = ExamEvaluator()
+        metrics = evaluator.eval(
+            llm_answer=llm_answer, groundtruth=groundtruth, model_name=model_name
         )
-        .toPandas()
-        .to_dict(orient='records')
-    )
-    summary_data = {
-        'reference': ref_data,
-        'score': score_data,
-        'score_by_test_paper': score_by_test_paper_data,
-        'final_score': score_data['llm_score'] / float(ref_data['full_score']),
+        points_earned = int(metrics["llm_score"])
+        points_possible = groundtruth["points"]
+        if points_earned == points_possible:
+            status = "correct"
+        elif points_earned > 0:
+            status = "partial"
+        else:
+            status = "incorrect"
+
+        minimal_result = {
+            "instance_id": groundtruth["instance_id"],
+            "exam_id": exam_id,
+            "question_type": groundtruth["type"],
+            "llm_answer": llm_answer,
+            "correct_answer": groundtruth["answer"],
+            "points_earned": points_earned,
+            "points_possible": points_possible,
+            "status": status,
+        }
+        detailed_result = {
+            **minimal_result,
+            "problem": groundtruth["problem"],
+            "llm_explanation": llm_explanation,
+            "correct_explanation": groundtruth["explanation"],
+            "llmjudger_explanation": metrics["llmjudger_explanation"],
+            "system_prompt": system_prompt,
+            "user_prompt": user_prompt,
+        }
+    except Exception as e:
+        logger.error(f"Error processing question {groundtruth['instance_id']}: {e}")
+        minimal_result = {
+            "instance_id": groundtruth["instance_id"],
+            "exam_id": exam_id,
+            "question_type": groundtruth["type"],
+            "llm_answer": None,
+            "correct_answer": groundtruth["answer"],
+            "points_earned": 0,
+            "points_possible": groundtruth["points"],
+            "status": "error",
+            "error": str(e),
+        }
+        detailed_result = {
+            **minimal_result,
+            "problem": groundtruth["problem"],
+            "llm_explanation": None,
+            "correct_explanation": groundtruth["explanation"],
+            "system_prompt": system_prompt,
+            "user_prompt": user_prompt,
+        }
+    return minimal_result, detailed_result
+
+
+def compute_summary(results_df, exams_metadata):
+    """Compute summary statistics using pandas.
+
+    Args:
+        results_df: DataFrame with evaluation results
+        exams_metadata: Dictionary mapping exam_id to exam metadata
+
+    Returns:
+        Tuple of (summary dict, comparison dict)
+    """
+    total_questions = len(results_df)
+    answered = len(results_df[results_df["status"] != "error"])
+    unanswered = total_questions - answered
+    correct = len(results_df[results_df["status"] == "correct"])
+    incorrect = len(results_df[results_df["status"].isin(["incorrect", "partial"])])
+    points_earned = int(results_df["points_earned"].sum())
+    points_possible = int(results_df["points_possible"].sum())
+    summary = {
+        "overall": {
+            "total_questions": total_questions,
+            "answered": answered,
+            "unanswered": unanswered,
+            "correct": correct,
+            "incorrect": incorrect,
+            "points_earned": points_earned,
+            "points_possible": points_possible,
+            "accuracy": round(correct / answered, 3) if answered > 0 else 0,
+            "score_percentage": (
+                round(points_earned / points_possible, 3) if points_possible > 0 else 0
+            ),
+        }
     }
+    # By exam summary
+    by_exam = []
+    for exam_id in results_df["exam_id"].unique():
+        exam_results = results_df[results_df["exam_id"] == exam_id]
+        exam_meta = exams_metadata.get(exam_id, {})
+        exam_answered = len(exam_results[exam_results["status"] != "error"])
+        exam_correct = len(exam_results[exam_results["status"] == "correct"])
+        exam_points_earned = int(exam_results["points_earned"].sum())
+        exam_points_possible = int(exam_results["points_possible"].sum())
+        by_exam.append(
+            {
+                "exam_id": exam_id,
+                "exam_name": exam_meta.get("test_paper_name", exam_id),
+                "total_questions": len(exam_results),
+                "answered": exam_answered,
+                "correct": exam_correct,
+                "incorrect": exam_answered - exam_correct,
+                "points_earned": exam_points_earned,
+                "points_possible": exam_points_possible,
+                "accuracy": (
+                    round(exam_correct / exam_answered, 3) if exam_answered > 0 else 0
+                ),
+                "score_percentage": (
+                    round(exam_points_earned / exam_points_possible, 3)
+                    if exam_points_possible > 0
+                    else 0
+                ),
+            }
+        )
+    summary["by_exam"] = by_exam
+    # Comparison with student performance
+    comparison = {"exams": []}
+    for exam_id in results_df["exam_id"].unique():
+        exam_results = results_df[results_df["exam_id"] == exam_id]
+        exam_meta = exams_metadata.get(exam_id, {})
 
-    with open(os.path.join(output_dir, 'avg_score.json'), 'w', encoding='utf-8') as summary_file:
-        json.dump(summary_data, summary_file, indent=4)
+        if not exam_meta:
+            continue
 
-    logger.info('************ Final average score ************')
+        exam_points_earned = int(exam_results["points_earned"].sum())
+        exam_points_possible = int(exam_results["points_possible"].sum())
+        comparison["exams"].append(
+            {
+                "exam_id": exam_id,
+                "exam_name": exam_meta.get("test_paper_name", exam_id),
+                "llm_performance": {
+                    "points_earned": exam_points_earned,
+                    "points_possible": exam_points_possible,
+                    "percentage": (
+                        round(exam_points_earned / exam_points_possible, 3)
+                        if exam_points_possible > 0
+                        else 0
+                    ),
+                },
+                "student_baseline": {
+                    "average_score": exam_meta.get("score_avg", 0),
+                    "max_score": exam_meta.get("score_max", 0),
+                    "median_score": exam_meta.get("score_median", 0),
+                    "total_points": exam_meta.get("score_total", 0),
+                    "average_percentage": (
+                        round(
+                            exam_meta.get("score_avg", 0)
+                            / exam_meta.get("score_total", 1),
+                            3,
+                        )
+                        if exam_meta.get("score_total", 0) > 0
+                        else 0
+                    ),
+                },
+            }
+        )
+    return summary, comparison
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='example benchmark')
+def main(data_dir, output_dir, model_name, agent_name):
+    """Run the course exam benchmark.
+
+    Args:
+        data_dir: Directory containing benchmark data files
+        output_dir: Directory to save results
+        model_name: Name of the LLM model
+        agent_name: Type of agent to use
+    """
+    logger.info("Loading benchmark data...")
+    questions, exams_metadata = load_benchmark_data(data_dir)
+    logger.info(f"Loaded {len(questions)} questions from {len(exams_metadata)} exams")
+    minimal_results = []
+    detailed_results = []
+
+    # Streaming
+    results_file = os.path.join(output_dir, "results.jsonl")
+    detailed_file = os.path.join(output_dir, "results_detailed.jsonl")
+
+    with open(results_file, "w", encoding="utf-8") as f_minimal, open(
+        detailed_file, "w", encoding="utf-8"
+    ) as f_detailed:
+        for groundtruth in questions:
+            logger.info(f"========== Question {groundtruth['instance_id']} ==========")
+            minimal_result, detailed_result = process_question(
+                groundtruth, model_name, agent_name, groundtruth["exam_id"]
+            )
+            minimal_results.append(minimal_result)
+            detailed_results.append(detailed_result)
+            f_minimal.write(json.dumps(minimal_result, ensure_ascii=False) + "\n")
+            f_detailed.write(json.dumps(detailed_result, ensure_ascii=False) + "\n")
+
+    results_df = pd.DataFrame(minimal_results)
+    summary, comparison = compute_summary(results_df, exams_metadata)
+
+    summary_file = os.path.join(output_dir, "summary.json")
+    with open(summary_file, "w", encoding="utf-8") as f:
+        json.dump(summary, f, indent=2, ensure_ascii=False)
+    comparison_file = os.path.join(output_dir, "comparison.json")
+    with open(comparison_file, "w", encoding="utf-8") as f:
+        json.dump(comparison, f, indent=2, ensure_ascii=False)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Course Exam Benchmark")
     parser.add_argument(
-        '-i',
-        '--input_file',
-        help='Benchmark input file',
-        default='./data/benchmark/SystemTestPaper.jsonl',
+        "-d",
+        "--data_dir",
+        help="Directory containing exams_metadata.json and questions.jsonl",
+        default="./data/benchmark",
     )
-    parser.add_argument('-o', '--save_path', help='Result save path', default=None)
-    parser.add_argument('-a', '--agent', help='Agent Name', default='llm')
     parser.add_argument(
-        '-m',
-        '--model_name',
-        help='Model Name',
+        "-o", "--output_dir", help="Output directory for results", default=None
     )
-    # Note that if your benchmark has multiple tasks, you need to add --task <task>
-    # in your code to enable task selection.
-    parser.add_argument('-t', '--task', help='specify task in scenarios', default=None)
-
+    parser.add_argument("-a", "--agent", help="Agent type", default="llm")
+    parser.add_argument("-m", "--model_name", help="Model name", required=True)
     args = parser.parse_args()
+    if args.output_dir is None:
+        model_name_safe = args.model_name.replace("/", "_")
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        output_dir = os.path.join(
+            "./outputs", f"course_exam__{model_name_safe}__{args.agent}__{timestamp}"
+        )
+    else:
+        output_dir = args.output_dir
+    output_dir = os.path.abspath(os.path.expanduser(output_dir))
+    os.makedirs(output_dir, exist_ok=True)
 
-    model_name = args.model_name
-    input_file = args.input_file
-    save_path = args.save_path
-
-    if save_path is None:
-        str_model_name = model_name.replace('/', '_')
-        timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        save_path = os.path.join('./outputs', f'systemcourseexam__{str_model_name}__{args.agent}__{timestamp}')
-
-    save_path = os.path.abspath(os.path.expanduser(save_path))
-    os.makedirs(save_path, exist_ok=True)
-
-    main(input_file, save_path, model_name, agent_name=args.agent)
+    main(args.data_dir, output_dir, args.model_name, args.agent)

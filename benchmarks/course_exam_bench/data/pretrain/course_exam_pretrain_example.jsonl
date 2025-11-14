@@ -1,0 +1,11 @@
+{
+  "text": "MapReduce: Simplified Data Processing on Large Clusters\n\nMapReduce is a programming model and implementation for processing and generating large data sets. The intermediate key space is partitioned among R reduce tasks using hash(key) mod R. This ensures that all values for a given key are processed by the same reduce task.\n\nWhen implementing MapReduce, it's crucial to ensure proper load balancing. If the hash function is poorly designed (e.g., always returns the same value), all intermediate data will be sent to a single reduce worker, eliminating parallelism and increasing wall-clock time significantly. While the total CPU time remains unchanged, the lack of parallel execution means one worker must handle all the work sequentially.\n\nThe MapReduce framework automatically handles the distribution of data across workers, task scheduling, and failure recovery, making it easier to process large datasets across distributed systems.",
+  "metadata": {
+    "source": "MIT 6.5840 Distributed System Engineering Course Materials",
+    "course": "Distributed System Engineering",
+    "topic": "MapReduce",
+    "year": 2025,
+    "content_type": "educational_text",
+    "related_paper": "MapReduce: Simplified Data Processing on Large Clusters by Dean and Ghemawat"
+  }
+}

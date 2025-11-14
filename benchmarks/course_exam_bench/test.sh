@@ -2,9 +2,9 @@
 
 set -e  # Exit immediately on error.
 
-source envexamplebench/bin/activate
+source .venv/bin/activate
 pytest --version
-pytest
+pytest tests/ -v
 deactivate
 
-echo "==> ExampleBench test is done successfully."
+echo "==> CourseExamBench tests completed successfully."

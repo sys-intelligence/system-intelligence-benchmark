@@ -1,0 +1,64 @@
+{
+  "exams": [
+    {
+      "exam_id": "6_5840_distributed_system_engineering_spring_2025_exam_i",
+      "test_paper_name": "6.5840 Distributed System Engineering: Spring 2025 Exam I",
+      "course": "Distributed System Engineering",
+      "year": 2025,
+      "score_total": 65,
+      "score_max": 65.0,
+      "score_avg": 51.85,
+      "score_median": 52,
+      "score_standard_deviation": 6.7,
+      "num_questions": 11
+    },
+    {
+      "exam_id": "6_5840_distributed_system_engineering_spring_2025_exam_ii",
+      "test_paper_name": "6.5840 Distributed System Engineering: Spring 2025 Exam II",
+      "course": "Distributed System Engineering",
+      "year": 2025,
+      "score_total": 73,
+      "score_max": 71.5,
+      "score_avg": 55.95,
+      "score_median": 57.5,
+      "score_standard_deviation": 7.22,
+      "num_questions": 15
+    },
+    {
+      "exam_id": "6_5840_distributed_system_engineering_spring_2024_exam_i",
+      "test_paper_name": "6.5840 Distributed System Engineering: Spring 2024 Exam I",
+      "course": "Distributed System Engineering",
+      "year": 2024,
+      "score_total": 97,
+      "score_max": 95.0,
+      "score_avg": 77.0,
+      "score_median": 78,
+      "score_standard_deviation": 9.72,
+      "num_questions": 15
+    },
+    {
+      "exam_id": "6_5840_distributed_system_engineering_spring_2024_exam_ii",
+      "test_paper_name": "6.5840 Distributed System Engineering: Spring 2024 Exam II",
+      "course": "Distributed System Engineering",
+      "year": 2024,
+      "score_total": 71,
+      "score_max": 71.0,
+      "score_avg": 56.61,
+      "score_median": 57,
+      "score_standard_deviation": 9.13,
+      "num_questions": 14
+    },
+    {
+      "exam_id": "6_1810_fall_2024_quiz_ii_solutions",
+      "test_paper_name": "6.1810 Fall 2024 Quiz II Solutions",
+      "course": "Operating System Engineering",
+      "year": 2024,
+      "score_total": 70,
+      "score_max": 67.5,
+      "score_avg": 49.88,
+      "score_median": 49,
+      "score_standard_deviation": 11.07,
+      "num_questions": 14
+    }
+  ]
+}

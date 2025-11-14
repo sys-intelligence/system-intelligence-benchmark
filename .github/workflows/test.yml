@@ -18,10 +18,10 @@ jobs:
       matrix:
         benchmark:
           - example_bench
+          - course_exam_bench
           # TODO: For now, we comment out other benchmarks as they have no tests
           # - arteval_bench
           # - cache_bench
-          # - course_exam_bench
           # - course_project_bench
 
     steps:
