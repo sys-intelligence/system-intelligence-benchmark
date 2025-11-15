@@ -4,15 +4,16 @@ import argparse
 import json
 import os
 import sys
-import time
 from datetime import datetime
 from pathlib import Path
 
 # Add paths
 SDK_ROOT = Path(__file__).parent.parent.parent.parent
 SYSMOBENCH_CORE = Path(__file__).parent.parent / "sysmobench_core"
+SRC_ROOT = Path(__file__).parent
 sys.path.insert(0, str(SDK_ROOT))
 sys.path.insert(0, str(SYSMOBENCH_CORE))
+sys.path.insert(0, str(SRC_ROOT))
 
 # Import SDK
 from sdk.utils import set_llm_endpoint_from_config  # noqa: E402
@@ -21,87 +22,12 @@ set_llm_endpoint_from_config(str(Path(__file__).parent.parent / 'env.toml'))
 # Import SysMoBench
 from tla_eval.tasks.loader import TaskLoader  # noqa: E402
 from tla_eval.methods import get_method  # noqa: E402
-from tla_eval.models.base import GenerationResult  # noqa: E402
-from tla_eval.evaluation.syntax.compilation_check import CompilationCheckEvaluator  # noqa: E402
-from tla_eval.evaluation.semantics.runtime_coverage_evaluator import RuntimeCoverageEvaluator  # noqa: E402
-from tla_eval.config import get_configured_model  # noqa: E402
+from executor import SysMoExecutor  # noqa: E402
+from evaluator import SysMoEvaluator  # noqa: E402
 
 import logging
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
-
-
-def run_evaluation(task, method, model_name, max_iterations=3):
-    """Run iterative evaluation with correction."""
-    logger.info(f"Evaluating {task.task_name} with max {max_iterations} iterations")
-
-    # Initial generation
-    start = time.time()
-    gen_result = method.generate(task, model_name)
-    if not gen_result.success:
-        return {'success': False, 'error': gen_result.error_message, 'final_score': 0.0}
-
-    current_spec = gen_result.tla_specification
-    current_gen = GenerationResult(current_spec, gen_result.metadata, time.time(), True)
-
-    # Evaluators
-    comp_eval = CompilationCheckEvaluator(validation_timeout=60)
-    runtime_eval = RuntimeCoverageEvaluator(num_simulations=100, simulation_depth=100, tlc_timeout=300)
-
-    # Iteration loop
-    for i in range(1, max_iterations + 1):
-        logger.info(f"=== Iteration {i}/{max_iterations} ===")
-        errors = []
-
-        # Phase 1: Compilation
-        comp_result = comp_eval.evaluate(current_gen, task.task_name, method.name, model_name, task.spec_module)
-        comp_pass = comp_result.overall_success
-
-        if comp_pass:
-            logger.info(f"  ✓ Compilation PASS")
-            # Phase 2: Runtime
-            runtime_result = runtime_eval.evaluate(current_gen, task.task_name, method.name, model_name, task.spec_module)
-            runtime_pass = runtime_result.overall_success
-
-            if runtime_pass:
-                logger.info(f"  ✓ Runtime PASS - SUCCESS at iteration {i}")
-                return {
-                    'success': True,
-                    'iteration': i,
-                    'total_time': time.time() - start,
-                    'compilation': comp_result,
-                    'runtime': runtime_result,
-                    'final_score': 1.0
-                }
-            else:
-                logger.info(f"  ✗ Runtime FAIL")
-                errors.append(f"Runtime: {getattr(runtime_result, 'error_message', 'failed')}")
-        else:
-            logger.info(f"  ✗ Compilation FAIL")
-            errors.extend([f"Compilation: {e}" for e in comp_result.syntax_errors + comp_result.semantic_errors])
-
-        # Correction for next iteration
-        if i < max_iterations and hasattr(method, '_generate_correction'):
-            logger.info(f"  Generating correction... ({len(errors)} errors)")
-            model_obj = get_configured_model(model_name)
-            correction = method._generate_correction(task, current_spec, errors, model_obj)
-            if correction.success:
-                current_spec = correction.tla_specification
-                current_gen = GenerationResult(current_spec, correction.metadata, time.time(), True)
-                logger.info(f"  ✓ Corrected for iteration {i+1}")
-
-    # Failed all iterations
-    logger.info(f"✗ FAILED after {max_iterations} iterations")
-    comp_score = 0.5 if comp_result.overall_success else 0.0
-    runtime_score = 0.5 if (comp_result.overall_success and runtime_result.overall_success) else 0.0
-
-    return {
-        'success': False,
-        'total_time': time.time() - start,
-        'compilation': comp_result,
-        'runtime': runtime_result if comp_result.overall_success else None,
-        'final_score': comp_score + runtime_score
-    }
 
 
 def main(input_file, output_dir, model_name, agent_name, max_iterations):
@@ -117,6 +43,8 @@ def main(input_file, output_dir, model_name, agent_name, max_iterations):
         cache_dir=str(SYSMOBENCH_CORE / "data" / "repositories")
     )
     method = get_method(agent_name)
+    evaluator = SysMoEvaluator()
+    executor = SysMoExecutor(method, model_name, evaluator, max_iterations)
     scores = []
 
     # Process tasks
@@ -128,18 +56,23 @@ def main(input_file, output_dir, model_name, agent_name, max_iterations):
 
             try:
                 task = task_loader.load_task(task_name)
-                result = run_evaluation(task, method, model_name, max_iterations)
+                exec_result = executor.run(task)
+                evaluation_outcome = exec_result.evaluation
+                final_score = 1.0 if exec_result.success else SysMoEvaluator.final_score(evaluation_outcome)
 
                 output = {
                     'id': task_id,
                     'task_name': task_name,
                     'model_name': model_name,
-                    'success': result['success'],
-                    'final_score': result['final_score'],
-                    'total_time': result.get('total_time', 0),
-                    'iteration': result.get('iteration', max_iterations)
+                    'success': exec_result.success,
+                    'final_score': final_score,
+                    'total_time': exec_result.total_time,
+                    'iteration': exec_result.iteration or max_iterations
                 }
-                scores.append(result['final_score'])
+                if exec_result.error:
+                    output['error'] = exec_result.error
+
+                scores.append(final_score)
             except Exception as e:
                 logger.error(f"Error: {e}")
                 output = {'id': task_id, 'error': str(e), 'final_score': 0.0}
