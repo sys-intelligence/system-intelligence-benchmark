@@ -93,7 +93,7 @@ After understanding the basic concept, you can decide whether to add more tasks 
 The easiest way to contribute is to add more tasks to existing benchmarks. For example, you can add more questions to the course exam benchmark or more projects to the course project benchmark. You can add more system algorithm design problems into algorithm design benchmark. Please follow the existing format and structure for adding new tasks. You can also improve the existing benchmarks by adding more advanced evaluators with improved metrics.
 
 ### Creating New Benchmarks
-> [!NOTE] 
+> [!NOTE]
 > See [custom_benchmark.md](doc/custom_benchmark.md) for step-by-step guidelines.
 
 To create a new benchmark, follow these steps:
@@ -105,6 +105,18 @@ To create a new benchmark, follow these steps:
 2. Add an `env.toml` configuration file
 3. Implement `install.sh` and `run.sh` scripts
 4. Update the benchmark list in `run_all_local.sh` and `run_docker.sh` if needed
+
+### Porting Existing Benchmarks
+> [!NOTE]
+> See [porting_benchmark.md](doc/porting_benchmark.md) for step-by-step guidelines.
+
+For integrating existing, independently-developed benchmark projects while maintaining synchronization with upstream:
+
+- Use Git Subtree/Submodule to incorporate upstream code
+- Write a bridge layer to connect upstream evaluators with framework SDK
+- Configure bidirectional sync for pulling updates and contributing fixes
+
+**Example:** [SysMoBench](benchmarks/sysmobench/) - ported from [SysSpecBench](https://github.com/specula-org/SysSpecBench)
 
 ## Contributing
 
