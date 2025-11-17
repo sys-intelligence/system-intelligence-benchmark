@@ -1,15 +1,14 @@
-# SysCap-CLI: Command Line Interface for Benchmark Execution
+# Benchmark-CLI: Command Line Interface for Benchmark Execution
 
-The CLI component provides tools for running SysCapBench benchmarks in both local and Docker-based environments. It handles benchmark orchestration, environment setup, and result collection.
+The CLI component provides tools for running all benchmarks in both local and Docker-based environments. It handles benchmark orchestration, environment setup, and result collection.
 
 ## Overview
 
-SysCap-CLI enables you to:
+The CLI enables you to:
 - Run individual benchmarks or execute all benchmarks sequentially
 - Deploy benchmarks in isolated Docker containers or local environments
 - Automatically collect and aggregate results from multiple benchmark runs
-- Configure execution environments via TOML configuration files
-
+  
 ## Installation
 
 ### Setup Virtual Environment
@@ -50,7 +49,18 @@ This script will:
 2. Iterate through each benchmark directory, running `install.sh` and `run.sh <model_name>` when they exist.
 3. Copy the benchmark outputs back into `cli/` for easy inspection.
 
-### Running Individual Benchmarks
+### Running with Docker
+
+Make sure the virtual environment remains active when invoking the shell wrapper. For benchmarks that require containerized execution:
+
+```bash
+cd cli
+./run_docker.sh
+```
+
+This script manages Docker-based benchmark execution with proper cleanup and isolation.
+
+#### Running a Single Benchmark
 
 With the virtual environment active, use the Docker runner to execute a specific benchmark:
 
@@ -69,17 +79,6 @@ python docker_run.py --benchmark_name <benchmark_name> --model_name <model>
 ```bash
 python docker_run.py --benchmark_name cache_bench --model_name gpt-4o
 ```
-
-### Running with Docker
-
-Make sure the virtual environment remains active when invoking the shell wrapper. For benchmarks that require containerized execution:
-
-```bash
-cd cli
-./run_docker.sh
-```
-
-This script manages Docker-based benchmark execution with proper cleanup and isolation.
 
 ## Configuration
 
@@ -135,7 +134,7 @@ cd cli
 python3 dashboard.py --results_dir outputs --output dashboard.html
 ```
 
-The script produces `System Capability Leaderboard`, a dark-mode HTML report. See [example](dashboard.html) and screenshot below.
+The script produces `System Intelligence Leaderboard`, a dark-mode HTML report. See [example](dashboard.html) and screenshot below.
 
 <img src="dashboard.png" alt="Dashboard Screenshot" width="600"/>
 
