@@ -118,7 +118,7 @@ Convert the upstream task format to the framework's standard `tasks.jsonl` schem
 
 ## Step 5: Complete Integration
 
-Most remaining steps (testing, documentation, root-level integration) are identical to creating a custom benchmark. See [Creating New Benchmarks](custom_benchmark.md) for detailed guidelines.
+Most remaining steps (testing, documentation, root-level integration) are identical to creating a custom benchmark. See [Creating New Benchmarks](creating_benchmark.md) for detailed guidelines.
 
 **Porting-specific considerations:**
 
@@ -167,7 +167,7 @@ benchmark_core/.venv/
 
 ### 5.4 Other Steps
 
-- **Tests**: See [custom_benchmark.md - Testing](custom_benchmark.md#testing)
+- **Tests**: See [creating_benchmark.md - Testing](creating_benchmark.md#testing)
 - **README**: Document upstream source, version, and attribution
 - **Root integration**: Update `cli/run_all_local.sh`, `README.md`
 
