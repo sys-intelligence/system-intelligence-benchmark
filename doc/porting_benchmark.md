@@ -66,7 +66,7 @@ Mature benchmarks already have end-to-end execution pipelines and SDKs. However,
 
 ### 4.1 Integrate Model Config Manager
 
-The framework provides a centralized model configuration manager. You have two options to integrate it:
+The framework provides a centralized model configuration manager. You may have two options to integrate it:
 
 **Option 1: Replace upstream config manager (Recommended)**
 
@@ -118,8 +118,8 @@ Any benchmark can be abstracted into two sequential modules: **Executor** (gener
 Convert the upstream task format to the framework's standard `tasks.jsonl` schema. This decouples task definitions from execution logic, enabling `main.py` to iterate over tasks programmatically without hardcoding task-specific details.
 
 ```jsonl
-{"task_id": "task_1", "description": "...", "metadata": {...}}
-{"task_id": "task_2", "description": "...", "metadata": {...}}
+{"task_id": "task_1", "description": "...", "metadata": {}}
+{"task_id": "task_2", "description": "...", "metadata": {}}
 ```
 
 ---
@@ -141,7 +141,7 @@ Reference upstream dependencies in `requirements.txt`:
 
 ### 5.2 Create install.sh
 
-Install both upstream and framework dependencies:
+Install upstream dependencies:
 
 ```bash
 #!/bin/bash
@@ -181,7 +181,7 @@ benchmark_core/.venv/
 
 ---
 
-## Step 6: Sync with Upstream
+## Sync with Upstream
 
 **Update:**
 ```bash
