@@ -1,5 +1,4 @@
-pyspark==3.5.5
-loguru==0.7.3
 pandas==2.2.3
+loguru==0.7.3
 litellm==1.77.5
 sentence_transformers

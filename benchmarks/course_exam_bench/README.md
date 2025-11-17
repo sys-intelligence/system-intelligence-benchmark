@@ -1,91 +1,196 @@
-# Sytsem Course Exam Benchmark
+# Course Exam Benchmark
 
-## Introduction
+This benchmark evaluates the performance of Large Language Models (LLMs) on system course exams.
 
-This benchmark evaluates the performance of Large Language Models (LLMs) on system course exams. Currently, this benchmark includes 4 exams from MIT, in total 54 questions, covering various topics such as operating system and distributed system. It contains single-choice questions, multiple-choice questions, and short-answer questions. The questions are designed to test the understanding of system concepts and problem-solving skills.
+- 69 questions from 5 MIT exams
+- Question types: Single-choice, multiple-choice, true/false, and short-answer
+- Includes real student performance data for comparison
 
-## Task Details
+For current model evaluation results, see [EVALUATION_RESULTS.md](EVALUATION_RESULTS.md).
 
-- **Input**: The questions in the system course exams. It include single-choice questions, multiple-choice questions, and short-answer questions.
-- **Output**: The answers to the questions. The output can be in the form of selected options for single-choice and multiple-choice questions, and detailed explanations for short-answer questions. For single-choice and multiple-choice questions, the output should be the selected option(s) (e.g., "A", "B", "C", etc.). For short-answer questions, the output should be a detailed explanation or answer to the question.
+| Exam                           | Questions | Topics              |
+| ------------------------------ | --------- | ------------------- |
+| MIT 6.5840 Spring 2025 Exam I  | 11        | Distributed Systems |
+| MIT 6.5840 Spring 2025 Exam II | 15        | Distributed Systems |
+| MIT 6.5840 Spring 2024 Exam I  | 15        | Distributed Systems |
+| MIT 6.5840 Spring 2024 Exam II | 14        | Distributed Systems |
+| MIT 6.1810 Fall 2024 Quiz II   | 14        | Operating Systems   |
 
-- **Evaluation**: For single-choice and multiple-choice questions, the evaluation is to compare the selected option(s) with the ground truth answers provided in the exam papers. The evaluation is binary: correct or incorrect. For multiple-choice questions, partial credit can be given if some of the selected options are correct. For short-answer questions, the evaluation is based on the correctness and completeness of the answer, which can be subjective and may require human evaluation or a predefined rubric. We use LLM combined with human defined rubric to evaluate the short-answer questions.
+## Quick Start
 
-## Eval Results
-
-You can see the detailed information of each exam in the table below.
-
-| Course                                                                 | # of questions | Score (gpt-4 1) (score/total) | Score (gpt-4o) (score/total) | Score (o3-mini) (score/total) | Student Score (max/average/medium) |
-|------------------------------------------------------------------------|----------------|-------------------------------|------------------------------|-------------------------------|-------------------------------------|
-| 6.5840 Distributed System Engineering: Spring 2025 Exam I              | 11             | 29/65                         | 27/65                        | 25/65                         | 65/ **51.8** /52                    |
-| 6.5840 Distributed System Engineering: Spring 2024 Exam I              | 15             | 54/95                         | 55/95                        | 42/95                         | 95/ **77** /78                      |
-| 6.5840 Distributed System Engineering: Spring 2024 Exam II             | 14             | 24/71                         | 24/71                        | 36/71                         | 72/ **56.6** /57                    |
-| 6.1810 Fall 2024 MIT 6.1810 Operating System Engineering               | 14             | 35/70                         | 40/70                        | 52/70                         | 65/ **49.8** /49                    |
-
-## Benchmark Setup
-
-### Test in Docker
-
-To test your benchmark in a Docker container, follow these steps:
-
-1. Build the Docker image using the provided Dockerfile. You can do this by running the following command in the terminal:
-
-   ```sh
-   docker build -t your_benchmark_image .
-   ```
-
-2. Once the image is built, you can run it using the following command:
-
-   ```sh
-   docker run -it --rm your_benchmark_image
-   # docker run --rm your_benchmark_image
-   ```
-
-3. Inside the container, navigate to the appropriate directory and execute the benchmark script to start the testing process.
-
-   ```sh
-   ./run.sh
-   ```
-
-### Maunaly Test
-
-To manually test your benchmark, follow these steps:
-
-#### Install Dependencies
-
-To install and configure your benchmark, follow these steps:
-
-1. configure `env.toml` to set LLM API endpoint
-2. install dependencies
+### 1. Install dependencies
 
 ```bash
 ./install.sh
 ```
 
-#### Run
+This creates a Python virtual environment and installs required packages
 
-To run your benchmark and obtain results for a specific task and model, follow these steps:
+### 2. Configure your LLM endpoint
 
-1. Review the `run.sh` script to understand the expected commands and parameters.
-2. Execute the `run.sh` script to start the benchmark. The script will guide you through the process and generate the results.
+Edit `env.toml` to add your API keys:
 
-```bash
-./run.sh "gpt-4o" 
+```toml
+[llm]
+AZURE_API_KEY = "your-key-here"
+AZURE_API_BASE = "https://your-endpoint.openai.azure.com/"
+# or
+ANTHROPIC_API_KEY = "your-key-here"
 ```
 
-or
+### 3. Run the benchmark
 
 ```bash
-python3 src/main.py --model_name $MODEL_NAME # default output: ./outputs/system_course)bench___${MODEL_NAME}___$(date +"%Y-%m-%d_%H-%M-%S")
-
-# or specify the save path
-python3 src/main.py --model_name $MODEL_NAME --save_path ./outputs/BAISysEducation___${MODEL_NAME}___$(date +"%Y-%m-%d_%H-%M-%S")
+./run.sh "gpt-4o"
 ```
 
-### Output Description
+Or run directly with Python:
 
-- `result.jsonl`: Detailed output information
-- `summary.json`: Summary of model results
-  - `reference`: Original test scores (ground truth student performance)
-  - `score`: Test scores
-  - `score_by_test_paper`: Test score by test paper
+```bash
+source .venv/bin/activate
+python src/main.py --model_name "gpt-4o"
+```
+
+### 4. Run tests
+
+```bash
+./test.sh
+```
+
+## How it works
+
+1. Load questions: Reads exam questions from `data/benchmark/`
+2. For each question:
+   - Prompts the LLM with the question
+   - Parses the LLM's JSON response
+   - Evaluates the answer (exact match for multiple-choice, LLM-as-judge for short-answer)
+   - Records the score
+3. Generate summary: Aggregates results by exam and overall
+
+## Output files
+
+After running, you'll find results in `./outputs/course_exam__<model>__<timestamp>/`:
+
+### 1. Per-question results (`results.jsonl`)
+
+For each question, one JSON object per line:
+
+```json
+{
+  "instance_id": 1,
+  "exam_id": "6_1810_operating_system_engineering_fall_2024_quiz_ii",
+  "question_type": "SingleChoice",
+  "llm_answer": "C",
+  "correct_answer": "C",
+  "points_earned": 5,
+  "points_possible": 5,
+  "status": "correct"
+}
+```
+
+Fields:
+
+- `instance_id`: Question identifier
+- `exam_id`: Exam identifier (links to exams_metadata.json)
+- `question_type`: Type of question (`SingleChoice`, `MultipleChoice`, `True/False Questions`, `ShortAnswerQuestion`)
+- `llm_answer`: LLM's answer
+- `correct_answer`: Correct answer
+- `points_earned`: Points the LLM earned
+- `points_possible`: Maximum points for this question
+- `status`: `correct`, `incorrect`, `partial`, or `error`
+
+### 2. Full debugging information (`results_detailed.jsonl`)
+
+Extended format with prompts and LLM explanations (for debugging).
+
+### 3. Aggregated statistics (`summary.json`)
+
+Overall performance and breakdown by exam with answered/unanswered/correct/incorrect counts.
+
+### 4. LLM vs student performance (`comparison.json`)
+
+Compares LLM performance against real student baseline data.
+
+## Data format
+
+The benchmark data is stored in `data/benchmark/`:
+
+- `exams_metadata.json`: Exam-level metadata (one entry per exam)
+- `questions.jsonl`: Individual questions (one JSON object per line that links to an exam from `exams_metadata.json` via `exam_id`)
+
+## How to extend the benchmark
+
+Consider this [MIT 6.824 Distributed Systems quiz](https://pdos.csail.mit.edu/6.824/quizzes/q25-2-sol.pdf). The steps below show how to add this exam to the benchmark. The same process applies to any course exam you want to include.
+
+### Step 1: Add exam metadata to `exams_metadata.json`
+
+Create a unique `exam_id` for your exam. Here's the actual entry for the Spring 2024 Exam II:
+
+```json
+{
+  "exam_id": "6_5840_distributed_system_engineering_spring_2024_exam_ii",
+  "test_paper_name": "6.5840 Distributed System Engineering: Spring 2024 Exam II",
+  "course": "Distributed System Engineering",
+  "year": 2024,
+  "score_total": 71,
+  "score_max": 71.0,
+  "score_avg": 56.61,
+  "score_median": 57,
+  "score_standard_deviation": 9.13,
+  "num_questions": 14
+}
+```
+
+### Step 2: Add individual questions to `questions.jsonl`
+
+Append your questions to the file. Each line is a JSON object. Here's an example from the exam (a True/False question about FaRM):
+
+```json
+{
+  "instance_id": 33,
+  "exam_id": "6_5840_distributed_system_engineering_spring_2024_exam_ii",
+  "problem_num": 4,
+  "points": 8,
+  "problem": "# III FaRM  \n\nConsider the following statements about FaRM as described in No compromises: distributed transactions with consistency, availability, and performance. For each statement, circle True or False.  \n\n4. [8 points]:  \n\nTrue / False : Because FaRM uses primary-backup replication for a region (instead of Paxos), FaRM must reconfigure to remove a failed replica before FaRM can continue to use the region.  \n\nTrue / False : FaRM can use short leases (10ms by default) because it has communication and scheduling optimizations to renew leases quickly.  \n\nTrue / False : A transaction that modifies only one object will never abort.  \n\nTrue / False : Read-only transactions require only the validate step of the Commit phase in Figure 4.  ",
+  "answer": "True,True,False,True",
+  "explanation": "Answer: True, True, False, True. The first statement is true because FaRM requires a response from all replicas, thus it must reconfigure to remove the failed replica before it can continue with the affected shard. The third statement is false because another transaction may modify the one object causing this transaction's validation phase to fail (because the other transaction will have incremented the object's version number).",
+  "type": "True/False Questions"
+}
+```
+
+Required fields:
+
+- `instance_id`: Globally unique number (use next available number)
+- `exam_id`: Must match the `exam_id` from Step 1
+- `problem_num`: Question number within the exam (1, 2, 3, ...)
+- `points`: Points allocated to this question
+- `problem`: The question text
+- `answer`: Correct answer
+  - For SingleChoice: `"A"`, `"B"`, etc.
+  - For MultipleChoice: `"A,B,C"` (comma-separated, no spaces)
+  - For True/False: `"True,False,True"` (one per sub-question)
+  - For ShortAnswerQuestion: The model answer text
+- `explanation`: Explanation of the correct answer
+- `type`: One of `"SingleChoice"`, `"MultipleChoice"`, `"True/False Questions"`, `"ShortAnswerQuestion"`
+
+> Note: Questions should be sorted by `exam_id` then `instance_id`
+
+After adding the exam and questions, run `./test.sh` as a sanity check to valid the data format. This will also run in the CI pipeline.
+
+## Question types and evaluation
+
+| Type                 | Answer Format       | Evaluation Method | Partial Credit?                    |
+| -------------------- | ------------------- | ----------------- | ---------------------------------- |
+| SingleChoice         | `"A"`               | Exact match       | No                                 |
+| MultipleChoice       | `"A,B,C"`           | Subset check      | Yes (2 points for partial correct) |
+| True/False Questions | `"True,False,True"` | Exact match       | No                                 |
+| ShortAnswerQuestion  | Free text           | LLM-as-judge      | Yes (scored 0 to max points)       |
+
+For short-answer questions, an LLM evaluates the answer based on accuracy, completeness, logical consistency, and clarity.
+
+## Training data templates
+
+See the example files in:
+
+- `data/sft/course_exam_sft_example.jsonl`: Format for supervised fine-tuning
+- `data/pretrain/course_exam_pretrain_example.jsonl`: Format for pre-training
