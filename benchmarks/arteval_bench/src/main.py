@@ -16,7 +16,7 @@ import sys
 from datetime import datetime
 from statistics import median
 from statistics import mean
-from loguru import logger
+from typing import Iterable, Tuple
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
 
@@ -26,11 +26,12 @@ set_llm_endpoint_from_config('env.toml')
 
 from sdk.evaluator import Evaluator
 from sdk.executor import Executor
-
+from sdk.logger import logger
+from sdk.llm import LLM
 
 ARTIFACT_STAGES = ("prep_environment", "build_code", "prep_benchmarks", "run_experiments")
 
-class BasicExecutor(Executor):
+class ArtEvalExecutor(Executor):
     """Example class for one simple LLM module."""
 
     def __init__(self, _model_name, _sys_prompt) -> None:
@@ -45,7 +46,7 @@ class BasicExecutor(Executor):
         return ans
 
 
-class ArtifactValidator(Evaluator):
+class ArtEvalValidator(Evaluator):
     """Validation class for evaluating the model's ability to install, run, and test a given artifact."""
 
     def __init__(self) -> None:
@@ -110,9 +111,16 @@ def main(input_file, output_dir, model_name, agent_name):
             logger.info(f"============ {artifact['task_id']} ============")
             
             system_prompt = (
-                f"You are an expert software engineer with experience with artifact evaluation tasks for computer science conferences.\n" 
-                + f"You are asked to setup, install, and run experiments following instructions provided in the artifact's README.md file.\n"
+                f"You are an experienced software engineer.\n"
+                + f"You are asked to follow the step-by-step instructions in README.md below to set-up," 
+                + f"install, compile, and reproduce the results of Wasabi" 
+                + f"Note that you are in a docker env with root access. If sudo is needed," 
+                + f"please remove sudo command in the install file."
+                + f"Note that you can ignore branch siwitch instructions in the README as you are already" 
+                + f"in the correct branch. So do not use git branch at all."
             )
+
+            logger.info("Reading task...")
 
             task_file = artifact['task_file']
             with open(task_file, encoding='utf-8') as f:
@@ -120,15 +128,18 @@ def main(input_file, output_dir, model_name, agent_name):
                 task = "\n".join(lines)
             user_prompt = 'Below is the README of the artifact:\n\n' + task
 
-
             prompt = f"{system_prompt}\n {user_prompt}"
             if agent_name == 'llm':
-                executor = BasicExecutor(model_name, prompt)
+                executor = ArtEvalExecutor(model_name, prompt)
             else:
                 raise ValueError(f'Unknown agent name: {agent_name}')
             
+            logger.info("Calling LLM with user prompt...")
+
             response = executor.run(user_prompt, lang='json')
             response = json.loads(response)
+
+            logger.info("Parsing LLM's answer...")
 
             answer = str(response.get('answer', ''))
             explanation = response.get('explanation', '')
@@ -137,7 +148,9 @@ def main(input_file, output_dir, model_name, agent_name):
 
             test_method = artifact['test_method']
 
-            evaluator = ArtifactValidator()
+            logger.info("Interaction with LLM succesful. Proceeding to validation...")
+
+            evaluator = ArtEvalValidator()
             metrics = evaluator.eval(cmd=test_method)
 
             result = {
@@ -159,7 +172,7 @@ def main(input_file, output_dir, model_name, agent_name):
         except Exception as e:
             logger.error(f"Error processing instance {artifact['task_id']}: {e}")
             result = {
-                'id': artifact['instance_id'],
+                'id': artifact['task_id'],
                 'system_prompt': locals().get('system_prompt'),
                 'user_prompt': locals().get('user_prompt'),
                 'llm_answer': None,
@@ -222,7 +235,7 @@ if __name__ == '__main__':
         '-i',
         '--input_file',
         help='Benchmark input file',
-        default='./data/benchmark/example_bench_benchmark_timestamp.jsonl',
+        default='./data/benchmark/arteval_tasks.jsonl',
     )
     parser.add_argument('-o', '--save_path', help='Result save path', default=None)
     parser.add_argument('-a', '--agent', help='Agent Name', default='llm')
