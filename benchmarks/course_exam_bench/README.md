@@ -6,6 +6,8 @@ This benchmark evaluates the performance of Large Language Models (LLMs) on syst
 - Question types: Single-choice, multiple-choice, true/false, and short-answer
 - Includes real student performance data for comparison
 
+For current model evaluation results, see [EVALUATION_RESULTS.md](EVALUATION_RESULTS.md).
+
 | Exam                           | Questions | Topics              |
 | ------------------------------ | --------- | ------------------- |
 | MIT 6.5840 Spring 2025 Exam I  | 11        | Distributed Systems |
@@ -76,7 +78,7 @@ For each question, one JSON object per line:
 ```json
 {
   "instance_id": 1,
-  "exam_id": "6_1810_fall_2024_quiz_ii_solutions",
+  "exam_id": "6_1810_operating_system_engineering_fall_2024_quiz_ii",
   "question_type": "SingleChoice",
   "llm_answer": "C",
   "correct_answer": "C",
@@ -118,45 +120,47 @@ The benchmark data is stored in `data/benchmark/`:
 
 ## How to extend the benchmark
 
+Consider this [MIT 6.824 Distributed Systems quiz](https://pdos.csail.mit.edu/6.824/quizzes/q25-2-sol.pdf). The steps below show how to add this exam to the benchmark. The same process applies to any course exam you want to include.
+
 ### Step 1: Add exam metadata to `exams_metadata.json`
 
-Create a unique `exam_id` for your exam:
+Create a unique `exam_id` for your exam. Here's the actual entry for the Spring 2024 Exam II:
 
 ```json
 {
-  "exam_id": "your_university_course_year_semester_exam",
-  "test_paper_name": "Your University Course Name: Semester Year Exam",
-  "course": "Course Name",
-  "year": 2025,
-  "score_total": 100,
-  "score_max": 95.0,
-  "score_avg": 75.0,
-  "score_median": 77.0,
-  "score_standard_deviation": 10.5,
-  "num_questions": 10
+  "exam_id": "6_5840_distributed_system_engineering_spring_2024_exam_ii",
+  "test_paper_name": "6.5840 Distributed System Engineering: Spring 2024 Exam II",
+  "course": "Distributed System Engineering",
+  "year": 2024,
+  "score_total": 71,
+  "score_max": 71.0,
+  "score_avg": 56.61,
+  "score_median": 57,
+  "score_standard_deviation": 9.13,
+  "num_questions": 14
 }
 ```
 
 ### Step 2: Add individual questions to `questions.jsonl`
 
-Append your questions to the file. Each line is a JSON object:
+Append your questions to the file. Each line is a JSON object. Here's an example from the exam (a True/False question about FaRM):
 
 ```json
 {
-  "instance_id": 70,
-  "exam_id": "your_university_course_year_semester_exam",
-  "problem_num": 1,
-  "points": 10,
-  "problem": "Explain the difference between a process and a thread.",
-  "answer": "A process is an instance of a running program with its own memory space, while a thread is a unit of execution within a process that shares the process's memory.",
-  "explanation": "Full explanation here...",
-  "type": "ShortAnswerQuestion"
+  "instance_id": 33,
+  "exam_id": "6_5840_distributed_system_engineering_spring_2024_exam_ii",
+  "problem_num": 4,
+  "points": 8,
+  "problem": "# III FaRM  \n\nConsider the following statements about FaRM as described in No compromises: distributed transactions with consistency, availability, and performance. For each statement, circle True or False.  \n\n4. [8 points]:  \n\nTrue / False : Because FaRM uses primary-backup replication for a region (instead of Paxos), FaRM must reconfigure to remove a failed replica before FaRM can continue to use the region.  \n\nTrue / False : FaRM can use short leases (10ms by default) because it has communication and scheduling optimizations to renew leases quickly.  \n\nTrue / False : A transaction that modifies only one object will never abort.  \n\nTrue / False : Read-only transactions require only the validate step of the Commit phase in Figure 4.  ",
+  "answer": "True,True,False,True",
+  "explanation": "Answer: True, True, False, True. The first statement is true because FaRM requires a response from all replicas, thus it must reconfigure to remove the failed replica before it can continue with the affected shard. The third statement is false because another transaction may modify the one object causing this transaction's validation phase to fail (because the other transaction will have incremented the object's version number).",
+  "type": "True/False Questions"
 }
 ```
 
 Required fields:
 
-- `instance_id`: Globally unique number (use next available number, currently 70+)
+- `instance_id`: Globally unique number (use next available number)
 - `exam_id`: Must match the `exam_id` from Step 1
 - `problem_num`: Question number within the exam (1, 2, 3, ...)
 - `points`: Points allocated to this question
