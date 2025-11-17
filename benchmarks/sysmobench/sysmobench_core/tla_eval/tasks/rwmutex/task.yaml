@@ -1,0 +1,36 @@
+# rwmutex task configuration
+name: "rwmutex"
+description: "Asterinas OS read-write mutex synchronization primitive"
+system_type: "concurrent"
+language: "rust"
+
+# Source code repository information
+repository:
+  url: "https://github.com/asterinas/asterinas.git"
+  branch: "main"
+  
+# Files to extract from the repository
+source_files:
+  - path: "ostd/src/sync/rwmutex.rs"
+    description: "Read-write mutex allowing multiple readers or single writer"
+
+# Default file to use if not specified
+default_source_file: "ostd/src/sync/rwmutex.rs"
+
+# TLA+ specification module name
+specModule: "rwmutex"
+
+# Traces folder location
+traces_folder: "data/sys_traces/rwmutex"
+trace_format: "asterinas_based"
+
+# Metadata
+metadata:
+  original_project: "asterinas"
+  
+# Phase 3 specific configuration
+phase3:
+  trace_generation: false
+  patch_required: true
+  patch_file: "data/patches/asterinas_tla_trace.patch"
+  patch_description: "Inject TLA+ trace instrumentation for Asterinas sync primitives"

@@ -1,0 +1,30 @@
+You are a TLA+ expert. Generate a complete TLC configuration file (.cfg) for the locking specification that can be directly saved and used for model checking.
+
+## Input Specification:
+
+$tla_spec
+
+## Generated Invariants:
+
+$invariants
+
+## Requirements:
+
+1. **Analyze the specification** to identify the main specification name and all declared constants
+2. **Generate complete .cfg file content** with SPECIFICATION, CONSTANTS, and INVARIANT/PROPERTY sections
+3. **Use small values for constants** to ensure efficient model checking (2-3 threads, small integers)
+4. **Only include invariants that are actually defined in the specification** - scan the TLA+ specification to check which invariants are defined. If an invariant name is provided but not defined in the specification, do NOT include it in the .cfg file. For included invariants, check if they use temporal operators (~>, <>) and put those in PROPERTY section instead of INVARIANT
+5. **Output ONLY the raw .cfg file content** - no explanations, no markdown, no code blocks
+
+## Example Output Format:
+
+SPECIFICATION SpecName
+
+CONSTANTS
+    ...
+INVARIANT
+    ...
+PROPERTY
+    ...
+
+**CRITICAL: Your response must contain exactly ONE complete .cfg file. Do not repeat any sections. Start your response immediately with "SPECIFICATION" and include nothing else. Each invariant name must be on its own line. Stop immediately after the last invariant name with no additional text.**

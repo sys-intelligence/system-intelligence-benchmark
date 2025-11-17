@@ -1,0 +1,3 @@
+[submodule "agents/specula"]
+	path = agents/specula
+	url = https://github.com/specula-org/Specula.git

@@ -1,0 +1,4 @@
+# SysMoBench integration dependencies
+# Reuse upstream requirements and add local runtime deps needed by the SDK bridge.
+-r sysmobench_core/requirements.txt
+litellm>=1.77.5

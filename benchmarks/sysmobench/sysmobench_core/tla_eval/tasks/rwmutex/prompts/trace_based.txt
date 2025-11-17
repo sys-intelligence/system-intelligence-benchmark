@@ -1,0 +1,57 @@
+You are an expert in formal verification and TLA+ specifications with deep expertise in concurrent systems and synchronization primitives.
+
+Convert the following Asterinas OS read-write mutex traces to a comprehensive TLA+ specification.
+
+System: Asterinas OS read-write mutex synchronization primitive
+Focus: {focus}
+
+Traces:
+{traces}
+
+Trace format interpretation:
+{trace_format}
+
+Read-write mutex modeling requirements:
+
+MANDATORY CORE ACTIONS (must include all):
+1. 【Reader/Writer/Upgradeable Operations】read(), write(), upread() methods with proper blocking semantics
+2. 【Complex Atomic State】AtomicUsize with bit fields: writer bit, upgradeable reader bit, being_upgraded bit, reader count (no MAX_READER)
+3. 【Mixed Wake Strategies】wake_one() for reader release, wake_all() for writer/upread release (FIFO WaitQueue base)
+4. 【Upgradeable Reader Support】Atomic upgrade from upread to write (upgrading state), atomic downgrade from write to upread
+5. 【Multi-Reader Exclusivity】Multiple concurrent readers, but exclusive writer access
+6. 【BEING_UPGRADED Semantics】Strict code behavior: blocks new readers during upgrade, precise flag management
+
+EXPLICITLY EXCLUDED (do not model):
+- Arc-based variants (ArcRwMutexReadGuard, ArcRwMutexWriteGuard, etc.)
+- UnsafeCell implementation details
+- get_mut() zero-cost access
+- Debug formatting and trait implementations
+- Complex guard type variations (lifetime management complexities)
+- Thread-local reader counting optimizations
+- MAX_READER overflow handling (simplified - no reader count limits)
+- Detailed spin-wait loop implementation (abstract as upgrading state)
+- Downgrade failure/retry scenarios (assume downgrade always succeeds)
+- Hardware memory ordering details (handle at logical atomicity level)
+
+REQUIRED BEHAVIORAL SCOPE:
+- AtomicUsize bit field state encoding: WRITER | UPGRADEABLE_READER | BEING_UPGRADED | reader_count
+- Reader-writer mutual exclusion (no simultaneous readers and writers)
+- Multiple concurrent readers allowed (no MAX_READER limit modeling - simplified)
+- Upgradeable reader exclusive access (only one upread at a time)
+- Upgrade state abstraction: upgrading state instead of spin-wait loop details
+- WaitQueue-based blocking with mixed wake strategies: wake_one() for reader release, wake_all() for writer/upread release
+- FIFO fairness from WaitQueue combined with wake strategy effects
+- BEING_UPGRADED flag blocks new readers during upgrade (strict code behavior)
+- Atomic downgrade from write to upread (assume always succeeds - no failure modeling)
+
+Generate a TLA+ specification that accurately models the read-write mutex's concurrent behavior.
+
+CRITICAL OUTPUT REQUIREMENTS:
+1. The MODULE name must be exactly "rwmutex" (---- MODULE rwmutex ----)
+2. Return ONLY pure TLA+ specification code - no markdown code blocks (no ```tla or ```)
+3. Do not include any explanations, comments, or formatting markers
+4. Start your response directly with: ---- MODULE rwmutex ----
+5. End your response with the closing ====
+6. **DO NOT define invariants** (like MutualExclusion, Invariant, etc.) - only include TypeOK, Init, actions, Next, Spec, and Vars
+7. **MUST include EXTENDS statement**: The specification must extend at least these modules: TLC, Sequences, SequencesExt, Naturals, FiniteSets, Bags
+8. **MANDATORY Spec Definition with Fairness**: The Spec definition MUST include appropriate fairness assumptions (e.g., WF_Vars for unlock operations or overall progress) to ensure liveness properties.

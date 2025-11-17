@@ -1,0 +1,89 @@
+You are tasked with generating a JSON mapping file that defines how to convert SpinLock system traces to TLA+ specification format for trace validation.
+
+## System Overview
+SpinLock is a simple mutual exclusion mechanism that supports:
+- Exclusive lock acquisition (only one thread at a time)
+- Blocking and non-blocking acquisition attempts
+- Spinning behavior when lock is contended
+- Simple lock/unlock operations
+
+## Code Analysis
+Before generating the mapping, you need to analyze the relevant code to understand the system behavior:
+
+**CRITICAL**: You MUST base your mapping on the actual TLA+ specification content, NOT on the examples below. The examples are for format reference only. Always use the actual variables and actions defined in the provided specification.
+
+### TLA+ Specification Code
+```tla+
+{TLA_SPEC_CODE_PLACEHOLDER}
+```
+
+### Implementation Code
+```rust
+{IMPLEMENTATION_CODE_PLACEHOLDER}
+```
+
+## Input: System Trace Format
+System traces are in JSONL format with events like:
+```json
+{"seq": 0, "thread": 2, "lock": 0, "state": "unlocked", "action": "TryAcquireBlocking", "actor": 2}
+{"seq": 1, "thread": 2, "lock": 0, "state": "locked", "action": "AcquireSuccess", "actor": 2}
+{"seq": 2, "thread": 2, "lock": 0, "state": "unlocked", "action": "Release", "actor": 2}
+```
+
+Common actions in system traces:
+- TryAcquireBlocking: Attempt to acquire lock with blocking
+- TryAcquireNonBlocking: Attempt to acquire lock without blocking
+- AcquireSuccess: Successfully acquired the lock
+- Release: Release the lock
+- StopSpinning: Thread stops spinning and may wait
+
+## Target: TLA+ Specification Variables
+The TLA+ specification tracks these state variables:
+- lock_state: Boolean indicating if the lock is held ("locked" or "unlocked")
+- lock_holder: Thread ID of the current lock holder (or null if unlocked)
+- waiting_threads: Set of threads waiting for the lock
+- thread_state: Mapping from thread ID to state ("idle", "spinning", "holding", "waiting")
+
+## Required Mapping Structure
+Generate a JSON file with this structure:
+
+```json
+{
+  "config": {
+    "Threads": ["Thread0", "Thread1", "Thread2"]  // List of thread identifiers
+  },
+  "events": {
+    // Map system actions to TLA+ events
+    "TryAcquireBlocking": "TryAcquireBlocking",
+    "TryAcquireNonBlocking": "TryAcquireNonBlocking",
+    "AcquireSuccess": "AcquireSuccess",
+    "Release": "Release",
+    "StopSpinning": "StopSpinning",
+    // Add other mappings as needed based on code analysis
+  },
+  "thread_mapping": {
+    // Map numeric thread IDs to thread names
+    "0": "Thread0",
+    "1": "Thread1",
+    "2": "Thread2",
+    // Continue as needed
+  },
+  "state_mapping": {
+    // Map system states to internal representations
+    "lock": "lock"
+  }
+}
+```
+
+## Implementation Notes
+1. The mapping will be used by a state tracker that maintains complete system state
+2. Thread IDs in traces are numeric (0, 1, 2...) and must be mapped to "Thread0", "Thread1", etc.
+3. The state tracker will automatically handle state transitions based on actions
+4. Focus on correctly mapping actions and thread states
+5. The config section should list all possible threads that might appear in traces
+
+## Your Task
+Generate a complete spin_mapping.json file that:
+1. Maps all common SpinLock actions to their TLA+ equivalents
+2. Provides thread ID mappings for all threads that appear in traces
+3. Ensures compatibility with the state tracking implementation

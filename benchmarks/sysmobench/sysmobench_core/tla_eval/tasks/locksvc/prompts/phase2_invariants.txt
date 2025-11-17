@@ -1,0 +1,21 @@
+You are a TLA+ expert. Analyze the following TLA+ distributed locking specification and generate meaningful invariants for model checking.
+
+## Input Specification:
+
+$tla_spec
+
+## Requirements:
+
+1. **Analyze the specification** to understand the distributed locking synchronization behavior and state variables
+2. **Check existing invariants** - DO NOT generate invariants with names that already exist in the specification
+3. **Generate 2-3 NEW key invariants** that capture important safety properties for lock synchronization
+4. **Use proper TLA+ syntax** for each invariant definition (Name == Expression)
+5. **Focus on mutual exclusion and deadlock prevention properties not already covered**
+6. **Output ONLY the raw invariant definitions** - no explanations, no markdown, no code blocks, no quotes
+
+## Expected Output Format:
+
+LockSafety == condition1
+SpecNoDeadlock == condition2
+
+**IMPORTANT: Your response must contain only valid TLA+ invariant definitions that do NOT already exist in the specification. Start immediately with the first NEW invariant definition and include nothing else. Do not wrap in quotes or code blocks.**

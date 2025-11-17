@@ -1,0 +1,54 @@
+You are an expert in formal verification and TLA+ specifications with deep expertise in concurrent systems and synchronization primitives.
+
+Convert the following Asterinas OS mutex execution traces to a comprehensive TLA+ specification.
+
+System: Asterinas OS mutex synchronization primitive  
+Focus: {focus}
+
+Traces:
+{traces}
+
+Trace format interpretation:
+{trace_format}
+
+Mutex modeling requirements:
+
+MANDATORY CORE ACTIONS (must include all):
+1. 【Lock/Unlock Operations】lock(), try_lock(), unlock() methods with proper blocking/non-blocking semantics
+2. 【Atomic CAS】compare_exchange operation on AtomicBool (false→true acquire, store false release) - logical atomicity level
+3. 【WaitQueue Blocking】wait_until() blocking mechanism, wake_one() FIFO notification on unlock
+4. 【Guard Lifecycle】MutexGuard creation on lock(), automatic unlock on Drop (creation/destruction only)
+5. 【Thread Interleaving】Multiple threads competing for exclusive access with different orderings
+6. 【Thread State Management】Waiting/blocked thread states when lock is held by others
+
+EXPLICITLY EXCLUDED (do not model):
+- Arc-based locking (lock_arc method and ArcMutexGuard)
+- UnsafeCell implementation details
+- get_mut() zero-cost access
+- Debug formatting and trait implementations
+- Thread ownership tracking complexities beyond basic exclusion
+- Advanced guard type variations (lifetime management complexities)
+- Hardware memory ordering details (Acquire/Release ordering - handle at logical atomicity level only)
+- Detailed wait_until() retry loop implementation (abstract as waiting state)
+- Guard Deref/DerefMut access patterns (only model creation/destruction)
+
+REQUIRED BEHAVIORAL SCOPE:
+- Simple AtomicBool state: false (unlocked) ↔ true (locked)
+- Exclusive access enforcement (only one thread in critical section)
+- WaitQueue-based blocking and wakeup coordination with FIFO fairness (wake_one uses pop_front())
+- Thread can reacquire lock only after releasing it
+- Non-blocking try_lock() vs blocking lock() semantics differentiation
+- Guard lifecycle: creation on successful lock acquisition, automatic unlock on Drop (abstract level only)
+- Thread waiting state abstraction: threads can be in waiting/blocked state when lock is held by others
+
+Generate a TLA+ specification that accurately models the mutex's concurrent behavior.
+
+CRITICAL OUTPUT REQUIREMENTS:
+1. The MODULE name must be exactly "mutex" (---- MODULE mutex ----)
+2. Return ONLY pure TLA+ specification code - no markdown code blocks (no ```tla or ```)
+3. Do not include any explanations, comments, or formatting markers
+4. Start your response directly with: ---- MODULE mutex ----
+5. End your response with the closing ====
+6. **DO NOT define invariants** (like MutualExclusion, Invariant, etc.) - only include TypeOK, Init, actions, Next, Spec, and Vars
+7. **MUST include EXTENDS statement**: The specification must extend at least these modules: TLC, Sequences, SequencesExt, Naturals, FiniteSets, Bags
+8. **MANDATORY Spec Definition with Fairness**: The Spec definition MUST include appropriate fairness assumptions (e.g., WF_Vars for unlock operations or overall progress) to ensure liveness properties.

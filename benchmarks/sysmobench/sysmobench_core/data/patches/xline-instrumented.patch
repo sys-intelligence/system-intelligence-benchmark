@@ -1,0 +1,1019 @@
+diff --git a/.cargo/config.toml b/.cargo/config.toml
+new file mode 100644
+index 00000000..53aa0bfe
+--- /dev/null
++++ b/.cargo/config.toml
+@@ -0,0 +1,4 @@
++# It is weird that even if code does not change when running consecutive `cargo run` with `RUSTFLAGS="--cfg madsim"`, the code would still be recompiled.
++# Every compilation takes minutes (rocksdb is the bottleneck), which is annoying, so we manually set the rustflags here. IT JUST WORKS!
++[build]
++rustflags = ["--cfg", "madsim"]
+diff --git a/.gitignore b/.gitignore
+index 546ca5e0..4551e0b2 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -28,3 +28,6 @@ coverage
+ .vscode
+ .idea
+ out/
++
++__pycache__/
++states/
+\ No newline at end of file
+diff --git a/Cargo.lock b/Cargo.lock
+index b1e55a72..3f5f8ed9 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -682,6 +682,7 @@ dependencies = [
+  "prost-build",
+  "rand",
+  "serde",
++ "serde_json",
+  "sha2",
+  "tempfile",
+  "test-macros",
+@@ -689,6 +690,7 @@ dependencies = [
+  "tokio-stream 0.1.12",
+  "tokio-util",
+  "tower 0.4.13",
++ "trace",
+  "tracing",
+  "tracing-subscriber",
+  "tracing-test",
+@@ -2676,8 +2678,10 @@ dependencies = [
+ name = "simulation"
+ version = "0.1.0"
+ dependencies = [
++ "anyhow",
+  "async-trait",
+  "bincode",
++ "clap",
+  "curp",
+  "curp-test-utils",
+  "engine",
+@@ -2689,7 +2693,10 @@ dependencies = [
+  "madsim-tonic-build",
+  "parking_lot",
+  "prost",
++ "rand",
++ "serde_json",
+  "tempfile",
++ "trace",
+  "tracing",
+  "utils",
+  "workspace-hack",
+@@ -3136,6 +3143,15 @@ version = "0.3.3"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "8df9b6e13f2d32c91b9bd719c00d1958837bc7dec474d94952798cc8e69eeec3"
+ 
++[[package]]
++name = "trace"
++version = "0.1.0"
++dependencies = [
++ "anyhow",
++ "serde",
++ "serde_json",
++]
++
+ [[package]]
+ name = "tracing"
+ version = "0.1.40"
+diff --git a/config.toml b/config.toml
+new file mode 100644
+index 00000000..28b1b5e7
+--- /dev/null
++++ b/config.toml
+@@ -0,0 +1,3 @@
++# to config the Madsim runtime.
++[net]
++packet_loss_rate = 0.1
+diff --git a/crates/curp-external-api/src/cmd.rs b/crates/curp-external-api/src/cmd.rs
+index 5b282b8b..17f1a35a 100644
+--- a/crates/curp-external-api/src/cmd.rs
++++ b/crates/curp-external-api/src/cmd.rs
+@@ -50,6 +50,11 @@ pub trait Command: pri::Serializable + ConflictCheck + PbCodec {
+     /// Returns `true` if the command is read-only
+     fn is_read_only(&self) -> bool;
+ 
++    /// Used for trace validation.
++    fn trace_string(&self) -> String {
++        unimplemented!()
++    }
++
+     /// Execute the command according to the executor
+     ///
+     /// # Errors
+diff --git a/crates/curp-test-utils/src/test_cmd.rs b/crates/curp-test-utils/src/test_cmd.rs
+index c3fa2389..6901dba3 100644
+--- a/crates/curp-test-utils/src/test_cmd.rs
++++ b/crates/curp-test-utils/src/test_cmd.rs
+@@ -200,6 +200,10 @@ impl Command for TestCommand {
+             TestCommandType::Put(_) => false,
+         }
+     }
++
++    fn trace_string(&self) -> String {
++        unreachable!() // This line should never be reeached in simulation mode.
++    }
+ }
+ 
+ impl ConflictCheck for TestCommand {
+diff --git a/crates/curp/Cargo.toml b/crates/curp/Cargo.toml
+index 8645d6fa..2d3d21a9 100644
+--- a/crates/curp/Cargo.toml
++++ b/crates/curp/Cargo.toml
+@@ -35,6 +35,7 @@ priority-queue = "2.0.2"
+ prost = "0.13"
+ rand = "0.8.5"
+ serde = { version = "1.0.204", features = ["derive", "rc"] }
++serde_json = "1.0"
+ sha2 = "0.10.8"
+ thiserror = "1.0.61"
+ tokio = { version = "0.2.25", package = "madsim-tokio", features = [
+@@ -46,6 +47,7 @@ tokio-stream = { git = "https://github.com/madsim-rs/tokio.git", rev = "ab251ad"
+ tokio-util = "0.7.11"
+ tonic = { version = "0.5.0", package = "madsim-tonic", features = ["tls"] }
+ tower = { version = "0.4.13", features = ["filter"] }
++trace = { path = "../trace" }
+ tracing = { version = "0.1.37", features = ["std", "log", "attributes"] }
+ utils = { path = "../utils", version = "0.1.0", features = ["parking_lot"] }
+ workspace-hack = { version = "0.1", path = "../../workspace-hack" }
+diff --git a/crates/curp/src/client/unary/propose_impl.rs b/crates/curp/src/client/unary/propose_impl.rs
+index d70033d9..d1a9dfaf 100644
+--- a/crates/curp/src/client/unary/propose_impl.rs
++++ b/crates/curp/src/client/unary/propose_impl.rs
+@@ -132,6 +132,15 @@ impl<C: Command> Unary<C> {
+             .send_leader_propose(cmd, leader_id, propose_id, use_fast_path, token)
+             .await?;
+         let follower_stream = self.send_record(cmd, leader_id, propose_id).await;
++
++        // trace Propose event.
++        #[cfg(madsim)]
++        {
++            use serde_json::json;
++            use trace::trace_event;
++            trace_event("Propose", json!({}));
++        }
++
+         let select = stream::select(Box::into_pin(leader_stream), Box::into_pin(follower_stream));
+ 
+         Ok(Box::new(select))
+diff --git a/crates/curp/src/members.rs b/crates/curp/src/members.rs
+index 5682268f..71e3a7e6 100644
+--- a/crates/curp/src/members.rs
++++ b/crates/curp/src/members.rs
+@@ -296,6 +296,20 @@ impl ClusterInfo {
+         cluster_name: &str,
+         timestamp: Option<u64>,
+     ) -> ServerId {
++        #[cfg(madsim)]
++        {
++            // Note: in simulation run, we use the IP address last octet as the server ID since it is deterministic.
++            // e.g.,192.168.1.1:2380 -> 1, 192.168.1.2:2380 -> 2, etc.
++            if let Some(addr) = addrs.first() {
++                if let Some(ip_part) = addr.split(':').next() {
++                    if let Some(last_octet) = ip_part.split('.').last() {
++                        if let Ok(id) = last_octet.parse::<u64>() {
++                            return id;
++                        }
++                    }
++                }
++            }
++        }
+         let mut hasher = DefaultHasher::new();
+         // to make sure same addrs but different order will get same id
+         addrs.sort();
+diff --git a/crates/curp/src/server/cmd_worker/mod.rs b/crates/curp/src/server/cmd_worker/mod.rs
+index 7ac5307b..91be7dc0 100644
+--- a/crates/curp/src/server/cmd_worker/mod.rs
++++ b/crates/curp/src/server/cmd_worker/mod.rs
+@@ -33,6 +33,42 @@ where
+             sp.remove(&pool_entry);
+             ucp.remove(&pool_entry);
+         };
++        // trace ProcessCommitMsg event.
++        #[cfg(madsim)]
++        {
++            use serde_json::json;
++            use trace::trace_event;
++            if let EntryData::Command(ref _cmd) = entry.entry_data {
++                let spec_pool = sp
++                    .all()
++                    .into_iter()
++                    .map(|entry| {
++                        json!({
++                            "id": entry.id.to_string(),
++                            "key": entry.cmd.trace_string(),
++                        })
++                    })
++                    .collect::<Vec<_>>();
++                let uncommitted_pool = ucp
++                    .all()
++                    .into_iter()
++                    .map(|entry| {
++                        json!({
++                            "id": entry.id.to_string(),
++                            "key": entry.cmd.trace_string(),
++                        })
++                    })
++                    .collect::<Vec<_>>();
++                trace_event(
++                    "ProcessCommitMsg",
++                    json!({
++                        "node_id": format!("r{}", curp.id()),
++                        "spec_pool": spec_pool,
++                        "uncommitted_pool": uncommitted_pool,
++                    }),
++                );
++            }
++        }
+     }
+ }
+ 
+diff --git a/crates/curp/src/server/conflict/uncommitted_pool.rs b/crates/curp/src/server/conflict/uncommitted_pool.rs
+index 432d72a1..f441f0a8 100644
+--- a/crates/curp/src/server/conflict/uncommitted_pool.rs
++++ b/crates/curp/src/server/conflict/uncommitted_pool.rs
+@@ -43,7 +43,7 @@ impl<C> UncommittedPool<C> {
+             .collect()
+     }
+ 
+-    #[cfg(test)]
++    #[allow(dead_code)]
+     /// Gets all entries in the pool
+     pub(crate) fn all(&self) -> Vec<PoolEntry<C>> {
+         let mut entries = Vec::new();
+diff --git a/crates/curp/src/server/curp_node.rs b/crates/curp/src/server/curp_node.rs
+index 95a4d15f..d4d5c431 100644
+--- a/crates/curp/src/server/curp_node.rs
++++ b/crates/curp/src/server/curp_node.rs
+@@ -288,6 +288,7 @@ impl<C: Command, CE: CommandExecutor<C>, RC: RoleChange> CurpNode<C, CE, RC> {
+     ) where
+         Executor: Fn(ExecutorEntry<C>),
+     {
++        // todo: maybe we should ban batch send?
+         if proposes.is_empty() {
+             return;
+         }
+diff --git a/crates/curp/src/server/raw_curp/log.rs b/crates/curp/src/server/raw_curp/log.rs
+index 472b1d90..23db0181 100644
+--- a/crates/curp/src/server/raw_curp/log.rs
++++ b/crates/curp/src/server/raw_curp/log.rs
+@@ -561,6 +561,21 @@ impl<C: Command> Log<C> {
+             commit_index,
+             self.commit_index
+         );
++
++        // trace Commit event.
++        #[cfg(madsim)]
++        {
++            use serde_json::json;
++            use trace::trace_event;
++            for i in (self.commit_index + 1)..=commit_index {
++                if let Some(entry) = self.get(i) {
++                    if let crate::log_entry::EntryData::Command(ref _cmd) = entry.entry_data {
++                        trace_event("Commit", json!({}));
++                    }
++                }
++            }
++        }
++
+         self.commit_index = commit_index;
+         self.fallback_contexts.retain(|&idx, c| {
+             if idx > self.commit_index {
+diff --git a/crates/curp/src/server/raw_curp/mod.rs b/crates/curp/src/server/raw_curp/mod.rs
+index b6f529c1..4ef8c247 100644
+--- a/crates/curp/src/server/raw_curp/mod.rs
++++ b/crates/curp/src/server/raw_curp/mod.rs
+@@ -513,6 +513,43 @@ impl<C: Command, RC: RoleChange> RawCurp<C, RC> {
+             .lock()
+             .insert(PoolEntry::new(propose_id, Arc::clone(cmd)))
+             .is_some();
++
++        // trace ProcessProposeNonLeader event.
++        #[cfg(madsim)]
++        {
++            use serde_json::json;
++            use trace::trace_event;
++            let spec_entries = self.ctx.spec_pool.lock().all();
++            let spec_pool = spec_entries
++                .into_iter()
++                .map(|entry| {
++                    json!({
++                        "id": entry.id.to_string(),
++                        "key": entry.cmd.trace_string(),
++                    })
++                })
++                .collect::<Vec<_>>();
++            trace_event(
++                "ProcessProposeNonLeader",
++                json!({
++                    "node_id": format!("r{}", self.id()),
++                    "spec_pool": spec_pool,
++                    "uncommitted_pool": self
++                        .ctx
++                        .uncommitted_pool
++                        .lock()
++                        .all()
++                        .into_iter()
++                        .map(|entry| {
++                            json!({
++                                "id": entry.id.to_string(),
++                                "key": entry.cmd.trace_string(),
++                            })
++                        })
++                        .collect::<Vec<_>>(),
++                }),
++            );
++        }
+         if conflict {
+             metrics::get()
+                 .proposals_failed
+@@ -529,6 +566,42 @@ impl<C: Command, RC: RoleChange> RawCurp<C, RC> {
+         for entry in entries {
+             let mut conflict = sp_l.insert(entry.clone()).is_some();
+             conflict |= ucp_l.insert(&entry);
++
++            // trace ProcessProposeLeader event.
++            #[cfg(madsim)]
++            {
++                use serde_json::json;
++                use trace::trace_event;
++                let spec_entries = sp_l.all();
++                let spec_pool = spec_entries
++                    .into_iter()
++                    .map(|entry| {
++                        json!({
++                            "id": entry.id.to_string(),
++                            "key": entry.cmd.trace_string(),
++                        })
++                    })
++                    .collect::<Vec<_>>();
++                let uncommitted_pool = ucp_l
++                    .all()
++                    .into_iter()
++                    .map(|entry| {
++                        json!({
++                            "id": entry.id.to_string(),
++                            "key": entry.cmd.trace_string(),
++                        })
++                    })
++                    .collect::<Vec<_>>();
++                trace_event(
++                    "ProcessProposeLeader",
++                    json!({
++                        "node_id": format!("r{}", self.id()),
++                        "spec_pool": spec_pool,
++                        "uncommitted_pool": uncommitted_pool,
++                    }),
++                );
++            }
++
+             conflicts.push(conflict);
+         }
+         metrics::get().proposals_failed.add(
+@@ -1742,6 +1815,48 @@ impl<C: Command, RC: RoleChange> RawCurp<C, RC> {
+         let _ignore = self.ctx.leader_event.notify(usize::MAX);
+         self.ctx.role_change.on_election_win();
+         debug!("{} becomes the leader", self.id());
++
++        // trace LeaderChange event.
++        #[cfg(madsim)]
++        {
++            use serde_json::json;
++            use trace::trace_event;
++            let spec_pool = self
++                .ctx
++                .spec_pool
++                .lock()
++                .all()
++                .into_iter()
++                .map(|entry| {
++                    json!({
++                        "id": entry.id.to_string(),
++                        "key": entry.cmd.trace_string(),
++                    })
++                })
++                .collect::<Vec<_>>();
++            let uncommitted_pool = self
++                .ctx
++                .uncommitted_pool
++                .lock()
++                .all()
++                .into_iter()
++                .map(|entry| {
++                    json!({
++                        "id": entry.id.to_string(),
++                        "key": entry.cmd.trace_string(),
++                    })
++                })
++                .collect::<Vec<_>>();
++            trace_event(
++                "LeaderChange",
++                json!({
++                    "node_id": format!("r{}", self.id()),
++                    "term": st.term,
++                    "spec_pool": spec_pool,
++                    "uncommitted_pool": uncommitted_pool,
++                }),
++            );
++        }
+     }
+ 
+     /// Server update self to a new term, will become a follower
+diff --git a/crates/curp/tla+/curp.tla b/crates/curp/tla+/curp.tla
+index c25847c4..584475c2 100644
+--- a/crates/curp/tla+/curp.tla
++++ b/crates/curp/tla+/curp.tla
+@@ -260,4 +260,4 @@ Stability ==
+ 
+ THEOREM Spec => []TypeOK /\ <>Stability
+ 
+-======================================================================================
++======================================================================================
+\ No newline at end of file
+diff --git a/crates/simulation/Cargo.toml b/crates/simulation/Cargo.toml
+index bbc988f0..90c7152b 100644
+--- a/crates/simulation/Cargo.toml
++++ b/crates/simulation/Cargo.toml
+@@ -11,8 +11,10 @@ categories = ["Test"]
+ keywords = ["Test", "Deterministic Simulation"]
+ 
+ [dependencies]
++anyhow = "1.0"
+ async-trait = "0.1.81"
+ bincode = "1.3.3"
++clap = { version = "4.0", features = ["derive"] }
+ curp = { path = "../curp" }
+ curp-test-utils = { path = "../curp-test-utils" }
+ engine = { path = "../engine" }
+@@ -21,7 +23,10 @@ itertools = "0.13"
+ madsim = "0.2.27"
+ parking_lot = "0.12.3"
+ prost = "0.13"
++rand = { version = "0.8", features = ["std_rng"] }
++serde_json = "1.0"
+ tempfile = "3"
++trace = { path = "../trace" }
+ tokio = { version = "0.2.25", package = "madsim-tokio", features = [
+     "rt",
+     "rt-multi-thread",
+@@ -39,5 +44,9 @@ xline = { path = "../xline" }
+ xline-client = { path = "../xline-client" }
+ xlineapi = { path = "../xlineapi" }
+ 
++[[bin]]
++name = "trace_generator"
++path = "src/bin/trace_generator.rs"
++
+ [build-dependencies]
+ tonic-build = { version = "0.5.0", package = "madsim-tonic-build" }
+diff --git a/crates/simulation/src/bin/trace_generator.rs b/crates/simulation/src/bin/trace_generator.rs
+new file mode 100644
+index 00000000..a84d9b08
+--- /dev/null
++++ b/crates/simulation/src/bin/trace_generator.rs
+@@ -0,0 +1,114 @@
++//! CURP trace generator.
++//! change to the root directory of Xline and run:
++//! MADSIM_TEST_CONFIG=./config.toml cargo run --bin trace_generator -- --nodes 3 --op-count 100 --trace-file trace.ndjson
++//! Normally we should add `RUSTFLAGS="--cfg madsim"` to the above command, but we manually set it in .cargo/config.toml, to avoid weird recompilation issues.
++//! There is a timing issue concerning logging. How can we make sure the first happend event gets logged first?
++//! However we don't have to consider this in Xline simulation mode backed by Madsim, since all nodes run in the same system thread.
++
++#![cfg(madsim)]
++
++use anyhow::Result;
++use clap::Parser;
++use madsim::rand::{self as madsim_rand, Rng};
++use madsim::time::Duration;
++use simulation::xline_group::XlineGroup;
++use std::collections::HashMap;
++use trace::init_global_trace_logger;
++use tracing::{error, info};
++
++#[derive(Parser)]
++#[command(name = "CURP trace generator")]
++#[command(about = "CURP trace generator")]
++struct Args {
++    #[arg(long, default_value = "3", help = "Cluster size")]
++    nodes: usize,
++
++    #[arg(long, default_value = "100", help = "Number of operations")]
++    op_count: usize,
++
++    #[arg(
++        long,
++        default_value = "trace.ndjson",
++        help = "Trace file path for cluster state"
++    )]
++    trace_file: String,
++}
++
++async fn run_test(args: Args) -> Result<()> {
++    // Failure injection (network packet loss) is controlled by the Madsim runtime.
++
++    // Use a HashMap as the oracle. But this is irrelevant to the trace generation.
++    let mut oracle = HashMap::<String, String>::new();
++
++    // Setup global trace logger.
++    init_global_trace_logger(&args.trace_file, args.nodes, false)?;
++    println!("Global trace logger setup complete.");
++
++    // Setup cluster.
++    let group = XlineGroup::new(args.nodes).await;
++    let client = group.client().await;
++
++    madsim::time::sleep(Duration::from_secs(1)).await;
++
++    let mut rng = madsim_rand::thread_rng();
++    let put_ratio = 0.7; // 70% PUT, 30% GET.
++    let _conflict_rate = 0.0; // Must be 0.0 due to TLA+ specification constraint.
++
++    let mut put_count = 0;
++    let mut get_count = 0;
++
++    // Main test loop.
++    for _ in 0..args.op_count {
++        if rng.gen::<f32>() < put_ratio {
++            // PUT operation.
++            let key = if put_count > 0 && rng.gen::<f32>() < 0.5 {
++                format!("key_{}", rng.gen_range(0..put_count))
++            } else {
++                format!("key_{}", put_count)
++            };
++            let value = format!("value_{}", put_count);
++            client.put(key.as_str(), value.as_str(), None).await?;
++            oracle.insert(key.clone(), value.clone());
++            put_count += 1;
++            info!("PUT {} = {}", key, value);
++        } else if !oracle.is_empty() {
++            // GET operation. This will not construct a command in Xline.
++            let keys: Vec<_> = oracle.keys().collect();
++            let key = keys[rng.gen_range(0..keys.len())].clone();
++            let result = client.range(key.as_str(), None).await?; // Note: SimClient only supports put, range, compact, watch.
++            let actual = result
++                .kvs
++                .first()
++                .map(|kv| String::from_utf8_lossy(&kv.value).to_string());
++            let expected = oracle.get(&key);
++
++            // Validate with the oracle.
++            if actual.as_ref() != expected {
++                error!(
++                    "CONSISTENCY VIOLATION: key={}, expected={:?}, actual={:?}. But in trace generation module, we allow this error. You may investigate it.",
++                    key, expected, actual
++                );
++            }
++            get_count += 1;
++            info!("GET {} = {:?}", key, actual);
++        }
++
++        madsim::time::sleep(Duration::from_millis(madsim_rand::random::<u64>() % 1001)).await;
++    }
++
++    // Print some summary.
++    println!("\n=== CURP Trace Generation Results ===");
++    println!(
++        "Operations: {} PUT + {} GET = {}",
++        put_count,
++        get_count,
++        put_count + get_count
++    );
++    Ok(())
++}
++
++#[madsim::main]
++async fn main() -> Result<()> {
++    let args = Args::parse();
++    run_test(args).await
++}
+diff --git a/crates/simulation/src/xline_group.rs b/crates/simulation/src/xline_group.rs
+index d3a0c41a..d1dd179b 100644
+--- a/crates/simulation/src/xline_group.rs
++++ b/crates/simulation/src/xline_group.rs
+@@ -54,7 +54,7 @@ impl XlineGroup {
+                     vec!["0.0.0.0:2379".to_owned()],
+                     vec![format!("192.168.1.{}:2379", i + 1)],
+                     all.clone(),
+-                    i == 0,
++                    false, // The original value is 0, we should ban this.
+                     CurpConfig::default(),
+                     ClientConfig::default(),
+                     ServerTimeout::default(),
+diff --git a/crates/trace/Cargo.toml b/crates/trace/Cargo.toml
+new file mode 100644
+index 00000000..eac9db21
+--- /dev/null
++++ b/crates/trace/Cargo.toml
+@@ -0,0 +1,9 @@
++[package]
++name = "trace"
++version = "0.1.0"
++edition = "2021"
++
++[dependencies]
++anyhow = "1.0"
++serde = { version = "1.0", features = ["derive"] }
++serde_json = "1.0"
+\ No newline at end of file
+diff --git a/crates/trace/src/lib.rs b/crates/trace/src/lib.rs
+new file mode 100644
+index 00000000..f0280876
+--- /dev/null
++++ b/crates/trace/src/lib.rs
+@@ -0,0 +1,374 @@
++//! Global trace logging for CURP protocol trace validation.
++//! This module corresponds to the curp.tla generated by Gemini.
++//! The basic principle of trace validation in our benchmark is that the spec should not be changed.
++
++use serde::{Deserialize, Serialize};
++use serde_json::json;
++use std::collections::{BTreeMap, BTreeSet};
++use std::fs::File;
++use std::io::Write;
++use std::sync::{Arc, Mutex};
++
++#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, Ord, PartialOrd)]
++pub struct Command {
++    pub id: String,
++    pub key: String,
++}
++
++/// Corresponds to VARIABLES defined in curp.tla generated by Gemini.
++/// Note: some VARIABLES in the TLA+ spec are not logged since there are no proper corresponding structures in the implementation.
++#[derive(Clone, Debug, Serialize, Deserialize)]
++pub struct ClusterState {
++    /// term \in Nat.
++    pub term: u64,
++
++    /// leader \in Replicas.
++    pub leader: String,
++
++    /// role \in [Replicas -> {"Leader", "Follower"}].
++    pub role: BTreeMap<String, String>,
++
++    /// spec_pool \in [Replicas -> SUBSET Commands].
++    pub spec_pool: BTreeMap<String, BTreeSet<Command>>,
++
++    /// uncommitted_pool \subseteq Commands.
++    pub uncommitted_pool: BTreeSet<Command>,
++}
++
++impl ClusterState {
++    pub fn new(replicas: Vec<String>) -> Self {
++        let mut role = BTreeMap::new();
++        for replica in replicas.clone() {
++            role.insert(replica.clone(), "Follower".to_string());
++        }
++        role.insert("r1".to_string(), "Leader".to_string());
++        let mut spec_pool = BTreeMap::new();
++        for replica in replicas {
++            spec_pool.insert(replica, BTreeSet::new());
++        }
++        Self {
++            term: 0,
++            leader: "r1".to_string(),
++            role,
++            spec_pool,
++            uncommitted_pool: BTreeSet::new(),
++        }
++    }
++}
++
++#[derive(Clone)]
++pub struct GlobalTraceLogger {
++    cluster_state: Arc<Mutex<ClusterState>>,
++    trace_file: Arc<Mutex<File>>,
++    _replicas: Vec<String>,
++    ignore_all_variables: bool,
++}
++
++impl GlobalTraceLogger {
++    pub fn new(
++        trace_file: &str,
++        replica_count: usize,
++        ignore_all_variables: bool,
++    ) -> anyhow::Result<Self> {
++        let trace_file = File::create(trace_file)?;
++        // r1, r2, r3, ... curp.cfg should be aligned with this naming.
++        let replicas: Vec<String> = (1..=replica_count).map(|i| format!("r{}", i)).collect();
++        let cluster_state = ClusterState::new(replicas.clone());
++        Ok(Self {
++            cluster_state: Arc::new(Mutex::new(cluster_state)),
++            trace_file: Arc::new(Mutex::new(trace_file)),
++            _replicas: replicas,
++            ignore_all_variables,
++        })
++    }
++
++    pub fn trace_event(&self, event: &str, event_args: serde_json::Value) -> anyhow::Result<()> {
++        // Lock to prevent race conditions. But I doubt if it is necessary, since the entire Madsim is single-threaded.
++        let mut state = self.cluster_state.lock().unwrap();
++        let mut _ignore = BTreeSet::new();
++        match event {
++            "Propose" => {
++                // Client propose a command.
++                self.handle_propose(&mut state, &event_args)?;
++            }
++            "ProcessProposeLeader" => {
++                // Leader process a command.
++                self.handle_process_propose_leader(&mut state, &event_args)?;
++            }
++            "ProcessProposeNonLeader" => {
++                // Non-leader process a command.
++                self.handle_process_propose_non_leader(&mut state, &event_args)?;
++            }
++            "Commit" => {
++                // Leader of the backend consensus protocol decides to commit a command.
++                self.handle_commit(&mut state, &event_args)?;
++                _ignore.insert("uncommitted_pool".to_string());
++            }
++            "ProcessCommitMsg" => {
++                // Replica of the backend consensus protocol increase its commit index.
++                self.handle_process_commit_msg(&mut state, &event_args)?;
++            }
++            "LeaderChange" => {
++                // Backend consensus protocol elects a new leader.
++                self.handle_leader_change(&mut state, &event_args)?;
++            }
++            _ => {
++                eprintln!("Unknown event: {}", event);
++                return Ok(()); // The lock is dropped here.
++            }
++        }
++        self.write_trace_json(&state, event, _ignore)?; // The lock is held inside this function.
++        Ok(()) // The lock is dropped here.
++    }
++
++    fn handle_propose(
++        &self,
++        _state: &mut ClusterState,
++        _event_args: &serde_json::Value,
++    ) -> anyhow::Result<()> {
++        // Nothing to change.
++        Ok(())
++    }
++
++    fn handle_process_propose_leader(
++        &self,
++        state: &mut ClusterState,
++        event_args: &serde_json::Value,
++    ) -> anyhow::Result<()> {
++        // Update two VARIABLES: spec_pool, uncommitted_pool.
++        let node_id = event_args
++            .get("node_id")
++            .and_then(|v| v.as_str())
++            .ok_or_else(|| anyhow::anyhow!("Missing 'node_id' in ProcessProposeLeader event"))?;
++
++        if let Some(spec_pool_value) = event_args.get("spec_pool") {
++            let pool = Self::parse_command_set(spec_pool_value)?;
++            state.spec_pool.insert(node_id.to_string(), pool);
++        } else {
++            anyhow::bail!("Missing 'spec_pool' in ProcessProposeLeader event");
++        }
++
++        if let Some(uncommitted_pool_value) = event_args.get("uncommitted_pool") {
++            let pool = Self::parse_command_set(uncommitted_pool_value)?;
++            state.uncommitted_pool = pool;
++        } else {
++            anyhow::bail!("Missing 'uncommitted_pool' in ProcessProposeLeader event");
++        }
++
++        Ok(())
++    }
++
++    fn handle_process_propose_non_leader(
++        &self,
++        state: &mut ClusterState,
++        event_args: &serde_json::Value,
++    ) -> anyhow::Result<()> {
++        // Update one VARIABLES: spec_pool.
++        let node_id = event_args
++            .get("node_id")
++            .and_then(|v| v.as_str())
++            .ok_or_else(|| anyhow::anyhow!("Missing 'node_id' in ProcessProposeNonLeader event"))?;
++
++        if let Some(spec_pool_value) = event_args.get("spec_pool") {
++            let pool = Self::parse_command_set(spec_pool_value)?;
++            state.spec_pool.insert(node_id.to_string(), pool);
++        } else {
++            anyhow::bail!("Missing 'spec_pool' in ProcessProposeNonLeader event");
++        }
++
++        Ok(())
++    }
++
++    fn handle_commit(
++        &self,
++        _state: &mut ClusterState,
++        _event_args: &serde_json::Value,
++    ) -> anyhow::Result<()> {
++        // We should log uncommitted_pool, but we can not access it from the corrsponding instrumentation site.
++        // For now we ignore it.
++        // But we could log it if we change the function signature in the instrumentation site to include it, if really needed.
++        // if let Some(uncommitted_pool_value) = event_args.get("uncommitted_pool") {
++        //     let pool = Self::parse_command_set(uncommitted_pool_value)?;
++        //     state.uncommitted_pool = pool;
++        // }
++
++        Ok(())
++    }
++
++    fn handle_process_commit_msg(
++        &self,
++        state: &mut ClusterState,
++        event_args: &serde_json::Value,
++    ) -> anyhow::Result<()> {
++        // Update one VARIABLES: spec_pool.
++        let node_id = event_args["node_id"]
++            .as_str()
++            .ok_or_else(|| anyhow::anyhow!("Missing 'node_id' in ProcessCommitMsg event"))?;
++
++        if let Some(spec_pool_value) = event_args.get("spec_pool") {
++            let pool = Self::parse_command_set(spec_pool_value)?;
++            state.spec_pool.insert(node_id.to_string(), pool);
++        } else {
++            anyhow::bail!("Missing 'spec_pool' in ProcessCommitMsg event");
++        }
++
++        Ok(())
++    }
++
++    fn handle_leader_change(
++        &self,
++        state: &mut ClusterState,
++        event_args: &serde_json::Value,
++    ) -> anyhow::Result<()> {
++        // Update five VARIABLES: term, leader, role, spec_pool, uncommitted_pool.
++        let node_id = event_args["node_id"]
++            .as_str()
++            .ok_or_else(|| anyhow::anyhow!("Missing 'node_id' in LeaderChange event"))?;
++
++        state
++            .role
++            .insert(state.leader.clone(), "Follower".to_string());
++        state.leader = node_id.to_string(); // r1, r2, r3, ...
++        state.role.insert(node_id.to_string(), "Leader".to_string());
++
++        let term = event_args["term"]
++            .as_u64()
++            .ok_or_else(|| anyhow::anyhow!("Missing 'term' in LeaderChange event"))?;
++        state.term = term;
++
++        if let Some(spec_pool_value) = event_args.get("spec_pool") {
++            let pool = Self::parse_command_set(spec_pool_value)?;
++            state.spec_pool.insert(node_id.to_string(), pool);
++        } else {
++            anyhow::bail!("Missing 'spec_pool' in LeaderChange event");
++        }
++
++        if let Some(uncommitted_pool_value) = event_args.get("uncommitted_pool") {
++            let pool = Self::parse_command_set(uncommitted_pool_value)?;
++            state.uncommitted_pool = pool;
++        } else {
++            anyhow::bail!("Missing 'uncommitted_pool' in LeaderChange event");
++        }
++
++        Ok(())
++    }
++
++    fn parse_command(value: &serde_json::Value) -> anyhow::Result<Command> {
++        let id = value
++            .get("id")
++            .and_then(|v| v.as_str())
++            .ok_or_else(|| anyhow::anyhow!("Missing 'id' in command"))?;
++        let key = value
++            .get("key")
++            .and_then(|v| v.as_str())
++            .ok_or_else(|| anyhow::anyhow!("Missing 'key' in command"))?;
++        Ok(Command {
++            id: id.to_string(),
++            key: key.to_string(),
++        })
++    }
++
++    fn parse_command_set(value: &serde_json::Value) -> anyhow::Result<BTreeSet<Command>> {
++        let arr = value
++            .as_array()
++            .ok_or_else(|| anyhow::anyhow!("command collection should be an array"))?;
++        let mut set = BTreeSet::new();
++        for item in arr {
++            set.insert(Self::parse_command(item)?);
++        }
++        Ok(set)
++    }
++
++    /// Write a JSON trace in the ndjson file.
++    fn write_trace_json(
++        &self,
++        state: &ClusterState,
++        event: &str,
++        ignore: BTreeSet<String>,
++    ) -> anyhow::Result<()> {
++        let mut spec_pool_json = BTreeMap::new();
++        for (replica, pool) in &state.spec_pool {
++            let pool_vec: Vec<Command> = pool.iter().cloned().collect();
++            spec_pool_json.insert(replica.clone(), pool_vec);
++        }
++
++        let mut trace_record = json!({
++            "event": event
++        });
++
++        if self.ignore_all_variables {
++            let mut file = self.trace_file.lock().unwrap();
++            writeln!(file, "{}", trace_record)?;
++            file.flush()?;
++            return Ok(());
++        }
++
++        if !ignore.contains("leader") {
++            trace_record["leader"] = json!([{
++                "op": "Update",
++                "path": [],
++                "args": [state.leader.clone()]
++            }]);
++        }
++
++        if !ignore.contains("spec_pool") {
++            trace_record["spec_pool"] = json!([{
++                "op": "Update",
++                "path": [],
++                "args": [spec_pool_json]
++            }]);
++        }
++
++        if !ignore.contains("uncommitted_pool") {
++            trace_record["uncommitted_pool"] = json!([{
++                "op": "Update",
++                "path": [],
++                "args": [state.uncommitted_pool.clone()]
++            }]);
++        }
++
++        if !ignore.contains("term") {
++            trace_record["term"] = json!([{
++                "op": "Update",
++                "path": [],
++                "args": [state.term]
++            }]);
++        }
++
++        if !ignore.contains("role") {
++            trace_record["role"] = json!([{
++                "op": "Update",
++                "path": [],
++                "args": [state.role.clone()]
++            }]);
++        }
++
++        let mut file = self.trace_file.lock().unwrap();
++        writeln!(file, "{}", trace_record)?;
++        file.flush()?;
++
++        Ok(())
++    }
++}
++
++static GLOBAL_TRACE_LOGGER: std::sync::OnceLock<GlobalTraceLogger> = std::sync::OnceLock::new();
++
++pub fn init_global_trace_logger(
++    trace_file: &str,
++    replica_count: usize,
++    ignore_all_variables: bool,
++) -> anyhow::Result<()> {
++    let logger = GlobalTraceLogger::new(trace_file, replica_count, ignore_all_variables)?;
++    GLOBAL_TRACE_LOGGER
++        .set(logger)
++        .map_err(|_| anyhow::anyhow!("Global trace logger already initialized"))?;
++    Ok(())
++}
++
++pub fn trace_event(event: &str, event_args: serde_json::Value) {
++    if let Some(logger) = GLOBAL_TRACE_LOGGER.get() {
++        if let Err(e) = logger.trace_event(event, event_args) {
++            eprintln!("Failed to trace event: {}", e);
++        }
++    }
++}
+diff --git a/crates/xlineapi/src/command.rs b/crates/xlineapi/src/command.rs
+index c34c92ba..0671aef7 100644
+--- a/crates/xlineapi/src/command.rs
++++ b/crates/xlineapi/src/command.rs
+@@ -548,6 +548,15 @@ impl CurpCommand for Command {
+     fn is_read_only(&self) -> bool {
+         self.request().is_read_only()
+     }
++
++    #[inline]
++    fn trace_string(&self) -> String {
++        // Use the first key as the trace string.
++        self.keys()
++            .first()
++            .map(|key_range| String::from_utf8_lossy(key_range.range_start()).to_string())
++            .expect("Unable to extract trace string from command!")
++    }
+ }
+ 
+ impl Command {

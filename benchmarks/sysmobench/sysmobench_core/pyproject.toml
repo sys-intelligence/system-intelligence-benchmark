@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sysmobench"
+version = "1.0.0"
+description = "Benchmark for evaluating AI on formally modeling real-world concurrent and distributed systems"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    {name = "TLA+ Benchmark Team"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "openai>=1.0.0",
+    "anthropic>=0.21.0",
+    "google-genai>=0.10.0",
+    "pyyaml>=6.0.0",
+    "requests>=2.25.0",
+    "tqdm>=4.65.0",
+    "pandas>=1.5.0",
+    "numpy>=1.24.0",
+    "pydantic>=2.0.0",
+    "structlog>=23.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/specula-org/SysSpecBench"
+Repository = "https://github.com/specula-org/SysSpecBench"
+Issues = "https://github.com/specula-org/SysSpecBench/issues"
+
+[project.scripts]
+sysmobench = "tla_eval.cli:main"
+sysmobench-setup = "tla_eval.setup_cli:main"
+
+[tool.setuptools.packages.find]
+include = ["tla_eval*"]
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --tb=short"

@@ -1,0 +1,43 @@
+* Each log represents one distributed execution with events from multiple nodes.
+* Each trace log is stored in TSV format.
+
+Top-Level fields:
+
+1. **`event`**
+
+   * String.
+   * Describes the type of event (e.g., `"LeaderChange"`, `"Propose"`, `"ProcessProposeLeader"`, `"ProcessProposeNonLeader"`).
+
+2. **`leader`**
+
+   * List of operation objects.
+   * Each object has:
+
+     * `op`: always `"Update"`.
+     * `path`: always an empty list (`[]`).
+     * `args`: list with one element, typically a leader identifier string (e.g., `"r4"`, `"r5"`).
+
+3. **`committedCommands`**
+
+   * List of operation objects.
+   * Each object has:
+
+     * `op`: always `"Update"`.
+     * `path`: always an empty list.
+     * `args`: list containing a single element, which is always an empty list (`[]`).
+
+4. **`speculativePool`**
+
+   * List of operation objects.
+   * Each object has:
+
+     * `op`: always `"Update"`.
+     * `path`: always an empty list.
+     * `args`: list with one element: a dictionary mapping replica identifiers (`r1`, `r2`, …) to lists of keys (strings).
+     * Keys may be empty lists (`[]`) or contain items such as `"key_0"`.
+
+5. **`uncommittedPool`**
+
+   * List of operation objects.
+   * Same structure as `committedCommands`.
+   * `args` always contains a single empty list.

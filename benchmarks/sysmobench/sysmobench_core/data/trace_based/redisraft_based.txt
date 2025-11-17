@@ -1,0 +1,35 @@
+Logs are emitted in a TSV format. Each log represents one distributed execution with events from multiple nodes.
+
+* Top-level object schema
+
+  * `timestamp` *(number, float)* — walltime value.
+  * `name` *(string)* — event/type label.
+  * `nid` *(number, int)* — node identifier related to this record.
+  * **Optional fields** (present only for certain events):
+
+    * `role` *(string)*
+    * `term` *(number, int)*
+    * `leader` *(number, int; may be negative)*
+    * `vote` *(number, int)*
+    * `vote_granted` *(number, int; commonly 0/1)*
+    * `prevote` *(number, int; commonly 0/1)*
+    * `from` *(number, int)* — emitter/peer id (distinct from `msg.from` below)
+    * `state` *(object)* — embedded state snapshot
+    * `msg` *(object)* — embedded message payload
+
+* **Embedded objects**
+
+  * `state` *(object)* — appears with:
+
+    * `term` *(number, int)*
+    * `vote` *(number, int)*
+    * `commit` *(number, int)*
+  * `msg` *(object)* — appears with:
+
+    * `type` *(string)*
+    * `from` *(number, int)*
+    * `to` *(number, int)*
+    * `term` *(number, int)*
+    * `candidate_id` *(number, int)*
+    * `last_log_idx` *(number, int)*
+    * `last_log_term` *(number, int)*

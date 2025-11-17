@@ -1,0 +1,52 @@
+You are an expert TLA+ specification specialist with extensive experience in distributed systems modeling.
+
+I need you to fix errors in a TLA+ specification for an Raft-based KV store {system_type} system.
+
+## Original Task Description
+{description}
+
+## Current TLA+ Specification (with errors)
+```tla
+{current_specification}
+```
+
+## Validation Errors Found
+**Error Summary:**
+{error_summary}
+
+**Detailed Syntax Errors:**
+{syntax_errors}
+
+**Detailed Semantic Errors:**
+{semantic_errors}
+
+**Full Validation Output:**
+```
+{validation_output}
+```
+
+## Correction Instructions
+This is correction attempt {attempt_number} of {max_attempts}.
+
+Please provide a corrected TLA+ specification that fixes these errors. Your corrected specification should:
+
+1. **Fix all syntax errors**: Ensure proper TLA+ syntax, correct operator usage, and valid module structure
+2. **Resolve semantic errors**: Define missing variables, operators, and ensure logical consistency
+3. **Maintain original intent**: Keep the core distributed system logic and behavior from the source code
+4. **Follow TLA+ best practices**: Use appropriate data structures, actions, and invariants
+5. **Be complete and self-contained**: Include all necessary EXTENDS, CONSTANTS, VARIABLES, and operator definitions
+
+Focus specifically on:
+- Defining any missing variables or constants
+- Implementing missing operators or functions
+- Fixing syntax issues with operators, expressions, or module structure
+- Ensuring proper action definitions and state transitions
+- Maintaining consistency with Raft's distributed consensus behavior
+
+**CRITICAL OUTPUT REQUIREMENTS:**
+- Return ONLY pure TLA+ specification code
+- NO markdown code blocks (no ```tla or ```)  
+- NO explanations, comments, or text outside the specification
+- NO formatting markers of any kind
+- The MODULE name must be exactly "raftkvs"
+- Start directly with: ---- MODULE raftkvs ----

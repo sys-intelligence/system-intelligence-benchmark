@@ -1,0 +1,90 @@
+You are a TLA+ expert specializing in concurrent systems and synchronization primitives. Your task is to implement a set of expert-written invariants for the given TLA+ distributed locking specification.
+
+## Target Specification
+
+$tla_specification
+
+## Invariants to Implement
+
+$invariant_templates
+
+## Implementation Requirements
+
+1. **Deep Analysis**: First, thoroughly understand both the invariant template's semantic intent and the specification's modeling approach:
+   - What safety/liveness property does each template aim to verify?
+   - How does the specification represent states, operations, and concurrency?
+   - What are the semantic equivalents between template concepts and specification implementation?
+
+2. **Semantic Mapping**: For each invariant, identify the conceptual mapping between template and specification:
+   - Template `"acquiring"` state → Specification's lock acquisition states (e.g., `"req_lock"`, `"waiting"`)
+   - Template `"releasing"` state → Specification's lock release states  
+   - Template ownership variables → Specification's ownership representation (explicit variables or implicit via state)
+   - Template thread sets → Specification's thread/process constants
+
+3. **Creative Adaptation**: Translate the invariant while preserving its core semantic meaning:
+   - **DO NOT** simply replace variable names - understand the underlying logic
+   - **DO** redesign the predicate logic to fit the specification's modeling granularity
+   - **DO** use equivalent semantic concepts even if names/structures differ
+   - **PRESERVE** the original safety/liveness intent without weakening the property
+
+4. **TLA+ Property Type Constraints**:
+   
+   **FOR SAFETY PROPERTIES** (type: "safety"):
+   - **MUST** be STATE PREDICATES (describe single states only)
+   - **NEVER** use primed variables (`pc'`, `lock_state'`)
+   - **NEVER** use temporal operators (`[]`, `<>`, `~>`)
+   - **NEVER** reference actions (like `Lock(p)`, `Unlock(p)`) - only use state variables
+   - **ONLY** use unprimed variables (`pc[t]`, `lock_state`) and constants
+   - **CORRECT**: `MutualExclusion == Cardinality({p ∈ Proc : pc[p] = "critical"}) <= 1` 
+   - **INCORRECT**: `pc[t] = "acquiring" => pc'[t] = "critical"`  (has primed variable)
+   - **INCORRECT**: `pc[p] = "waiting" => Lock(p)`  (references action Lock)
+
+   **FOR LIVENESS PROPERTIES** (type: "liveness"): 
+   - **MUST** be TEMPORAL FORMULAS (describe execution traces)
+   - **MUST** use temporal operators (`<>`, `~>`) to express "eventually" or "leads-to"
+   - **MAY** use both primed and unprimed variables as needed
+   - **CORRECT**: `EventualAcquisition == ∀p ∈ Proc : (pc[p] = "waiting") ~> (pc[p] = "critical")` 
+   - **INCORRECT**: `EventualAcquisition == pc[t] = "waiting"`  (missing temporal aspect)
+
+5. **Constraint Compliance**:
+   - Use ONLY variables, constants, and operators that exist in the specification
+   - Generate complete, syntactically valid TLA+ invariant definitions
+   - Maintain the exact invariant names from templates
+
+6. **Output format**: Return a JSON object containing an array of complete TLA+ invariant definitions
+
+7. **EXACT naming requirement**: You MUST use the exact invariant names specified in the templates above. Do not create your own names.
+
+## Example Output Format
+
+```json
+{
+  "invariants": [
+    "MutualExclusion == Cardinality({t \\in Threads : pc[t] = \"critical\"}) <= 1",
+    "LockConsistency == (lock_state = TRUE) <=> (\\E t \\in Threads : pc[t] = \"critical\")",
+    "EventualAcquisition == \\A t \\in Threads : (pc[t] = \"waiting\") ~> (pc[t] = \"critical\")"
+  ]
+}
+```
+
+**CRITICAL REQUIREMENTS**: 
+- **PROPERTY TYPE AWARENESS**: Check each invariant's type field - safety properties MUST be state predicates, liveness properties MUST be temporal formulas
+- **SAFETY PROPERTIES**: Use ONLY unprimed variables, NO temporal operators (`[]`, `<>`, `~>`)
+- **LIVENESS PROPERTIES**: MUST use temporal operators (`<>`, `~>`) to express "eventually" or "leads-to" relationships
+- **SEMANTIC PRESERVATION**: Each translated invariant MUST verify the same safety/liveness property as the original template
+- **CREATIVE ADAPTATION**: Do NOT simply omit invariants - find creative ways to express the same property using available specification elements
+- **COMPLETENESS**: Aim to translate ALL invariants by understanding their semantic intent, not just their syntactic form
+- Use ONLY variables, constants, and operators that exist in the provided specification
+- Use EXACTLY the invariant names from the templates (MutualExclusion, LockConsistency, DeadlockFreedom, ThreadOwnership, GuardLifecycle, EventualAcquisition)
+- Return ONLY valid JSON, no explanatory text before or after
+- Each array element must be a complete TLA+ invariant definition: "InvariantName == <expression>"
+- For complex invariants, you may use multiline format within the JSON string (use actual line breaks)
+- For simple invariants, single line format is preferred
+- **LAST RESORT**: Only omit an invariant if its core concept is fundamentally incompatible with the specification's design
+- **CRITICAL JSON ESCAPING RULES**: 
+  - TLA+ operators like `\A`, `\E`, `\in` contain ONE backslash in the final TLA+ code
+  - In JSON strings, use EXACTLY ONE backslash escape: write `"\\A"` to get `\A` in TLA+
+  - **DO NOT double-escape**: `"\\\\A"` is WRONG and will produce `\\A` in TLA+
+  - **CORRECT**: `"MutualExclusion == \\A t \\in Threads : pc[t] = \"critical\""`
+  - **WRONG**: `"MutualExclusion == \\\\A t \\\\in Threads : pc[t] = \"critical\""`
+- Start your response immediately with the opening brace {

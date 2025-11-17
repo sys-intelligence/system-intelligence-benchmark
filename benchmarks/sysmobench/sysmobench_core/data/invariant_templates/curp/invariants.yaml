@@ -1,0 +1,77 @@
+# High-Quality Invariants for Xline/CURP Systems
+# Based on deep analysis of Xline CURP implementation with concrete state predicates
+
+invariants:
+  # Safety Invariant
+  - name: "SpeculativeConflictInv"
+    type: "safety"
+    natural_language: "Conflicting commands cannot coexist in speculative pools"
+    formal_description: "Commands operating on the same key cannot simultaneously exist in any replica's speculative pool."
+    tla_example: |
+      SpeculativeConflictInv ==
+        \A r \in replicas :
+          \A cmd1, cmd2 \in specPools[r] :
+            (cmd1.key = cmd2.key) => (cmd1 = cmd2)
+
+  - name: "UncommittedValidityInv"
+    type: "safety"
+    natural_language: "Uncommitted commands are valid"
+    formal_description: "Uncommitted commands only contain valid commands."
+    tla_example: |
+      UncommittedValidityInv ==
+        \A i \in 1..Len(uncommittedCmds) :
+          uncommittedCmds[i] \in proposedCmds
+
+  - name: "SpeculativeValidityInv"
+    type: "safety"
+    natural_language: "Speculative commands are valid"
+    formal_description: "Speculative commands only contain valid commands."
+    tla_example: |
+      SpeculativeValidityInv ==
+        \A r \in replicas :
+          specPools[r] \subseteq proposedCmds
+
+  - name: "CommittedValidityInv"
+    type: "safety"
+    natural_language: "Committed commands are valid"
+    formal_description: "Committed commands only contain valid commands."
+    tla_example: |
+      CommittedValidityInv ==
+        \A i \in 1..Len(committedCmds) :
+          committedCmds[i] \in proposedCmds
+
+  - name: "CommitMessageValidityInv"
+    type: "safety"
+    natural_language: "Commit messages contain only committed commands"
+    formal_description: "Commands in commit messages are actually committed."
+    tla_example: |
+      CommitMessageValidityInv ==
+        \A r \in replicas :
+          commitMsgs[r] \subseteq {cmd \in commands : 
+            GetIdxInSeq(committedCmds, LAMBDA t: t = cmd) # 0}
+
+  # Liveness Properties
+  - name: "EventualCommitLiveness"
+    type: "liveness"
+    natural_language: "Proposed commands eventually get committed"
+    formal_description: "All proposed commands eventually appear in the committed sequence."
+    tla_example: |
+      EventualCommitLiveness ==
+        \A cmd \in commands :
+          (cmd \in proposedCmds) ~>
+            (GetIdxInSeq(committedCmds, LAMBDA t: t = cmd) # 0)
+
+  - name: "SpeculativeEmptyLiveness"
+    type: "liveness"
+    natural_language: "Committed commands are eventually removed from speculative pools"
+    formal_description: "Commands that have been committed are eventually garbage collected from all speculative pools."
+    tla_example: |
+      SpeculativeEmptyLiveness ==
+        \A cmd \in commands : \A r \in replicas :
+          (cmd \in commitMsgs[r]) ~>
+            (cmd \notin specPools[r])
+
+metadata:
+  total_invariants: 7
+  safety_invariants: 5
+  liveness_invariants: 2

@@ -1,0 +1,120 @@
+Logs are emitted in TSV format. Each log represents one distributed execution with events from multiple nodes.
+
+## 1) Line envelope (outer format)
+
+A Raft log record may appear in **either** of these outer wrappers; in **both cases the Raft message is the string payload we call `msg`**.
+
+* **JSON (Zap) wrapper (etcd server):** one JSON object per line. Key fields:
+
+  * `level`: `"debug"|"info"|"warn"|"error"`.
+  * `ts`: ISO8601 timestamp (or numeric seconds in some components).
+  * `logger`: often `"raft"` when wrapping raft messages.
+  * `caller`: file\:line (commonly `etcdserver/zap_raft.go:77`).
+  * `msg`: **the Raft message string** to parse. ([GitHub][1])
+
+* **Plaintext wrapper (legacy/other deployments):** free‑form prefix, then **`raft:`** and the Raft message:
+
+  * Example prefix styles:
+
+    * `YYYY-MM-DD HH:MM:SS.ffffff I | raft: <msg>` (systemd/etcd output). ([GitHub][2])
+    * `raftYYYY/MM/DD HH:MM:SS INFO: <msg>` (older format). ([GitHub][3])
+
+**Parsing rule:** detect wrapper; extract `msg` = the substring after `msg` (JSON) **or** after `raft:` / `INFO:` (plaintext).
+
+---
+
+## 2) Identifiers and numeric fields inside `msg`
+
+* **Node IDs and peer IDs** are printed with `%x` (lower‑case hexadecimal, no `0x`). Treat as opaque hex strings. Terms, indexes, votes are decimal integers. ([Chromium Git Repositories][4])
+* **Message type names** are literal Raft pb.MessageType identifiers (e.g., `MsgVote`, `MsgVoteResp`, `MsgPreVote`, `MsgApp`, `MsgAppResp`, `MsgHeartbeat`, `MsgHeartbeatResp`, `MsgSnap`, `MsgUnreachable`, `MsgTimeoutNow`, `MsgReadIndex`, `MsgReadIndexResp`, `MsgHup`, `MsgBeat`, `MsgTransferLeader`). (All appear in log strings below.) ([Chromium Git Repositories][4])
+* Common bracketed attribute blocks: `[logterm: N, index: N]`, `[term: N]`, `[commit: N]`, `[lastindex: N, lastterm: N]`, and configuration strings. ([Chromium Git Repositories][4])
+
+---
+
+## 3) Canonical `msg` patterns (normalize with regex)
+
+Below, `ID` = `[0-9a-f]+`, `N` = `\d+`. Use the left‑hand label as the event kind.
+
+**Initialization**
+
+* `newRaft ID [peers: \[(?<peers>[0-9a-f,]+)?\], term: (?<term>N), commit: (?<commit>N), applied: (?<applied>N), lastindex: (?<lastindex>N), lastterm: (?<lastterm>N)]` ([Chromium Git Repositories][5])
+
+**State transitions**
+
+* `(?<self>ID) became follower at term (?<term>N)`
+* `(?<self>ID) became candidate at term (?<term>N)`
+* `(?<self>ID) became pre-candidate at term (?<term>N)`
+* `(?<self>ID) became leader at term (?<term>N)` ([Chromium Git Repositories][4])
+
+**Election start**
+
+* `(?<self>ID) is starting a new election at term (?<term>N)` ([Chromium Git Repositories][4])
+
+**Vote requests (sent)**
+
+* `(?<self>ID) \[logterm: (?<logterm>N), index: (?<index>N)\] sent (?<msg>(MsgVote|MsgPreVote)) request to (?<to>ID) at term (?<term>N)` ([Chromium Git Repositories][4])
+
+**Vote responses (received)**
+
+* `(?<self>ID) received (?<msg>(MsgVoteResp|MsgPreVoteResp)) from (?<from>ID) at term (?<term>N)`
+* `(?<self>ID) received (?<msg>(MsgVoteResp|MsgPreVoteResp)) rejection from (?<from>ID) at term (?<term>N)`
+* `(?<self>ID) has received (?<granted>N) (?<msg>(MsgVoteResp|MsgPreVoteResp)) votes and (?<rejected>N) vote rejections` ([Chromium Git Repositories][4])
+
+**Lease / higher-term handling**
+
+* `(?<self>ID) \[logterm: (?<self_logterm>N), index: (?<self_index>N), vote: (?<vote>ID)\] ignored (?<msg>(MsgVote|MsgPreVote)) from (?<from>ID) \[logterm: (?<from_logterm>N), index: (?<from_index>N)\] at term (?<term>N): lease is not expired \(remaining ticks: (?<ticks>N)\)` ([Chromium Git Repositories][4])
+* `(?<self>ID) \[term: (?<self_term>N)\] received a (?<msg>\w+) message with higher term from (?<from>ID) \[term: (?<from_term>N)\]` ([Chromium Git Repositories][4])
+
+**Proposal dropped (no leader / forwarding disabled)**
+
+* `(?<self>ID) no leader at term (?<term>N); dropping proposal`
+* `(?<self>ID) not forwarding to leader (?<leader>ID) at term (?<term>N); dropping proposal` ([Chromium Git Repositories][4])
+
+**AppendEntries rejection (follower → leader)**
+
+* `(?<self>ID) \[logterm: (?<self_logterm>N), index: (?<self_index>N)\] rejected MsgApp \[logterm: (?<msg_logterm>N), index: (?<msg_index>N)\] from (?<from>ID)` ([Chromium Git Repositories][4])
+
+**TimeoutNow / election by transfer**
+
+* `(?<self>ID) \[term (?<term>N)\] received MsgTimeoutNow from (?<from>ID) and starts an election to get leadership\.` ([Chromium Git Repositories][4])
+
+**Leadership transfer**
+
+* `(?<self>ID) \[term (?<term>N)\] starts to transfer leadership to (?<to>ID)`
+* `(?<self>ID) \[term (?<term>N)\] abort previous transferring leadership to (?<prev>ID)`
+* `(?<self>ID) sends MsgTimeoutNow to (?<to>ID) immediately as (?<to2>ID) already has up-to-date log` (note: `to2` equals `to`) ([Chromium Git Repositories][4])
+
+**Read index**
+
+* `(?<self>ID) invalid format of MsgReadIndexResp from (?<from>ID), entries count: (?<count>N)` ([Chromium Git Repositories][4])
+
+**Snapshots**
+
+* `(?<self>ID) \[commit: (?<commit>N)\] restored snapshot \[index: (?<index>N), term: (?<term>N)\]`
+* `(?<self>ID) \[commit: (?<commit>N)\] ignored snapshot \[index: (?<index>N), term: (?<term>N)\]`
+* Fast‑forward on restore (leader viewpoint):
+  `(?<self>ID) \[commit: (?<commit>N), lastindex: (?<lastindex>N), lastterm: (?<lastterm>N)\] fast-forwarded commit to snapshot \[index: (?<index>N), term: (?<term>N)\]` ([Chromium Git Repositories][4])
+
+**Configuration changes**
+
+* `(?<self>ID) switched to configuration (?<conf>.+)` — `conf` string renders voters/learners sets (e.g., `voters=(...) learners=(...)`). ([Chromium Git Repositories][4])
+
+**Debug‑level transport/progress notes** (present only when debug enabled)
+
+* `(?<self>ID) snapshot (succeeded|failed), resumed sending replication messages to (?<peer>ID) \[(?<progress>.+)\]`
+* `(?<self>ID) failed to send message to (?<peer>ID) because it is unreachable \[(?<progress>.+)\]`
+* `(?<self>ID) \[term (?<term>N)\] transfer leadership to (?<to>ID) is in progress; dropping proposal`
+* `(?<self>ID) ignoring MsgHup because already leader` ([Chromium Git Repositories][4])
+
+**Errors / Panics (rare but present)**
+
+* `unexpected error getting unapplied entries (...)` (panic)
+* `(?<self>ID) stepped empty MsgProp` (panic)
+* `(?<self>ID) state.commit (?<commit>N) is out of range \[(?<lo>N), (?<hi>N)\]` (panic)
+* `(?<self>ID) is sending append in unhandled state (?<state>\w+)` (panic) ([Chromium Git Repositories][4])
+
+---
+
+## 4) Severity levels (inner semantics)
+
+* The Raft library emits **Info**, **Warning**, **Debug**, **Error**, and occasionally **Panic** messages; wrappers surface them as `level` (JSON) or mapped to `I|W|E` (plaintext). Do **not** assume ordering purely by level. ([Chromium Git Repositories][4])

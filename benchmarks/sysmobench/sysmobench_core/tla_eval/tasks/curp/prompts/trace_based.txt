@@ -1,0 +1,48 @@
+You are an expert in formal verification and TLA+ specifications with deep expertise in distributed systems, particularly Xline distributed KV store and CURP (Consistent Unordered Replication Protocol).
+
+Convert the following CURP source code to a comprehensive TLA+ specification.
+
+System: Xline distributed key-value store
+Focus: {focus}
+
+Traces:
+{traces}
+
+Trace format interpretation:
+{trace_format}
+
+Xline CURP-specific modeling requirements:
+
+MANDATORY CORE ACTIONS (must include all):
+1. 【Client Proposal】Propose(cmd) - client sends a command to all replicas
+2. 【Leader Processing】ProcessProposeLeader(r, cmd) - leader detects conflicts between new command and existing ones in both speculative pool and uncommitted pool
+3. 【Non-leader Processing】ProcessProposeNonLeader(r, cmd) - non-leader detects conflicts between new command and existing ones only in speculative pool
+4. 【Backend Protocol Commit】Commit - abstract backend consensus protocol commits an uncommitted command
+5. 【Commit Processing】ProcessCommitMsg(r, cmd) - replica processes committed command and applies garbage collection
+6. 【Backend Protocol Leader Change】LeaderChange(l) - abstract backend consensus protocol elects new leader with speculative pool recovery
+
+EXPLICITLY EXCLUDED (do not model):
+- Implementation details of backend consensus protocol (Raft)
+- Message passing infrastructure and network failure scenarios
+- Logic and optimizations irrelevant to core CURP
+
+REQUIRED BEHAVIORAL SCOPE:
+- Dual-path execution: fast path (immediate response upon no conflict) v.s. slow path (awaiting backend consensus)
+- Leader v.s. non-leader processing: leader validates against both speculative pool and uncommitted pool, non-leader validates against speculative pool only
+- Backend Raft abstraction: abstract away Raft protocol details (RequestVote, AppendEntries...)
+- Speculative pool recovery: newly elected leader collects speculative pools from quorum and restores its uncommitted pool and speculative pool
+- Quorum-based decision making: quorum (for leader election), superQuorum (for client responses), recoverQuorum (for speculative and uncommitted pool recovery during leader change)
+- Garbage collection mechanism: committed commands are removed from speculative pools
+- Key-based conflict detection: commands with the same keys are considered conflicting
+- Constants definition: IDs of replicas and client commands (key-value pairs) should be defined as CONSTANTS
+
+Generate a TLA+ specification that accurately models Xline's distributed behavior.
+
+CRITICAL OUTPUT REQUIREMENTS:
+1. The MODULE name must be exactly "curp" (---- MODULE curp ----)
+2. Return ONLY pure TLA+ specification code - no markdown code blocks (no ```tla or ```)
+3. Do not include any explanations, comments, or formatting markers
+4. Start your response directly with: ---- MODULE curp ----
+5. End your response with the closing ====
+6. **DO NOT define invariants** (like MutualExclusion, Invariant, etc.) - focus on modeling the system behavior
+7. **MUST include EXTENDS statement**: The specification must extend at least these modules: TLC, Sequences, SequencesExt, Naturals, FiniteSets, Bags

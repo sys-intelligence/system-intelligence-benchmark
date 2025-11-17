@@ -1,0 +1,86 @@
+# General
+.DS_Store
+*.log
+*~
+.vscode/
+.idea/
+.env
+
+# Build output
+results/
+target/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+pip-selfcheck.json
+*.egg-info/
+
+# Maven
+.mvn/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.m2/
+archive/
+lib/
+tools/cfa/input/test
+tools/cfa/output/test
+
+# Embedded git repositories
+systems/etcd/raft/
+systems/asterinas/asterinas/
+
+# TLA+ generated files
+*.st
+*.fp
+states/
+traces/
+**/output/
+generation_summary.json
+specula
+
+# claude
+CLAUDE.md
+TLA+Parser.md
+.claude/
+
+# Java compiled files
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+
+# Test files and debug files
+tools/cfa/Test*.java
+tools/cfa/*Test*.java
+tools/cfa/*Test*.class
+tools/cfa/classpath.txt
+tools/cfa/test_*.tla
+tools/cfa/*Test*.tla
+tools/cfa/input/debug_*.tla
+tools/cfa/input/test_*.tla
+data/repositories/
+data/sys_traces
+run_batch_experiments.sh
+local_env_setup.sh
+
+data/spec
+data/source
+data/gold_spec
+data/trace_validation
+data/error_classification
+data/convertor
+agents/specula
+tlaplus/

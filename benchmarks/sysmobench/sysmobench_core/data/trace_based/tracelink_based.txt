@@ -1,0 +1,54 @@
+In the traces, the individual node instances can be identified by their different "self" values.
+
+*Object information*
+
+Record object:
+
+* **`archetypeName`**: string — MPCal archetype of the executing process (e.g., `"AServer"`, `"AServerAppendEntries"`).
+* **`self`**: string — process identifier **within the archetype**. *(Actor identity for clocks is the pair `(archetypeName, self)`.)*
+* **`clock`**: array of entries, each entry is **`[[archetypeName, self], counter]`** (i.e., vector‑clock map from an **actor ID tuple** to a non‑negative integer).
+* **`csElements`**: ordered array of **event objects** (see below).
+* **`isAbort`**: boolean — `true` means `abort()`; `false` means `commit()`.
+* **`startTime`**, **`endTime`**: ISO‑8601 timestamps (wall‑clock metadata; not used by the TLA+ semantics).
+
+Event object (`csElements[i]`):
+
+* **`tag`**: `"read"` | `"write"`.
+* **`name`**: object describing the accessed variable:
+
+  * **`name`**: string — state variable name; for the program counter this is **`.pc`**.
+  * **`prefix`**: string — archetype/module prefix (usually equals `archetypeName`; **empty** for `.pc`).
+  * **`self`**: string — same as the record’s `self` (the instance id).
+* **`indices`**: array of strings — zero or more **TLA+ literal values as text** used as index/path elements.
+* **`value`**: string — **TLA+ literal value as text** that was read or written (e.g., `TRUE`, `"follower"`, numbers, records/functions encoded in TLA+ syntax).
+* **`oldValue`** *(write‑only; optional)*: string — prior value as TLA+ text; some traces use the sentinel `defaultInitValue` for “uninitialized”.
+
+**Notes linking JSON to the paper’s grammar:**
+
+* JSON **record** = `(clock, self, event*, end)`. Here, `end` is derived from `isAbort`.
+* JSON **event** with `tag:"read"` ↔ `value ← read(var, idx*)`; with `tag:"write"` ↔ `write(var, idx*, old?) ← value`.
+* The accessed **variable** is identified by `(name.prefix, name.name, name.self)`; `.pc` has empty `prefix` and is read at record start and written at record end. (Matches the paper’s `.pc` rule.)
+* **Vector clock** is represented explicitly as a list of `[[archetypeName, self], counter]` pairs; **process identity** in practice is that tuple. (The paper treats `self` as the index; the implementation disambiguates across archetypes by including both.)
+
+---
+
+*Required interpretation rules*
+
+1. **Merge** all JSON records from all nodes/files into one multiset.
+2. **Topologically sort** records in **any order consistent with the vector‑clock partial order** (do **not** rely on lexical/file order). Enforce the clock discipline: own coordinate increases by 1; no coordinate references “future” events.
+3. For each record:
+   a) Expect a `.pc` **read** as the first event; retain it as a label/phase tag.
+   b) Apply each **event** in `csElements` in order:
+
+   * `read`: treat as an **observation** that `var[idx*] == value` at this point.
+   * `write`: if the record **commits**, update the abstract state so that `var[idx*] := value`. If `oldValue` is present, it must match the pre‑state for local variables; ignore `oldValue` for mapping‑macro endpoints.
+     c) If `isAbort == true`, **discard all writes** (no state change), but keep reads as observations.
+     d) Expect a `.pc` **write** as the last event to the next label.
+
+---
+
+*Other important details*
+
+* **Indices (`idx*`)** model **mapping macros** (e.g., network/channel endpoints) and are part of the variable access path. Reads/writes without indices target the whole variable.
+* **`oldValue`**: optional; useful for locals; **not required** for mapping macros and **not well‑defined** there.
+* **Vector clocks**: start from empty; the domain grows as actors appear; each actor’s coordinate is **gap‑free** (increments by 1 per record).

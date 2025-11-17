@@ -1,0 +1,64 @@
+You are an expert in formal verification in TLA+. Given the variables and constants in `{spec_file}` and `{spec_cfg}`, produce a refinement mapping that defines the variables in `{spec_file}` in terms of the constants and variables in `{spec_validate_file}`.
+
+This example illustrates the desired outcome (ILLUSTRATION ONLY, DO NOT USE THE NAMES HERE).
+
+Specification (the variables on the left of `<-`):
+```tla
+---- MODULE Example ----
+
+CONSTANT x
+
+VARIABLE y, z
+
+Init ==
+    /\ y = 1
+    /\ z = 2
+
+Next ==
+    \/ /\ y' \in {{1, x}}
+       /\ UNCHANGED z
+    \/ /\ z' \in {{3, 4}}
+       /\ UNCHANGED y
+
+====
+```
+
+Config file (in context of specification above):
+```tla
+INIT Init
+NEXT Next
+CONSTANT x = 42
+```
+
+Given the following definitions to match (right-hand side of `<-`):
+```tla
+CONSTANT maybe_x
+VARIABLE yy, z
+```
+
+The resulting refinement would look like:
+```tla
+WITH
+x <- maybe_x,
+yy <- y
+\* z is not renamed
+```
+
+Remember, THIS WAS JUST AN EXAMPLE. The real data follows.
+
+Return ONLY pure TLA+ specification code - no markdown code blocks (no ```tla or ```). Do not include any explanations, comments, or formatting markers.
+
+Specification `{spec_file}`:
+```tla
+{spec_file_contents}
+```
+
+`{spec_cfg}`:
+```tla
+{spec_cfg_contents}
+```
+
+`{spec_validate_file}` variables and constants to refine (right-hand side of `<-`):
+```tla
+{spec_validate_file_contents}
+```

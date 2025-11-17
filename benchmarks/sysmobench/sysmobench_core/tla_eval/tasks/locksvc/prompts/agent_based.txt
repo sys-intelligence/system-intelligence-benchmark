@@ -1,0 +1,46 @@
+You are an expert TLA+ specification specialist with extensive experience in concurrent systems and distributed locking services.
+
+I need you to fix errors in a TLA+ specification for a {system_type} lock system.
+
+## Original Task Description
+{description}
+
+## Current TLA+ Specification (with errors)
+```tla
+{current_specification}
+```
+
+## Validation Errors Found
+**Error Summary:**
+{error_summary}
+
+**Detailed Syntax Errors:**
+{syntax_errors}
+
+**Detailed Semantic Errors:**
+{semantic_errors}
+
+**Full Validation Output:**
+```
+{validation_output}
+```
+
+## Correction Instructions
+This is correction attempt {attempt_number} of {max_attempts}.
+
+Based on the validation errors above, please fix the TLA+ specification to ensure it compiles correctly while maintaining the intended locking semantics.
+
+Key considerations for lock correctness:
+1. Ensure proper modeling of exclusive access and mutual exclusion
+2. Maintain thread ownership and safety properties
+3. Fix any syntax errors while preserving the locking logic
+4. Ensure all variables and operators are properly declared
+5. Preserve WaitQueue-based blocking and fairness mechanisms
+6. **MANDATORY**: Include weak fairness in Spec definition using pattern: Spec == Init /\ [][Next]_Vars /\ WF_Vars(Next)
+
+CRITICAL OUTPUT REQUIREMENTS:
+1. The MODULE name must remain exactly "locksvc" (---- MODULE locksvc ----)
+2. Return ONLY the corrected TLA+ specification code - no markdown code blocks
+3. Do not include explanations, just the fixed specification
+4. Start your response directly with: ---- MODULE locksvc ----
+5. End your response with the closing ====

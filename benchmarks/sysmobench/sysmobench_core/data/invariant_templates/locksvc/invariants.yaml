@@ -1,0 +1,70 @@
+invariants:
+  - name: "LockSafety"
+    type: "safety"
+    natural_language: "At most one client holds the lock at any time."
+    formal_description: "The fundamental safety property for distributed locking: mutual exclusion among clients"
+    tla_example: |
+      LockSafety ==
+          \A i, j \in ClientSet:
+              (/\ i # j
+               /\ hasLock[i])
+              => ~ hasLock[j]
+
+  - name: "NoPriorityInversion"
+    type: "liveness"
+    natural_language: "A later client cannot finish its critical section before an earlier waiter due to inversion."
+    formal_description: "Priority inversion prevention: ensures temporal ordering of critical section completion relative to acquisition attempts"
+    tla_example: |
+      NoPriorityInversion ==
+          \A i, j \in NodeSet :
+              i # j =>
+              [](
+                  /\ pc[i] = "acquireLock"
+                  /\ pc[j] = "criticalSection"
+                  => ~<>(
+                      /\ pc[i] = "unlock"
+                      /\ pc[j] = "criticalSection"
+                  )
+              )
+
+  - name: "ProgressOK"
+    type: "liveness"
+    scope: "per-node"
+    natural_language: "Each node that tries to acquire eventually enters CS, then eventually unlocks."
+    formal_description: "Per-node progress guarantee: every client attempting to acquire the lock will eventually complete the full lock-use-unlock cycle"
+    tla_example: |
+      ProgressOK(i) == pc[i] = "acquireLock" ~> (pc[i] = "criticalSection" ~> pc[i] = "unlock")
+
+  - name: "SystemLiveness"
+    type: "liveness"
+    natural_language: "All nodes satisfy ProgressOK."
+    formal_description: "System-wide liveness guarantee: all clients in the system will make progress through the locking protocol"
+    tla_example: |
+      Liveness == \A i \in NodeSet: ProgressOK(i)
+  
+  - name: "ServerIsIdle"
+    type: "liveness"
+    natural_language: "Server may idle (no state change), allowing stuttering steps."
+    formal_description: "Server idling property: allows the lock server to remain in a waiting state without processing requests, enabling stuttering steps in the specification"
+    tla_example: |
+      ServerIsIdle ==
+          \E self \in ServerSet :
+              /\ pc[self] = "serverReceive"
+              /\ UNCHANGED vars
+
+  - name: "SpecNoDeadlock"
+    type: "liveness"
+    natural_language: "Initialization, step relation with idling, and weak fairness prevent deadlock."
+    formal_description: "Specification-level deadlock freedom: the combination of initial states, next-state relation, and fairness assumptions ensures the system cannot reach a deadlocked state"
+    tla_example: |
+      SpecNoDeadlock ==
+          /\ Init
+          /\ [][Next \/ ServerIsIdle]_vars
+          /\ \A self \in ServerSet : WF_vars(Server(self))
+          /\ \A self \in ClientSet : WF_vars(client(self))
+
+
+metadata:
+  total_invariants: 6
+  safety_invariants: 1
+  liveness_invariants: 5

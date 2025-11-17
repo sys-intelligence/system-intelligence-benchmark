@@ -1,0 +1,71 @@
+You are an expert in formal verification and TLA+ specifications with deep expertise in concurrent systems and synchronization primitives.
+
+Convert the following Asterinas OS spinlock traces to a comprehensive TLA+ specification.
+
+System: Asterinas OS spinlock synchronization primitive
+Focus: {focus}
+
+Traces:
+{traces}
+
+Trace format interpretation:
+{trace_format}
+
+Spinlock modeling requirements:
+
+MANDATORY CORE ACTIONS (must include all):
+1. 【Lock/Unlock Operations】Distinguish between lock() and try_lock() with different semantics:
+   - lock(): blocking call that spins until acquisition (idle → trying → spinning → trying → ... → locked)
+   - try_lock(): non-blocking call that returns immediately (idle → trying → locked OR idle → trying → idle)
+2. 【Atomic CAS】compare_exchange operation on AtomicBool (false→true acquire, store false release)
+3. 【Busy-Wait Loop】spin_loop() hint during contention, continuous polling until acquisition (only for lock(), NOT try_lock())
+4. 【Guard Lifecycle】SpinLockGuard creation on successful acquisition, automatic unlock on Drop
+5. 【Thread Interleaving】Multiple threads competing for same lock with different orderings
+6. 【Memory Ordering】Acquire ordering for lock acquisition, Release ordering for unlock
+
+CRITICAL SEMANTIC DISTINCTION:
+- **lock() METHOD**: Blocking semantics - thread MUST eventually acquire the lock through spinning
+  * States: idle → trying → spinning → trying → ... → locked → idle
+  * On CAS failure: transitions to "spinning" state and keeps retrying
+  * Never gives up until lock is acquired
+  
+- **try_lock() METHOD**: Non-blocking semantics - thread attempts once and gives up if failed
+  * States: idle → trying → (locked | idle) 
+  * On CAS failure: transitions DIRECTLY back to "idle" state (no spinning)
+  * Returns immediately with success/failure indication
+
+MODELING REQUIREMENTS FOR DUAL SEMANTICS:
+- Add a variable to track the type of lock request (blocking vs non-blocking)
+- Model different state transitions based on request type
+- Ensure try_lock() requests NEVER enter "spinning" state
+- Ensure lock() requests DO enter "spinning" state on contention
+
+EXPLICITLY EXCLUDED (do not model):
+- PreemptDisabled vs LocalIrqDisabled guard behaviors (G type parameter)
+- Arc-based locking (lock_arc method)
+- UnsafeCell implementation details
+- get_mut() zero-cost access
+- Debug formatting and trait implementations  
+- RAII guard type variations (lifetime management complexities)
+
+REQUIRED BEHAVIORAL SCOPE:
+- Simple AtomicBool state: false (unlocked) ↔ true (locked)  
+- Basic fairness under fair thread scheduling (no permanent starvation)
+- Critical section mutual exclusion enforcement
+- Compare-and-exchange retry loop for contention handling
+- Thread can acquire lock multiple times only if it releases between acquisitions
+
+Generate a TLA+ specification that accurately models the spinlock's concurrent behavior.
+
+CRITICAL OUTPUT REQUIREMENTS:
+1. The MODULE name must be exactly "spin" (---- MODULE spin ----)
+2. Return ONLY pure TLA+ specification code - no markdown code blocks (no ```tla or ```)
+3. Do not include any explanations, comments, or formatting markers
+4. Start your response directly with: ---- MODULE spin ----
+5. End your response with the closing ====
+6. **DO NOT define invariants** (like MutualExclusion, Invariant, etc.) - only include TypeOK, Init, actions, Next, Spec, and Vars
+7. **MUST include EXTENDS statement**: The specification must extend at least these modules: TLC, Sequences, SequencesExt, Naturals, FiniteSets, Bags
+8. **MANDATORY Spec Definition with Proper Fairness**: The Spec definition MUST include proper fairness assumptions for liveness guarantees. Use the pattern:
+   Spec == Init /\ [][Next]_Vars /\ \A t \in Threads : WF_Vars(Unlock(t))
+   This ensures that any thread holding a lock will eventually release it (critical for liveness properties).
+   (Replace "Vars", "Next", "Threads", and "Unlock" with your actual names)

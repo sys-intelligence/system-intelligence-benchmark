@@ -1,0 +1,35 @@
+# Lock service task configuration
+name: "locksvc"
+description: "PGo-generated lock synchronization service"
+system_type: "distributed"
+language: "go"
+
+# Source code repository information
+repository:
+  url: "https://github.com/DistCompiler/pgo.git"
+  branch: "main"
+  
+# Files to extract from the repository
+source_files:
+  - path: "systems/locksvc/locksvc.go"
+    description: "Lock implementation"
+
+# Default file to use if not specified
+default_source_file: "systems/locksvc/locksvc.go"
+
+# TLA+ specification module name
+specModule: "locksvc"
+
+# Traces folder location
+traces_folder: "data/sys_traces/locksvc"
+trace_format: "tracelink_based"
+
+# Metadata
+metadata:
+  original_project: "DistCompiler/pgo"
+  
+# Phase 3 specific configuration
+phase3:
+  trace_generation: false
+  patch_required: false
+  description: "Lock synchronization verification"

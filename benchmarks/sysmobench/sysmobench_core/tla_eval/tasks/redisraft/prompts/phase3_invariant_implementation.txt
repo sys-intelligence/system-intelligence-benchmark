@@ -1,0 +1,84 @@
+You are a TLA+ expert specializing in distributed systems and RedisRaft node management. Your task is to implement a set of expert-written invariants for the given RedisRaft TLA+ specification.
+
+## Target Specification
+
+$tla_specification
+
+## Invariants to Implement
+
+$invariant_templates
+
+## Implementation Requirements
+
+1. **Deep Analysis**: First, thoroughly understand both the invariant template's semantic intent and the specification's modeling approach:
+   - What RedisRaft node management/safety property does each template aim to verify?
+   - How does the specification represent node states, indices, message IDs, and flags?
+   - What are the semantic equivalents between template concepts and specification implementation?
+
+2. **Semantic Mapping**: For each invariant, identify the conceptual mapping between template and specification:
+   - Template node concepts → Specification's node representation
+   - Template index structure → Specification's index data structures and bounds
+   - Template message ID concepts → Specification's message ordering and monotonicity
+   - Template flag concepts → Specification's flag management and boolean operations
+   - Template node sets → Specification's node constants and domains
+
+3. **Creative Adaptation**: Translate the invariant while preserving its core RedisRaft safety meaning:
+   - **DO NOT** simply replace variable names - understand the underlying node management logic
+   - **DO** redesign the predicate logic to fit the specification's data structure granularity
+   - **DO** use equivalent semantic concepts even if data representations differ
+   - **PRESERVE** the original RedisRaft safety/consistency guarantees without weakening the property
+
+4. **TLA+ Property Type Constraints**:
+   
+   **FOR SAFETY PROPERTIES** (type: "safety"):
+   - **MUST** be STATE PREDICATES (describe single states only)
+   - **NEVER** use primed variables (`next_idx'`, `match_idx'`)
+   - **NEVER** use temporal operators (`[]`, `<>`, `~>`)
+   - **NEVER** reference actions (like `NodeCreate(n)`, `NodeSetNextIndex(n,i)`) - only use state variables
+   - **ONLY** use unprimed variables (`next_idx[n]`, `match_idx[n]`) and constants
+   - **CORRECT**: `IndexBounds == \A n \in nodes : next_idx[n] >= 1 /\ match_idx[n] >= 0` 
+   - **INCORRECT**: `next_idx[n] >= 1 => NodeSetNextIndex(n, i)`  (references action NodeSetNextIndex)
+
+   **FOR LIVENESS PROPERTIES** (type: "liveness"): 
+   - **MUST** be TEMPORAL FORMULAS (describe execution traces)
+   - **MUST** use temporal operators (`<>`, `~>`) to express "eventually" or "leads-to"
+   - **CORRECT**: `EventualProgress == <>(\E n \in nodes : next_idx[n] > 1)` 
+
+5. **Constraint Compliance**:
+   - Use ONLY variables, constants, and operators that exist in the specification
+   - Generate complete, syntactically valid TLA+ invariant definitions
+   - Maintain the exact invariant names from templates
+
+6. **Output format**: Return a JSON object containing an array of complete TLA+ invariant definitions
+
+7. **EXACT naming requirement**: You MUST use the exact invariant names specified in the templates above. Do not create your own names.
+
+## Example Output Format
+
+```json
+{
+  "invariants": [
+    "IndexBoundsConstraint == \\A n \\in nodes : next_idx[n] >= 1 /\\ match_idx[n] >= 0",
+    "MessageIdMonotonicity == \\A n \\in nodes : \\A m1, m2 \\in DOMAIN max_seen_msgid : max_seen_msgid[n] >= 0"
+  ]
+}
+```
+
+**CRITICAL REQUIREMENTS**: 
+- **SEMANTIC PRESERVATION**: Each translated invariant MUST verify the same RedisRaft node management property as the original template
+- **CREATIVE ADAPTATION**: Do NOT simply omit invariants - find creative ways to express the same property using available specification elements
+- **COMPLETENESS**: Aim to translate ALL invariants by understanding their semantic intent, not just their syntactic form
+- Use ONLY variables, constants, and operators that exist in the provided specification
+- Use EXACTLY the invariant names from the templates (preserve exact names for evaluation consistency)
+- Return ONLY valid JSON, no explanatory text before or after
+- Each array element must be a complete TLA+ invariant definition: "InvariantName == <expression>"
+- For complex invariants, you may use multiline format within the JSON string (use actual line breaks)
+- For simple invariants, single line format is preferred
+- **LAST RESORT**: Only omit an invariant if its core concept is fundamentally incompatible with the specification's design
+- **CRITICAL JSON ESCAPING RULES**: 
+  - TLA+ operators like `\A`, `\E`, `\in` contain ONE backslash in the final TLA+ code
+  - In JSON strings, use EXACTLY ONE backslash escape: write `"\\A"` to get `\A` in TLA+
+  - **DO NOT double-escape**: `"\\\\A"` is WRONG and will produce `\\A` in TLA+
+  - **CORRECT**: `"IndexBounds == \\A n \\in nodes : next_idx[n] >= 1"`
+  - **WRONG**: `"IndexBounds == \\\\A n \\\\in nodes : next_idx[n] >= 1"`
+- Start your response immediately with the opening brace {

@@ -1,0 +1,98 @@
+# Invariants for Asterinas RwMutex Systems
+# Includes both generic read-write lock properties and Asterinas-specific features
+
+invariants:
+  # Generic Read-Write Lock Invariants (applicable to all rwlock implementations)
+  - name: "ReaderWriterExclusion"
+    type: "safety"
+    natural_language: "Readers and writers cannot access the data simultaneously"
+    formal_description: "The fundamental safety property: no simultaneous read and write access to protected data"
+    tla_example: |
+      ReaderWriterExclusion ==
+        ~((\E r \in Threads : pc[r] = "reading") /\ (\E w \in Threads : pc[w] = "writing"))
+
+  - name: "MultipleReadersAllowed"
+    type: "safety"
+    natural_language: "Multiple readers can access the data concurrently"
+    formal_description: "Multiple threads can hold read access simultaneously (no MAX_READER limit in modeling)"
+    tla_example: |
+      MultipleReadersAllowed ==
+        Cardinality({t \in Threads : pc[t] = "reading"}) >= 0
+
+  - name: "WriterExclusivity"
+    type: "safety"
+    natural_language: "At most one writer can access the data at any time"
+    formal_description: "Exclusive write access: only one thread can hold write access at any given time"
+    tla_example: |
+      WriterExclusivity ==
+        Cardinality({t \in Threads : pc[t] = "writing"}) <= 1
+
+  - name: "LockStateConsistency"
+    type: "safety"
+    natural_language: "The atomic lock state correctly reflects the current access mode"
+    formal_description: "AtomicUsize bit field state must be consistent with current reader/writer status"
+    tla_example: |
+      LockStateConsistency ==
+        (lock_state & WRITER != 0) <=> (\E t \in Threads : pc[t] = "writing")
+
+  # Asterinas-specific RwMutex Invariants
+  - name: "UpgradeableReaderUniqueness"
+    type: "safety"
+    natural_language: "At most one upgradeable reader can exist at any time"
+    formal_description: "Asterinas-specific: only one thread can hold an upgradeable read lock to avoid deadlocks in upgrade"
+    tla_example: |
+      UpgradeableReaderUniqueness ==
+        Cardinality({t \in Threads : pc[t] = "upread"}) <= 1
+
+  - name: "UpgradeAtomicity"
+    type: "safety"
+    natural_language: "Upgrade from upread to write is atomic and blocks new readers"
+    formal_description: "Asterinas upgrade semantics: during upgrade, new readers are blocked while existing readers continue"
+    tla_example: |
+      UpgradeAtomicity ==
+        \A t \in Threads :
+          (pc[t] = "upgrading") => (lock_state & BEING_UPGRADED != 0)
+
+  - name: "DowngradeAtomicity"
+    type: "safety"
+    natural_language: "Downgrade from write to upgradeable reader is atomic and always succeeds"
+    formal_description: "Asterinas downgrade semantics: writers can atomically downgrade to upgradeable readers (no failure modeling)"
+    tla_example: |
+      DowngradeAtomicity ==
+        \A t \in Threads :
+          (pc[t] = "writing") => CanDowngrade(t) \* Always possible to downgrade from write
+
+  - name: "BeingUpgradedBlocksReaders"
+    type: "safety"
+    natural_language: "BEING_UPGRADED flag blocks new readers during upgrade process"
+    formal_description: "Asterinas upgrade semantics: when BEING_UPGRADED is set, new read() operations are blocked (strict code behavior)"
+    tla_example: |
+      BeingUpgradedBlocksReaders ==
+        (lock_state & BEING_UPGRADED != 0) => 
+          \A t \in Threads : ~CanStartRead(t)
+
+  - name: "MixedWakeStrategy"
+    type: "safety"
+    natural_language: "Mixed wake strategies: wake_one() for reader release, wake_all() for writer/upread release"
+    formal_description: "Asterinas wake strategy: reader release uses FIFO wake_one(), writer/upread release uses wake_all() with competition"
+    tla_example: |
+      MixedWakeStrategy ==
+        /\ (\A t \in Threads : ReaderRelease(t) => FIFOWakeOne())
+        /\ (\A t \in Threads : (WriterRelease(t) \/ UpreadRelease(t)) => WakeAll())
+
+  # Generic Liveness Properties
+  - name: "EventualRelease"
+    type: "liveness"
+    natural_language: "Any thread holding a lock will eventually release it"
+    formal_description: "Under fair scheduling, threads holding any type of lock (read/write/upgradeable) will eventually release it"
+    tla_example: |
+      EventualRelease == \A t \in Threads :
+        (pc[t] = "reading" \/ pc[t] = "writing" \/ pc[t] = "upread") ~>
+        (pc[t] = "idle")
+
+metadata:
+  total_invariants: 10
+  safety_invariants: 9
+  liveness_invariants: 1
+  generic_invariants: 4  # ReaderWriterExclusion, MultipleReadersAllowed, WriterExclusivity, EventualRelease
+  asterinas_specific_invariants: 6  # UpgradeableReaderUniqueness, UpgradeAtomicity, DowngradeAtomicity, BeingUpgradedBlocksReaders, MixedWakeStrategy

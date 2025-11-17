@@ -1,0 +1,69 @@
+# Model configuration file
+# Users configure their models here, then methods use these models
+
+models:
+  # User's OpenAI configuration
+  gpt-4o:
+    provider: "openai"
+    model_name: "gpt-4o"
+    api_key_env: "OPENAI_API_KEY"
+    temperature: 0.7
+    max_tokens: 16000
+    timeout: 1800
+
+  gpt5:
+    provider: "openai"
+    model_name: "gpt-5"
+    api_key_env: "OPENAI_API_KEY"  # or set api_key directly
+    temperature: 1
+    max_tokens: 64000
+    timeout: 1800  # 30 minutes timeout for large TLA+ generation
+    
+  # User's Anthropic configuration  
+  claude:
+    provider: "anthropic"
+    model_name: "claude-sonnet-4-20250514"
+    api_key_env: "ANTHROPIC_API_KEY"
+    temperature: 0.1
+    max_tokens: 64000
+    top_p: 0.9
+
+  deepseek_tencent:
+    provider: "deepseek"
+    url: "https://api.lkeap.cloud.tencent.com/v1"
+    model_name: "deepseek-r1-0528"
+    api_key_env: "DEEPSEEK_TENCENT_API_KEY"
+    temperature: 0.5
+    max_tokens: 32000
+
+  deepseek:
+    provider: "deepseek"
+    url: "https://api.deepseek.com"
+    model_name: "deepseek-reasoner"
+    api_key_env: "DEEPSEEK_API_KEY"
+    temperature: 0.1
+    max_tokens: 64000
+    top_p: 0.9
+
+
+  my_yunwu:
+    provider: "yunwu"
+    url: "https://yunwu.ai/v1"
+    model_name: "gpt-5-2025-08-07"
+    api_key_env: "YUNWU_API_KEY"
+    temperature: 0.1
+    max_tokens: 64000
+    top_p: 0.9
+
+  gemini:
+    provider: "genai"
+    model_name: "gemini-2.5-pro"
+    api_key_env: "GEMINI_API_KEY"
+    temperature: 0.1
+    max_tokens: 64000
+    top_p: 0.9
+    thinking_budget: 32768
+
+
+# Default model to use if not specified
+default_model: "my_yunwu"

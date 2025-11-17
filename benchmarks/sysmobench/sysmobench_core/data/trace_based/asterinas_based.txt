@@ -1,0 +1,29 @@
+Each log represents one distributed execution with events from multiple nodes. Logs are given as TSV translated from JSON.
+
+1. Record schema (per line)
+
+* Each record is a **flat JSON object** with the **six required fields** below. No nesting, arrays, or extra fields were present in the samples.
+
+  * `seq` (integer) — sequence number (non-negative integer).
+  * `thread` (integer) — thread identifier (non-negative integer).
+  * `mutex` (integer) — mutex identifier (non-negative integer).
+  * `state` (string) — lock state label.
+  * `action` (string) — action label.
+  * `actor` (integer) — actor identifier (non-negative integer).
+* All strings are **double-quoted** JSON strings. Numbers are base-10 JSON numbers. No per-record timestamps.
+* Do NOT use these actions as-is as operations in the spec; you should only use built-in operators.
+
+2. Allowed/observed value shapes
+
+* `state`: a short string label. **Observed** values include `"locked"` and `"unlocked"`. (Treat as open set; do not assume this list is exhaustive.)
+* `action`: a short string label in PascalCase. **Observed** values include `"TryAcquireBlocking"`, `"TryAcquireNonBlocking"`, `"AcquireSuccess"`, `"Release"`. (Treat as open set; do not assume this list is exhaustive.)
+
+3. Formatting/whitespace rules
+
+* Each JSON object is contained on a single line.
+* Lines that do **not** start with `{` (e.g., `#` comments or blank lines) should be ignored by parsers.
+* No trailing commas inside JSON objects.
+
+4. Ordering & grouping
+
+* Records appear in file order. Do not assume any additional invariants (e.g., monotonicity/uniqueness of `seq`, relationships between `thread` and `actor`, or specific `state`↔`action` progressions) beyond field presence and types.

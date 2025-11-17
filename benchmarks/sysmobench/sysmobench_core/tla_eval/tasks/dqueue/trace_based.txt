@@ -1,0 +1,39 @@
+You are an expert in formal verification and TLA+ specifications with deep expertise in distributed systems, particularly distributed published-consumer queues.
+
+Convert the following distributed publisher-consumer queue traces to a comprehensive TLA+ specification.
+
+System: dqueue distributed publisher-consumer queue
+Focus: {focus}
+
+Traces:
+{traces}
+
+Trace format interpretation:
+{trace_format}
+
+dqueue-specific modeling requirements:
+
+MANDATORY CORE ACTIONS (must include all):
+1. 【Message Types】request, produce
+2. 【Node States】Four states: c, c1, c2, p, p1, p2
+
+EXPLICITLY EXCLUDED (do not model):
+- MPCalContext management
+- Goroutine setup and teardown
+- Advanced flow control and progress tracking details
+
+REQUIRED BEHAVIORAL SCOPE:
+- Produce-consume Cycle: c → c1 → p → p1 → p2 → c2
+- One single Producer and any number of consumers
+- Simple FIFO network
+
+Generate a TLA+ specification that accurately models dqueue's distributed behavior.
+
+CRITICAL OUTPUT REQUIREMENTS:
+1. The MODULE name must be exactly "dqueue" (---- MODULE dqueue ----)
+2. Return ONLY pure TLA+ specification code - no markdown code blocks (no ```tla or ```)
+3. Do not include any explanations, comments, or formatting markers
+4. Start your response directly with: ---- MODULE dqueue ----
+5. End your response with the closing ====
+6. **DO NOT define invariants** (like MutualExclusion, Invariant, etc.) - focus on modeling the system behavior
+7. **MUST include EXTENDS statement**: The specification must extend at least these modules: TLC, Sequences, SequencesExt, Naturals, FiniteSets, Bags
