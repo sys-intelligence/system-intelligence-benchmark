@@ -114,7 +114,7 @@ For integrating existing, independently-developed benchmark projects while maint
 
 ### Creating New Benchmarks
 > [!NOTE]
-> See [custom_benchmark.md](doc/custom_benchmark.md) for step-by-step guidelines.
+> See [custom_benchmark.md](doc/creating_benchmark.md) for step-by-step guidelines.
 
 To create a new benchmark, follow these steps:
 1. Create a new benchmark directory in `benchmarks/`
