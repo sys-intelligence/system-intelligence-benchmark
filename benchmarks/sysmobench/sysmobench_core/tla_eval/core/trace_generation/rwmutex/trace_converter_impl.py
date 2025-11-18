@@ -320,9 +320,10 @@ CHECK_DEADLOCK FALSE
             base_path = self.project_root / "output/trace_validation/rwmutex/system_trace_gen/specula_claude"
             working_dir = str(base_path)
 
-            # Build command
+            # Build command with project-relative tla2tools.jar path
+            tla_jar = str(self.project_root / "lib" / "tla2tools.jar")
             cmd = [
-                "java", "-cp", "/home/ubuntu/LLM_gen/spec_rag_system/tlc_tools/tla2tools.jar",
+                "java", "-cp", tla_jar,
                 "tlc2.TLC", "-config", "specTrace.cfg", "specTrace.tla"
             ]
 

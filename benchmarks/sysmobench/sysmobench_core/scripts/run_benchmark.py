@@ -407,7 +407,8 @@ def _call_evaluator_with_files(evaluator, generation_result, task_name, method_n
     return evaluate_method(*args, **kwargs)
 
 
-def run_single_benchmark(task_name: str, method_name: str, model_name: str, 
+def run_single_benchmark(task_name: str, method_name: str, model_name: str,
+                        language: str = "TLA+",
                         evaluation_type: str = "syntax",
                         metric: Optional[str] = None,
                         phase: Optional[int] = None,  # Legacy support
@@ -419,21 +420,22 @@ def run_single_benchmark(task_name: str, method_name: str, model_name: str,
                         **metric_params) -> dict:
     """
     Run benchmark for a single task/method/model combination.
-    
+
     Args:
         task_name: Name of the task
-        method_name: Name of the generation method  
+        method_name: Name of the generation method
         model_name: Name of the model
+        language: Specification language ("TLA+", "Alloy", "PAT")
         evaluation_type: Evaluation type ("syntax", "semantics", "consistency")
         metric: Specific metric to run (if None, uses default for evaluation_type)
         phase: Legacy evaluation phase (1=syntax, 2=semantics, 3=consistency)
         source_file: Optional specific source file
         traces_folder: Optional specific traces folder
-        spec_file: Optional path to existing TLA+ specification file
-        config_file: Optional path to existing TLC configuration file
+        spec_file: Optional path to existing specification file
+        config_file: Optional path to existing configuration file
         generation_config: Optional generation configuration
         metric_params: Additional parameters for specific metrics
-        
+
     Returns:
         Dictionary with benchmark results
     """
@@ -471,8 +473,10 @@ def run_single_benchmark(task_name: str, method_name: str, model_name: str,
     try:
         # Load task
         task_loader = get_task_loader()
-        task = task_loader.load_task(task_name, source_file, traces_folder)
-        logger.info(f"Loaded task: {task.task_name} ({task.system_type})")
+        # Normalize language parameter
+        spec_language = language.lower().replace("+", "").strip()
+        task = task_loader.load_task(task_name, source_file, traces_folder, spec_language)
+        logger.info(f"Loaded task: {task.task_name} ({task.system_type}), spec_language: {task.spec_language}")
         
         # Setup repository if needed for consistency evaluation
         if evaluation_type == "consistency":
@@ -485,9 +489,9 @@ def run_single_benchmark(task_name: str, method_name: str, model_name: str,
             except Exception as e:
                 logger.warning(f"Repository setup failed (continuing anyway): {e}")
         
-        # Get prompt for this method
-        prompt_template = task_loader.get_task_prompt(task_name, method_name)
-        logger.info(f"Loaded prompt template ({len(prompt_template)} chars)")
+        # Get prompt for this method (language-specific)
+        prompt_template = task_loader.get_task_prompt(task_name, method_name, task.spec_language)
+        logger.info(f"Loaded prompt template for {task.spec_language} ({len(prompt_template)} chars)")
         
         # Load model (only if not using existing files)
         model = None
@@ -574,11 +578,52 @@ def run_single_benchmark(task_name: str, method_name: str, model_name: str,
         # Filter parameters before passing to evaluator
         filtered_params = filter_metric_params(metric, metric_params)
 
-        # For trace_validation metrics, pass model_name so the evaluator uses the requested model
-        if metric in {"trace_validation", "pgo_trace_validation"}:
-            evaluator = create_evaluator(metric, model_name=model_name, **filtered_params)
+        # Handle language-specific evaluators
+        if language == "Alloy":
+            # Alloy currently supports compilation_check, runtime_check, coverage, invariant_verification, and composite
+            if metric == "compilation_check":
+                from tla_eval.evaluation.syntax.alloy_compilation_check import AlloyCompilationCheckEvaluator
+                evaluator = AlloyCompilationCheckEvaluator(**filtered_params)
+                logger.info("Using Alloy compilation check evaluator")
+            elif metric == "runtime_check":
+                from tla_eval.evaluation.semantics.alloy_runtime_check import AlloyRuntimeCheckEvaluator
+                evaluator = AlloyRuntimeCheckEvaluator(**filtered_params)
+                logger.info("Using Alloy runtime check evaluator")
+            elif metric == "coverage":
+                from tla_eval.evaluation.semantics.alloy_coverage import AlloyCoverageEvaluator
+                evaluator = AlloyCoverageEvaluator(**filtered_params)
+                logger.info("Using Alloy coverage evaluator")
+            elif metric == "invariant_verification":
+                from tla_eval.evaluation.semantics.alloy_invariant_check import AlloyInvariantCheckEvaluator
+                evaluator = AlloyInvariantCheckEvaluator(**filtered_params)
+                logger.info("Using Alloy invariant evaluator")
+            elif metric == "trace_validation":
+                from tla_eval.evaluation.consistency.alloy_trace_validation import AlloyTraceValidationEvaluator
+                evaluator = AlloyTraceValidationEvaluator(**filtered_params)
+                logger.info("Using Alloy trace validation evaluator")
+            elif metric == "composite":
+                # Composite metric will be handled by the generic composite handling below
+                # Create a placeholder evaluator, will be recreated in composite section
+                from tla_eval.evaluation.composite.composite_evaluation import create_composite_evaluator
+                evaluator = create_composite_evaluator(
+                    **filtered_params,
+                    spec_language=task.spec_language
+                )
+                logger.info("Using Alloy composite evaluator")
+            else:
+                raise ValueError(
+                    f"Metric '{metric}' is not yet supported for Alloy language. "
+                    "Currently supported: compilation_check, runtime_check, coverage, invariant_verification, trace_validation, composite"
+                )
+        elif language == "PAT":
+            raise ValueError(f"PAT language support is not yet implemented")
         else:
-            evaluator = create_evaluator(metric, **filtered_params)
+            # TLA+ (default)
+            # For trace_validation metrics, pass model_name so the evaluator uses the requested model
+            if metric in {"trace_validation", "pgo_trace_validation"}:
+                evaluator = create_evaluator(metric, model_name=model_name, **filtered_params)
+            else:
+                evaluator = create_evaluator(metric, **filtered_params)
         
         # Evaluate based on metric type
         evaluation_result = None
@@ -643,6 +688,14 @@ def run_single_benchmark(task_name: str, method_name: str, model_name: str,
                         # Always load method for composite evaluation to support correction iterations
                         # even when using --spec-file
                         method = get_method(method_name)
+
+                        # Recreate evaluator with spec_language for composite evaluation
+                        from tla_eval.evaluation.composite.composite_evaluation import create_composite_evaluator
+                        evaluator = create_composite_evaluator(
+                            **filtered_params,
+                            spec_language=task.spec_language
+                        )
+
                         evaluation_result = evaluator.evaluate(
                             generation_result, task_name, method_name, model_name, task.spec_module,
                             task=task, method=method
@@ -678,8 +731,9 @@ def run_single_benchmark(task_name: str, method_name: str, model_name: str,
 
 
 def run_batch_benchmark(tasks: List[str], methods: List[str], models: List[str],
+                       language: str = "TLA+",
                        evaluation_type: str = "syntax", metric: Optional[str] = None,
-                       phase: Optional[int] = None, output_dir: str = "results", 
+                       phase: Optional[int] = None, output_dir: str = "results",
                        generation_config: Optional[GenerationConfig] = None,
                        **metric_params):
     """
@@ -689,6 +743,7 @@ def run_batch_benchmark(tasks: List[str], methods: List[str], models: List[str],
         tasks: List of task names
         methods: List of method names
         models: List of model names
+        language: Specification language to evaluate ("TLA+", "Alloy", "PAT")
         evaluation_type: Evaluation type ("syntax", "semantics", "consistency")
         phase: Legacy evaluation phase (deprecated)
         output_dir: Output directory for results
@@ -712,12 +767,18 @@ def run_batch_benchmark(tasks: List[str], methods: List[str], models: List[str],
             for model_name in models:
                 current += 1
                 logger.info(f"Progress: {current}/{total_combinations}")
-                
+
                 result = run_single_benchmark(
-                    task_name, method_name, model_name, evaluation_type, metric,
-                    generation_config=generation_config, **metric_params
+                    task_name,
+                    method_name,
+                    model_name,
+                    language=language,
+                    evaluation_type=evaluation_type,
+                    metric=metric,
+                    generation_config=generation_config,
+                    **metric_params
                 )
-                
+
                 if result["success"]:
                     results.append(result["evaluation_result"])
                 else:
@@ -786,11 +847,16 @@ Examples:
         """
     )
     
+    # Language selection
+    parser.add_argument("--language", default="TLA+",
+                       choices=["TLA+", "Alloy", "PAT"],
+                       help="Specification language (default: TLA+)")
+
     # Evaluation type and metric selection
-    parser.add_argument("--evaluation-type", default="syntax", 
+    parser.add_argument("--evaluation-type", default="syntax",
                        choices=get_available_dimensions(),
                        help="Evaluation type: syntax=compilation, semantics=model-checking, consistency=trace-validation (default: syntax)")
-    parser.add_argument("--metric", 
+    parser.add_argument("--metric",
                        help="Specific metric to run (if not specified, uses default for evaluation-type)")
     parser.add_argument("--phase", type=int, choices=[1, 2, 3],
                        help="Legacy evaluation phase: 1=syntax, 2=semantics, 3=consistency (deprecated, use --evaluation-type)")
@@ -950,7 +1016,12 @@ Examples:
     if single_mode:
         # Single benchmark
         result = run_single_benchmark(
-            args.task, args.method, args.model, evaluation_type, args.metric,
+            args.task,
+            args.method,
+            args.model,
+            language=args.language,
+            evaluation_type=evaluation_type,
+            metric=args.metric,
             source_file=args.source_file,
             traces_folder=args.traces_folder,
             spec_file=args.spec_file,
@@ -970,8 +1041,15 @@ Examples:
     elif batch_mode:
         # Batch benchmark
         run_batch_benchmark(
-            args.tasks, args.methods, args.models, evaluation_type, args.metric,
-            output_dir=args.output, generation_config=generation_config,
+            args.tasks,
+            args.methods,
+            args.models,
+            language=args.language,
+            evaluation_type=evaluation_type,
+            metric=args.metric,
+            phase=args.phase,
+            output_dir=args.output,
+            generation_config=generation_config,
             **metric_params
         )
     

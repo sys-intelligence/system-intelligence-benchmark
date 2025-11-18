@@ -174,7 +174,7 @@ class GenAIAdapter(ModelAdapter):
         
         # Format prompt - check if prompt_template already contains the content
         if "{source_code}" in prompt_template:
-            prompt_content = prompt_template.format(source_code=source_code)
+            prompt_content = prompt_template.replace("{source_code}", source_code)
         else:
             # Prompt is already formatted, use as-is
             prompt_content = prompt_template

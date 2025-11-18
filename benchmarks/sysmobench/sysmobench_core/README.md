@@ -33,7 +33,7 @@ SysMoBench sources its tasks from real-world systems and automatically evaluates
 1. Navigate to the project directory and install:
 
 ```bash
-cd LLM_Gen_TLA_benchmark_framework
+cd SysMoBench
 pip install -e .
 ```
 
@@ -180,7 +180,7 @@ For detailed instructions, see [Adding New Systems Guide](docs/add_new_system.md
 ## Project Structure
 
 ```
-LLM_Gen_TLA_benchmark_framework/
+SysMoBench/
 ├── scripts/
 │   └── run_benchmark.py          # Main entry script for running benchmarks
 ├── tla_eval/

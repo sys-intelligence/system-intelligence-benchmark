@@ -1,0 +1,84 @@
+# Alloy Invariants for Asterinas Spinlock Systems
+# Includes both generic spinlock properties and Asterinas-specific features
+
+invariants:
+  # Generic Spinlock Invariants (applicable to all spinlock implementations)
+  - name: "MutualExclusion"
+    type: "safety"
+    natural_language: "At most one thread can hold any lock at any given time"
+    formal_description: "The fundamental safety property: no two threads can hold the same lock simultaneously"
+    alloy_example: |
+      assert MutualExclusion {
+        all s: State, l: Lock |
+          lone s.lock_holder[l]
+      }
+      check MutualExclusion for 10 Time, 2 Thread, 1 Lock
+
+  - name: "LockStatusConsistency"
+    type: "safety"
+    natural_language: "If a thread holds a lock, it must be in Locked status"
+    formal_description: "Lock state consistency: the thread status must accurately reflect lock ownership"
+    alloy_example: |
+      assert LockStatusConsistency {
+        all s: State, l: Lock, th: Thread |
+          th in s.lock_holder[l] implies s.thread_status[th] = Locked
+      }
+      check LockStatusConsistency for 10 Time, 2 Thread, 1 Lock
+
+  - name: "StatusImpliesLock"
+    type: "safety"
+    natural_language: "If a thread is in Locked status, it must hold some lock"
+    formal_description: "Status consistency: a thread in Locked status must be holding at least one lock"
+    alloy_example: |
+      assert StatusImpliesLock {
+        all s: State, th: Thread |
+          s.thread_status[th] = Locked implies
+            some l: Lock | th in s.lock_holder[l]
+      }
+      check StatusImpliesLock for 10 Time, 2 Thread, 1 Lock
+
+  - name: "NoDeadlock"
+    type: "safety"
+    natural_language: "Not all threads can be in Trying state simultaneously - prevents global deadlock"
+    formal_description: "Deadlock freedom: prevents the situation where all threads are stuck trying to acquire locks simultaneously"
+    alloy_example: |
+      assert NoDeadlock {
+        all s: State |
+          not (all th: Thread | s.thread_status[th] = Trying)
+      }
+      check NoDeadlock for 10 Time, 2 Thread, 1 Lock
+
+  # Asterinas-specific Invariants
+  - name: "TryLockNonBlocking"
+    type: "safety"
+    natural_language: "try_lock() operations are non-blocking and return immediately"
+    formal_description: "Asterinas-specific: try_lock() never causes a thread to wait or spin. If the specification models call_type, threads making try_lock() requests should transition directly from Trying to either Locked or Idle."
+    alloy_example: |
+      assert TryLockNonBlocking {
+        all s: State, th: Thread |
+          (s.call_type[th] = TryLock and s.thread_status[th] = Trying) implies
+            (some s': State | s'.time = s.time.next implies
+              s'.thread_status[th] in (Locked + Idle))
+      }
+      check TryLockNonBlocking for 10 Time, 2 Thread, 1 Lock
+
+  - name: "BlockingVsNonBlockingSemantics"
+    type: "safety"
+    natural_language: "Only lock() requests can lead to spinning/waiting, try_lock() requests cannot"
+    formal_description: "Asterinas dual-interface semantics: if a thread is waiting/spinning, it must have made a blocking lock() request, not a try_lock() request"
+    alloy_example: |
+      assert BlockingVsNonBlockingSemantics {
+        all s: State, th: Thread |
+          (s.thread_status[th] = Trying and s.call_type[th] = TryLock) implies
+            (some s': State | s'.time = s.time.next implies
+              s'.thread_status[th] != Trying)
+      }
+      check BlockingVsNonBlockingSemantics for 10 Time, 2 Thread, 1 Lock
+
+metadata:
+  total_invariants: 6
+  safety_invariants: 6
+  liveness_invariants: 0
+  generic_invariants: 4  # MutualExclusion, LockStatusConsistency, StatusImpliesLock, NoDeadlock
+  asterinas_specific_invariants: 2  # TryLockNonBlocking, BlockingVsNonBlockingSemantics
+  note: "Liveness properties are not included as Alloy performs bounded model checking and cannot verify unbounded temporal properties"

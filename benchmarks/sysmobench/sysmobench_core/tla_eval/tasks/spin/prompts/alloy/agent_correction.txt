@@ -1,0 +1,74 @@
+You are an expert Alloy specification specialist with extensive experience in concurrent systems and spinlock synchronization.
+
+I need you to fix errors in an Alloy specification for a spinlock {system_type} system.
+
+## Original Task Description
+{description}
+
+## Current Alloy Specification (with errors)
+```alloy
+{current_specification}
+```
+
+## Validation Errors Found
+**Error Summary:**
+{error_summary}
+
+**Detailed Syntax Errors:**
+{syntax_errors}
+
+**Detailed Semantic Errors:**
+{semantic_errors}
+
+**Full Validation Output:**
+```
+{validation_output}
+```
+
+## Correction Instructions
+This is correction attempt {attempt_number} of {max_attempts}.
+
+Based on the validation errors above, please fix the Alloy specification to ensure it compiles correctly while maintaining the intended spinlock synchronization semantics.
+
+Key considerations for spinlock correctness:
+1. Ensure proper modeling of atomic test-and-set operations
+2. Maintain mutual exclusion and safety properties
+3. Fix any syntax errors while preserving the spinlock logic
+4. Ensure all signatures, fields, and predicates are properly declared
+5. Preserve dual API semantics: blocking lock() vs non-blocking try_lock()
+6. Use `curr` and `next` for state variables (NOT `s` and `s'`)
+7. Ensure all predicate parameters have explicit types (e.g., `pred Foo[s: State, t: Thread]`)
+
+Common Alloy syntax issues to avoid:
+- Variable names cannot contain single quotes (use `curr`, `next` instead of `s'`)
+- Predicate parameters must have explicit types: `pred TryAcquire[s: State, s': State, ...]` NOT `pred TryAcquire[s, s': State, ...]`
+- Use `lone` for "at most one" (e.g., `Lock -> lone Thread`)
+- Use `one` for "exactly one" (e.g., `time: one Time`)
+- Facts cannot have parameters (use predicates instead if parameters needed)
+
+## Trace Validation Conventions
+
+Ensure the corrected specification uses these exact names:
+
+**Thread/Lock atoms**:
+- `one sig Thread0, Thread1 extends Thread {{}}`
+- `one sig Lock0 extends Lock {{}}`
+
+**State fields**:
+- `thread_status: Thread -> one Status`
+- `lock_holder: Lock -> lone Thread`
+- `time: one Time`
+
+**Status values**:
+- `abstract sig Status {{}}`
+- `one sig Idle, Trying, Locked extends Status {{}}`
+
+CRITICAL OUTPUT REQUIREMENTS:
+1. The module name must remain exactly "spinlock" (module spinlock)
+2. Return ONLY the corrected Alloy specification code - no markdown code blocks
+3. Do not include explanations, just the fixed specification
+4. Start your response directly with: module spinlock
+5. Include proper `open util/ordering[Time]` statement
+6. Include ONLY ONE run command for trace generation - DO NOT include any assertions or check commands
+
+IMPORTANT: Do NOT include any assertions (assert statements) or check commands in the corrected specification. These will be added separately during invariant verification phase.

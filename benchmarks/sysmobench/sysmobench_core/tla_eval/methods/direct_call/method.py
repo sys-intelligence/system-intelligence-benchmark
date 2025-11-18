@@ -6,7 +6,7 @@ with source code and asking for a TLA+ translation.
 """
 
 from typing import Dict, Any
-from ..base import TLAGenerationMethod, GenerationTask, GenerationOutput
+from ..base import TLAGenerationMethod, GenerationTask, GenerationOutput, format_prompt_template
 from ...config import get_configured_model
 
 
@@ -94,8 +94,8 @@ class DirectCallMethod(TLAGenerationMethod):
         if task.extra_info:
             format_vars.update(task.extra_info)
         
-        # Format template with task information
-        return prompt_template.format(**format_vars)
+        # Format template with task information without interfering with literal braces
+        return format_prompt_template(prompt_template, format_vars)
     
     def get_method_info(self) -> Dict[str, Any]:
         """Get information about direct call method."""

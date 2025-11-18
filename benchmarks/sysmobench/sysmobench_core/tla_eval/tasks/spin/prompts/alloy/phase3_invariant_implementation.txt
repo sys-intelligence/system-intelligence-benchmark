@@ -1,0 +1,96 @@
+You are an Alloy expert specializing in concurrent systems and synchronization primitives. Your task is to implement a set of expert-written invariants for the given spinlock Alloy specification.
+
+## Target Specification
+
+$alloy_specification
+
+## Invariants to Implement
+
+$invariant_templates
+
+## Implementation Requirements
+
+1. **Deep Analysis**: First, thoroughly understand both the invariant template's semantic intent and the specification's modeling approach:
+   - What safety property does each template aim to verify?
+   - How does the specification represent states, operations, and concurrency?
+   - What are the semantic equivalents between template concepts and specification implementation?
+
+2. **Semantic Mapping**: For each invariant, identify the conceptual mapping between template and specification:
+   - Template "trying" state → Specification's lock acquisition states (e.g., Trying, Locked)
+   - Template "locked" state → Specification's lock holding state
+   - Template ownership variables → Specification's ownership representation (lock_holder field)
+   - Template thread sets → Specification's Thread signature
+   - Template thread_status → Specification's thread state representation
+   - **CRITICAL**: If specification distinguishes lock() vs try_lock(), use call_type or equivalent field
+   - **FALLBACK**: If specification does NOT model call_type distinction, adapt invariants to unified semantics
+
+3. **Creative Adaptation**: Translate the invariant while preserving its core semantic meaning:
+   - **DO NOT** simply replace variable names - understand the underlying logic
+   - **DO** redesign the assertion logic to fit the specification's modeling granularity
+   - **DO** use equivalent semantic concepts even if names/structures differ
+   - **PRESERVE** the original safety intent without weakening the property
+
+4. **Alloy Assertion Constraints**:
+
+   **FOR SAFETY PROPERTIES** (type: "safety"):
+   - **MUST** be ASSERTIONS over all states/executions within bounded scope
+   - **USE** quantifiers: `all`, `some`, `no`, `lone`, `one`
+   - **USE** state predicates: `s.lock_holder[l]`, `s.thread_status[th]`
+   - **USE** implications and logical operators: `implies`, `iff`, `and`, `or`, `not`
+   - **CORRECT**: `all s: State, l: Lock | lone s.lock_holder[l]`
+   - **CORRECT**: `all s: State, th: Thread | s.thread_status[th] = Locked implies some l: Lock | th in s.lock_holder[l]`
+
+   **FOR LIVENESS PROPERTIES** (type: "liveness"):
+   - **NOTE**: Alloy performs bounded model checking and cannot verify unbounded liveness properties
+   - **ADAPTATION**: Convert liveness properties to bounded safety properties where possible
+   - **EXAMPLE**: "Eventually releases" → "No thread stays locked in all states"
+   - **IF IMPOSSIBLE**: Gracefully omit the invariant with a comment explaining why
+
+5. **Alloy-Specific Syntax**:
+   - Use `lone` for "at most one" (e.g., `lone s.lock_holder[l]`)
+   - Use `one` for "exactly one" (e.g., `one s.time`)
+   - Use `in` for set membership (e.g., `th in s.lock_holder[l]`)
+   - Use `=` for singleton comparison (e.g., `s.thread_status[th] = Locked`)
+   - Always quantify over State signature: `all s: State | ...`
+   - Field access uses dot notation: `s.lock_holder`, `s.thread_status`
+
+6. **Constraint Compliance**:
+   - Use ONLY signatures, fields, and predicates that exist in the specification
+   - Generate complete, syntactically valid Alloy assertion definitions
+   - Maintain the exact invariant names from templates
+   - Each assertion MUST be followed by a `check` command with appropriate scope
+
+7. **Output format**: Return a JSON object containing an array of complete Alloy assertion + check command pairs
+
+8. **EXACT naming requirement**: You MUST use the exact invariant names specified in the templates above. Do not create your own names.
+
+## Example Output Format
+
+```json
+{
+  "invariants": [
+    "assert MutualExclusion {\n  all s: State, l: Lock |\n    lone s.lock_holder[l]\n}\ncheck MutualExclusion for 10 Time, 2 Thread, 1 Lock",
+    "assert LockStatusConsistency {\n  all s: State, l: Lock, th: Thread |\n    th in s.lock_holder[l] implies s.thread_status[th] = Locked\n}\ncheck LockStatusConsistency for 10 Time, 2 Thread, 1 Lock"
+  ]
+}
+```
+
+**CRITICAL REQUIREMENTS**:
+- **BOUNDED MODEL CHECKING**: Remember Alloy performs bounded checking, not unbounded temporal verification
+- **SAFETY FOCUS**: All invariants must be expressible as state predicates over bounded executions
+- **LIVENESS ADAPTATION**: Convert unbounded liveness properties to bounded equivalents, or omit with explanation
+- **SEMANTIC PRESERVATION**: Each translated invariant MUST verify the same safety property as the original template
+- **CREATIVE ADAPTATION**: Do NOT simply omit invariants - find creative ways to express the same property using available specification elements
+- **COMPLETENESS**: Aim to translate ALL safety invariants by understanding their semantic intent
+- Use ONLY signatures, fields, and predicates that exist in the provided specification
+- Use EXACTLY the invariant names from the templates (MutualExclusion, LockStatusConsistency, StatusImpliesLock, NoDeadlock, TryLockNonBlocking, BlockingVsNonBlockingSemantics)
+- Return ONLY valid JSON, no explanatory text before or after
+- Each array element must contain BOTH the assertion definition AND the check command
+- Use `\n` for line breaks within JSON strings for readability
+- **SCOPE MATCHING**: Check commands should use the same scope as the run command in the base specification (typically "for 10 Time, 2 Thread, 1 Lock")
+- **LAST RESORT**: Only omit an invariant if its core concept is fundamentally incompatible with Alloy's bounded checking
+- **JSON ESCAPING**: Use proper JSON escaping for quotes and newlines
+  - Use `\"` for quotes inside strings
+  - Use `\n` for line breaks
+  - **CORRECT**: `"assert MutualExclusion {\n  all s: State | ...\n}\ncheck MutualExclusion for 10 Time"`
+- Start your response immediately with the opening brace {
