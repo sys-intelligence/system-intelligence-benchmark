@@ -1,8 +1,8 @@
-# Cache Benchmark [Under Development]
+# Algorithm Design Benchmark - Cache [Under Development]
 
 ## Scenario Description
 
-The Cache Benchmark evaluates the ability of AI models to design and implement efficient cache replacement policies. This benchmark challenges models to create custom eviction algorithms that minimize cache miss rates across diverse real-world workload traces, simulating practical cache optimization scenarios in storage systems and distributed computing environments.
+This benchmark evaluates the ability of AI models to design and implement efficient cache replacement policies. This benchmark challenges models to create custom eviction algorithms that minimize cache miss rates across diverse real-world workload traces, simulating practical cache optimization scenarios in storage systems and distributed computing environments.
 
 ### Task Details
 
@@ -61,13 +61,13 @@ To test the benchmark in a Docker container:
 1. Build the Docker image:
 
    ```sh
-   docker build -t cache_bench .
+   docker build -t algo_cache_bench .
    ```
 
 2. Run the container:
 
    ```sh
-   docker run -it --rm cache_bench
+   docker run -it --rm algo_cache_bench
    ```
 
 3. Inside the container, execute the benchmark:
