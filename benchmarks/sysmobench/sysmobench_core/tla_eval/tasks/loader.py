@@ -165,7 +165,8 @@ class TaskLoader:
         """
         traces_path = Path(traces_folder)
         if not traces_path.exists() or not traces_path.is_dir():
-            raise FileNotFoundError(f"Traces folder not found: {traces_folder}")
+            # Return empty list if traces folder doesn't exist - traces are optional
+            return []
         
         if trace_format == "tracelink_based":
             all_traces = []
@@ -196,9 +197,8 @@ class TaskLoader:
                     trace_name = f"{subfolder.name}/{merged_trace.name}"
                     all_traces.append((trace_name, trace_content))
             if not all_traces:
-                raise FileNotFoundError(
-                    f"No merged_trace.ndjson files found in folder: {traces_folder}"
-                )
+                # Return empty list instead of raising error - traces are optional
+                return []
             return all_traces
         else:
             all_traces = []
@@ -211,7 +211,8 @@ class TaskLoader:
             ]
             trace_files = sorted({f for pat in patterns for f in Path(traces_folder).glob(pat)})
             if not trace_files:
-                raise FileNotFoundError(f"No trace files found in folder: {traces_folder}")
+                # Return empty list if no trace files found - traces are optional
+                return []
             
             for trace_file in trace_files:
                 with open(trace_file, 'r', encoding='utf-8') as f:

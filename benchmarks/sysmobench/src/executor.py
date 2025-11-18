@@ -79,7 +79,7 @@ class SysMoExecutor:
                 model_obj = get_configured_model(self.model_name)
                 correction = self.method._generate_correction(task, current_spec, errors, model_obj)
                 if correction.success:
-                    current_spec = correction.tla_specification
+                    current_spec = correction.generated_text
                     current_gen = GenerationResult(current_spec, correction.metadata, time.time(), True)
                     logger.info("  ✓ Corrected for iteration %s", iteration + 1)
                     continue
