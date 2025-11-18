@@ -99,7 +99,7 @@ poetry run python -m openhands.core.main \
 1. Add your agent path to the evaluation script
 2. Run the benchmark:
    ```sh
-   python src/main_setup.py --agent ./src/agents/your_agent_name
+   python src/main.py --agent ./src/agents/your_agent_name
    ```
 
 ## 6. Best Practices
@@ -129,6 +129,7 @@ The benchmark framework executes your agent as follows:
 3. **Evaluation Phase**:
    - Test method from task specification executed (e.g., `cd src/main && bash test-mr.sh`)
    - Results captured and saved to `outputs/`
+
 
 ## 8. Troubleshooting
 

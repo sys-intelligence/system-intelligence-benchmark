@@ -24,7 +24,7 @@ pip install pytest
 pip install pytest-cov
 deactivate
 
-echo "==> Setting up SystemCourseProject environment..."
+echo "==> Setting up CourseLabBench environment..."
 cd data/benchmark/projects
 if [ -d "test-repo" ]; then
     echo "==> test-repo already exists, skipping clone."
@@ -54,4 +54,4 @@ else
     git clone git://g.csail.mit.edu/6.5840-golabs-2025
 fi
 
-echo "==> SystemCourseProject environment is set up successfully."
+echo "==> CourseLabBench environment is set up successfully."

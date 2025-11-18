@@ -3,8 +3,8 @@
 set -e  # Exit immediately on error.
 
 if [ $# -ne 1 ]; then
-    echo "Usage: $0 <model_location>"
-    echo "Example: $0 Qwen/Qwen2.5-7B-Instruct"
+    echo "Usage: $0 <model_name>"
+    echo "Example: $0 claude-sonnet-4-5-20250929"
     exit 1
 fi
 
@@ -19,19 +19,19 @@ NEW_MODEL_NAME="${MODEL_NAME//\//_}"
 # export OPENAI_API_KEY="EMPTY"
 
 source .venv/bin/activate
-echo "==> Start to run SystemCoursePoject"
+echo "==> Start to run CourseLabBench"
 # Note that if you benchmark has multiple tasks, you need to add --task <task> 
 # in your code to enable task selection.
-# sweagent --help
-# python src/main.py \
-#     --task "test"
-    # --save_path "./outputs/systemcourseproject__${NEW_MODEL_NAME}__$(date +"%Y-%m-%d_%H-%M-%S")" \
 
-python src/main_setup.py
+python src/main.py \
+    --agent "claudecode" \
+    --model "$MODEL_NAME" \
+    # --task "test"
+    # --save_path "./outputs/course_lab_bench__${NEW_MODEL_NAME}__$(date +"%Y-%m-%d_%H-%M-%S")" \
+    # --input_json "./data/benchmark/course_lab_task_examples.jsonl"
+
+# python src/main_patch.py
     # --model "$MODEL_NAME" \
-    # --save_path "./outputs/systemcourseproject__${NEW_MODEL_NAME}__$(date +"%Y-%m-%d_%H-%M-%S")" \
-
-# python src/main_setup.py \
-#     --input_json "./data/benchmark/course_lab_task_examples.jsonl" 
+    # --save_path "./outputs/course_lab_bench__${NEW_MODEL_NAME}__$(date +"%Y-%m-%d_%H-%M-%S")" \
 
 deactivate
