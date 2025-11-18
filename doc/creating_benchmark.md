@@ -14,7 +14,7 @@ Before creating a custom benchmark, ensure you have:
 
 Choose an example benchmark that **is similar to** your setting as a starting point. 
 
-If your tasks involve exam-style questions, consider starting from [course_exam_bench](https://github.com/sys-intelligence/system_intelligence_benchmark/tree/main/benchmarks/course_exam_bench). If your benchmark focuses on algorithm design or optimization tasks, you might use [algo_cache_bench](https://github.com/sys-intelligence/system_intelligence_benchmark/tree/main/benchmarks/algo_cache_bench) as a template. These tasks can often be handled by a minimal agent (an LLM call plus a response parser).
+If your tasks involve exam-style questions, consider starting from [course_exam_bench](https://github.com/sys-intelligence/system_intelligence_benchmark/tree/main/benchmarks/course_exam_bench). If your benchmark focuses on algorithm design or optimization tasks, you might use [cache_algo_bench](https://github.com/sys-intelligence/system_intelligence_benchmark/tree/main/benchmarks/cache_algo_bench) as a template. These tasks can often be handled by a minimal agent (an LLM call plus a response parser).
 
 Use [course_lab_bench](https://github.com/sys-intelligence/system_intelligence_benchmark/tree/main/benchmarks/course_exam_bench), if your benchmark is related to **environment setup, system understanding/implementation, performance analysis, or debugging tasks**, and each task may need different runing environments. These tasks typically require an LLM to autonomously call tools (such as the File Editor, Bash, etc.), navigate a large codebase, and run experiments or tests—similar to what a human developer would do. To support this, we provide several advanced agents (e.g., Claude Code, MiniSWEAgent) in this example, along with guidance for [integrating new agents](https://github.com/sys-intelligence/system_intelligence_benchmark/blob/main/benchmarks/course_lab_bench/add_agents.md).
 
@@ -254,7 +254,7 @@ class CustomEvaluator(Evaluator):
 
 - **`example_bench/src/main.py`**: Uses `SimpleExecutor` + `BasicEvaluator` for basic evaluation with multiple similarity metrics
 - **`course_exam_bench/`**: Uses `SimpleExecutor` + `ExamEvaluator` for grading exam questions
-- **`algo_cache_bench/`**: Uses custom evaluator for code execution and performance testing
+- **`cache_algo_bench/`**: Uses custom evaluator (cache_simulator) for code execution and performance testing
 - **`course_lab_bench/`**: Uses agent-based executor for complex project execution
 
 ## Step 4: Configure Your Benchmark
@@ -437,7 +437,7 @@ Follow the [PreChecks.md](PreChecks.md) for code formatting and linting guidelin
 Refer to existing benchmarks for inspiration:
 
 - **`example_bench/`**: Minimal template with `SimpleExecutor` + `BasicEvaluator`
-- **`algo_cache_bench/`**: Code execution, algorithm simulation and performance evaluation
+- **`cache_algo_bench/`**: Code execution, algorithm simulation and performance evaluation
 - **`course_exam_bench/`**: Multiple-choice and short-answer questions with `ExamEvaluator`
 - **`course_lab_bench/`**: Complex project-based evaluation with agent executors
 
