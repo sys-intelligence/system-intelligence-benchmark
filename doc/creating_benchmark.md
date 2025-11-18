@@ -14,9 +14,9 @@ Before creating a custom benchmark, ensure you have:
 
 Choose an example benchmark that **is similar to** your setting as a starting point. 
 
-If your tasks involve exam-style questions, consider starting from [course_exam_bench](https://github.com/sys-intelligence/system_intelligence_benchmark/tree/main/benchmarks/course_exam_bench). If your benchmark focuses on algorithm design or optimization tasks, you might use [cache_algo_bench](https://github.com/sys-intelligence/system_intelligence_benchmark/tree/main/benchmarks/cache_algo_bench) as a template. These tasks can often be handled by a minimal agent (an LLM call plus a response parser).
+If your tasks involve exam-style questions, consider starting from [course_exam_bench](https://github.com/sys-intelligence/system-intelligence-benchmark/tree/main/benchmarks/course_exam_bench). If your benchmark focuses on algorithm design or optimization tasks, you might use [cache_algo_bench](https://github.com/sys-intelligence/system-intelligence-benchmark/tree/main/benchmarks/cache_algo_bench) as a template. These tasks can often be handled by a minimal agent (an LLM call plus a response parser).
 
-Use [course_lab_bench](https://github.com/sys-intelligence/system_intelligence_benchmark/tree/main/benchmarks/course_exam_bench), if your benchmark is related to **environment setup, system understanding/implementation, performance analysis, or debugging tasks**, and each task may need different runing environments. These tasks typically require an LLM to autonomously call tools (such as the File Editor, Bash, etc.), navigate a large codebase, and run experiments or tests—similar to what a human developer would do. To support this, we provide several advanced agents (e.g., Claude Code, MiniSWEAgent) in this example, along with guidance for [integrating new agents](https://github.com/sys-intelligence/system_intelligence_benchmark/blob/main/benchmarks/course_lab_bench/add_agents.md).
+Use [course_lab_bench](https://github.com/sys-intelligence/system-intelligence-benchmark/tree/main/benchmarks/course_exam_bench), if your benchmark is related to **environment setup, system understanding/implementation, performance analysis, or debugging tasks**, and each task may need different runing environments. These tasks typically require an LLM to autonomously call tools (such as the File Editor, Bash, etc.), navigate a large codebase, and run experiments or tests—similar to what a human developer would do. To support this, we provide several advanced agents (e.g., Claude Code, MiniSWEAgent) in this example, along with guidance for [integrating new agents](https://github.com/sys-intelligence/system-intelligence-benchmark/blob/main/benchmarks/course_lab_bench/add_agents.md).
 
 1. Navigate to the benchmarks directory:
 
@@ -72,7 +72,7 @@ Create your evaluation dataset in a structured format:
    - `user_prompt`: User query/task description
    - `response`: Expected/ground truth response
 
-3. **NOTES:** for more complex scenarios, you can use **any custom formats**. See [course_exam_bench](https://github.com/sys-intelligence/system_intelligence_benchmark/blob/main/benchmarks/course_exam_bench/data/benchmark/questions.jsonl) and [course_lab_bench](https://github.com/sys-intelligence/system_intelligence_benchmark/blob/main/benchmarks/course_lab_bench/data/benchmark/env_setup_examples.jsonl) for examples.
+3. **NOTES:** for more complex scenarios, you can use **any custom formats**. See [course_exam_bench](https://github.com/sys-intelligence/system-intelligence-benchmark/blob/main/benchmarks/course_exam_bench/data/benchmark/questions.jsonl) and [course_lab_bench](https://github.com/sys-intelligence/system-intelligence-benchmark/blob/main/benchmarks/course_lab_bench/data/benchmark/env_setup_examples.jsonl) for examples.
 
 ## Step 3: Select or Implement Your Executor and Evaluator
 

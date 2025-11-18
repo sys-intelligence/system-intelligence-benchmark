@@ -7,7 +7,7 @@ A guide for integrating mature, independently-developed benchmarks using `SysMoB
 
 **Git Subtree vs Submodule:**
 
-When porting an existing benchmark, you need to decide how to integrate the upstream benchmark code into the framework repository (i.e., `system_intelligence_benchmark`). While both Git Subtree and Git Submodule can work, we recommend **Git Subtree** for most benchmark porting scenarios.
+When porting an existing benchmark, you need to decide how to integrate the upstream benchmark code into the framework repository (i.e., `system-intelligence-benchmark`). While both Git Subtree and Git Submodule can work, we recommend **Git Subtree** for most benchmark porting scenarios.
 
 **Why Subtree over Submodule for Benchmarks:**
 - **Atomic commits and consistency**: Subtree keeps all code in the main repository's Git object database, avoiding state synchronization issues between the parent repo and submodule HEAD. You can modify framework code and benchmark code in a single atomic commit, ensuring consistency across the entire codebase.

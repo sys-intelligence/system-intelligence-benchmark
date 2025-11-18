@@ -43,8 +43,8 @@ System Intelligence Benchmark currently includes the following example benchmark
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/sys-intelligence/system_intelligence_benchmark.git
-   cd system_intelligence_benchmark
+   git clone https://github.com/sys-intelligence/system-intelligence-benchmark.git
+   cd system-intelligence-benchmark
    ```
 
 2. Install dependencies for a specific benchmark:
@@ -95,8 +95,8 @@ We welcome community contributions to enrich existing benchmarks (e.g., by addin
 
 ### Contribute to Existing Benchmarks
 The easiest way to contribute is to add more tasks to existing benchmarks. Currently, the following two are highly recommended. You can simply follow the provided guidelines to submit your data—once that’s done, you’re all set.
-- **SystemExam**: If you are a professor teaching one or more courses, we highly recommend contributing **more exam problems** to SystemExam (see [this doc](https://github.com/sys-intelligence/system_intelligence_benchmark/tree/main/benchmarks/course_exam_bench#how-to-extend-the-benchmark) for step-by-step guidance).
-- **SystemArtifact**: If you are a researcher submitting artifacts, or an AE chair involved in artifact evaluation, we highly recommend contributing **more system artifacts** to SystemArtifact (see [this doc](https://github.com/sys-intelligence/system_intelligence_benchmark/blob/main/benchmarks/arteval_bench/README.md) for step-by-step guidance).
+- **SystemExam**: If you are a professor teaching one or more courses, we highly recommend contributing **more exam problems** to SystemExam (see [this doc](https://github.com/sys-intelligence/system-intelligence-benchmark/tree/main/benchmarks/course_exam_bench#how-to-extend-the-benchmark) for step-by-step guidance).
+- **SystemArtifact**: If you are a researcher submitting artifacts, or an AE chair involved in artifact evaluation, we highly recommend contributing **more system artifacts** to SystemArtifact (see [this doc](https://github.com/sys-intelligence/system-intelligence-benchmark/blob/main/benchmarks/arteval_bench/README.md) for step-by-step guidance).
 
 In addition, you can also help review the existing benchmarks to propose improvement ideas or directly enhance them—for example, by adding more advanced evaluators or incorporating improved metrics.
 
