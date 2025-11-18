@@ -1,4 +1,4 @@
-# System Course Lab Benchmark [Under Development]
+# Course Lab Benchmark [Under Development]
 
 ## Scenario Description
 
