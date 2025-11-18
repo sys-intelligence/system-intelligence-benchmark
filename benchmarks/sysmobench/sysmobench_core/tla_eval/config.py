@@ -14,6 +14,10 @@ from .models import get_model_adapter
 
 logger = logging.getLogger(__name__)
 
+# Language configuration
+DEFAULT_LANGUAGE = "TLA+"
+SUPPORTED_LANGUAGES = ["TLA+", "Alloy", "PAT"]
+
 
 class ConfigManager:
     """Manages model configurations from YAML files."""

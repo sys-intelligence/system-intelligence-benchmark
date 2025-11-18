@@ -33,36 +33,41 @@ class OutputManager:
         self.base_output_dir = Path(base_output_dir)
         self.base_output_dir.mkdir(exist_ok=True)
     
-    def create_experiment_dir(self, metric: str, task: str, method: str, model: str, 
-                            timestamp: Optional[str] = None) -> Path:
+    def create_experiment_dir(self, metric: str, task: str, method: str, model: str,
+                            timestamp: Optional[str] = None, language: str = "tla") -> Path:
         """
         Create experiment directory with timestamp-based structure.
-        
+
         Args:
             metric: Metric name (e.g., "compilation_check", "runtime_check")
             task: Task name (e.g., "etcd", "raft")
             method: Method name (e.g., "agent_based", "direct_call")
             model: Model name (e.g., "claude", "my_yunwu")
             timestamp: Optional custom timestamp (defaults to current time)
-            
+            language: Language name (e.g., "tla", "alloy", "pat")
+
         Returns:
             Path to created experiment directory
         """
         if timestamp is None:
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        
-        # Structure: output/{metric}/{task}/{method}_{model}/{timestamp}/
+
+        # Normalize language name to lowercase
+        language = language.lower().replace("+", "")  # "TLA+" -> "tla"
+
+        # Structure: output/{metric}/{language}/{task}/{method}_{model}/{timestamp}/
         experiment_dir = (
-            self.base_output_dir / 
-            metric / 
-            task / 
+            self.base_output_dir /
+            metric /
+            language /
+            task /
             f"{method}_{model}" /
             timestamp
         )
-        
+
         experiment_dir.mkdir(parents=True, exist_ok=True)
         logger.info(f"Created experiment directory: {experiment_dir}")
-        
+
         return experiment_dir
     
     def get_latest_experiment_dir(self, metric: str, task: str, 

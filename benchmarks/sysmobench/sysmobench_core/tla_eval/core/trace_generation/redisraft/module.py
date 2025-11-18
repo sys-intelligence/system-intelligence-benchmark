@@ -24,7 +24,9 @@ class RedisRaftTraceGenerator(TraceGenerator):
 
     def __init__(self):
         self.generator_path = Path(__file__).parent / "raft_trace_generator"
-        self.output_base = "/home/ubuntu/LLM_Gen_TLA_benchmark_framework/data/sys_traces/redisraft"
+        # Use fixed relative path like spin module
+        project_root = Path(__file__).parent.parent.parent.parent.parent
+        self.output_base = str(project_root / "data" / "sys_traces" / "redisraft")
 
     def generate_traces(self, config: Dict[str, Any], output_dir: Path, name_prefix: str = "trace") -> List[Dict[str, Any]]:
         """

@@ -1,0 +1,123 @@
+You are an expert in formal verification and Alloy specifications with deep expertise in concurrent systems and synchronization primitives.
+
+Convert the following Asterinas OS spinlock source code to a comprehensive Alloy specification.
+
+System: Asterinas OS spinlock synchronization primitive
+Focus: {focus}
+
+Source Code from {file_path}:
+```rust
+{source_code}
+```
+
+Spinlock modeling requirements:
+
+MANDATORY CORE CONCEPTS:
+1. 【Lock/Unlock Operations】Distinguish between lock() and try_lock() with different semantics:
+   - lock(): blocking call that spins until acquisition
+   - try_lock(): non-blocking call that returns immediately
+2. 【Atomic CAS】compare_exchange operation on AtomicBool
+3. 【Thread States】Model thread states: Idle, Trying, Locked
+4. 【Lock Status】Model lock status: held by at most one thread
+5. 【State Transitions】Model state transitions over Time
+
+CRITICAL SEMANTIC DISTINCTION:
+- **lock() METHOD**: Blocking semantics - thread spins until acquisition
+  * States: Idle → Trying → (Spinning if failed) → Locked
+  * On CAS failure: keeps trying
+  * Eventually acquires the lock
+
+- **try_lock() METHOD**: Non-blocking semantics - attempts once
+  * States: Idle → Trying → (Locked | Idle)
+  * On CAS failure: returns to Idle immediately
+  * No spinning
+
+ALLOY MODELING APPROACH:
+- Use signatures to model entities (Thread, Lock, State, Time, Status)
+- Use fields to model relationships (lock_holder, thread_status, etc.)
+- Use predicates to model operations (Init, TryAcquire, Release)
+- Use facts to model constraints (TimeStateMapping, transitions)
+- Use **only run commands** for traces; invariants/assertions are handled later
+
+REQUIRED STRUCTURE:
+1. **Signatures**:
+   - Time (with ordering)
+   - Thread
+   - Lock
+   - Status (abstract: Idle, Trying, Locked)
+   - State (to record system state at each time point)
+
+2. **Fields in State**:
+   - time: one Time
+   - lock_holder: Lock -> lone Thread (at most one holder per lock)
+   - thread_status: Thread -> one Status
+
+3. **Predicates**:
+   - Init[s: State]: Initial state predicate
+   - TryAcquire[t, t': Time, th: Thread, l: Lock]: Lock acquisition
+   - Release[t, t': Time, th: Thread, l: Lock]: Lock release
+
+4. **Facts**:
+   - TimeStateMapping: each time has exactly one state
+   - LockStatusConsistency: if thread holds lock, status must be Locked
+   - Transitions: Init + all state transitions
+
+5. **Run Command** (for trace generation):
+   - Include ONE run command to generate example traces
+   - Example format: `run InitSpec for 10 Time, 2 Thread, 1 Lock` (replace `InitSpec` with your predicate)
+
+EXPLICITLY EXCLUDED (do not model):
+- PreemptDisabled vs LocalIrqDisabled guard behaviors
+- Arc-based locking
+- UnsafeCell implementation details
+- Debug formatting and trait implementations
+- Complex memory ordering details
+
+CRITICAL OUTPUT REQUIREMENTS:
+1. The module name must be exactly "spinlock" (module spinlock)
+2. Return ONLY pure Alloy specification code - no markdown code blocks (no ```alloy or ```)
+3. Do not include any explanations, comments outside the spec
+4. Start your response with: module spinlock
+5. Include proper `open util/ordering[Time]` statement
+6. Include ONLY ONE run command for trace generation - DO NOT include any assertions or check commands
+7. Use `curr` and `next` for state variables in predicates (NOT `s` and `s'`)
+8. Ensure all predicate parameters have explicit types
+
+## Trace Validation Conventions
+
+To enable automated trace validation, use these exact names:
+
+**Thread/Lock atoms**:
+- `one sig Thread0, Thread1 extends Thread {}`
+- `one sig Lock0 extends Lock {}`
+
+**State fields**:
+- `thread_status: Thread -> one Status`
+- `lock_holder: Lock -> lone Thread`
+- `time: one Time`
+
+**Status values**:
+- `abstract sig Status {}`
+- `one sig Idle, Trying, Locked extends Status {}`
+
+Example structure:
+```alloy
+abstract sig Status {}
+one sig Idle, Trying, Locked extends Status {}
+
+sig Thread {}
+one sig Thread0, Thread1 extends Thread {}
+
+sig Lock {}
+one sig Lock0 extends Lock {}
+
+sig State {
+  time: one Time,
+  thread_status: Thread -> one Status,
+  lock_holder: Lock -> lone Thread
+}
+```
+
+IMPORTANT: Do NOT include any assertions (assert statements) or check commands. These will be added separately during invariant verification phase.
+
+Generate a complete Alloy BASE specification that accurately models the spinlock's concurrent behavior.

@@ -111,7 +111,9 @@ class RaftCluster:
         """
         if output_file is None:
             timestamp = int(time.time())
-            output_file = f"/home/ubuntu/LLM_Gen_TLA_benchmark_framework/data/sys_traces/etcd/etcd_trace_{timestamp}.ndjson"
+            # Use fixed relative path like spin module
+            project_root = Path(__file__).parent.parent.parent.parent.parent
+            output_file = str(project_root / "data" / "sys_traces" / "etcd" / f"etcd_trace_{timestamp}.ndjson")
         
         # Build command arguments
         cmd = [

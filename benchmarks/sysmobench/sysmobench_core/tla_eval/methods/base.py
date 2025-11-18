@@ -15,10 +15,11 @@ class GenerationTask:
     source_code: str
     task_name: str
     system_type: str  # e.g., "distributed", "concurrent"
-    language: str     # e.g., "go", "java", "c++"
+    language: str     # e.g., "go", "java", "c++" (source code language)
     description: str
     traces: List[List[Tuple[str, str]] | Tuple[str, str]] = None
     spec_module: str = None  # TLA+ module name for the specification
+    spec_language: str = "tla"  # Target specification language (tla, alloy, pat)
     extra_info: Dict[str, Any] = None  # Additional task-specific information
     
     def __post_init__(self):
@@ -76,3 +77,18 @@ class TLAGenerationMethod(ABC):
             Dictionary with method metadata
         """
         pass
+
+
+def format_prompt_template(prompt_template: str, format_vars: Dict[str, Any]) -> str:
+    """
+    Safely format a prompt template without requiring callers to escape brace characters.
+
+    This replaces `{field}` placeholders using simple string replacement so that literal
+    braces used in prompt instructions (e.g., Alloy/TLA+ snippets) are preserved.
+    """
+    formatted_prompt = prompt_template
+    for key, value in format_vars.items():
+        placeholder = f"{{{key}}}"
+        if placeholder in formatted_prompt:
+            formatted_prompt = formatted_prompt.replace(placeholder, str(value))
+    return formatted_prompt

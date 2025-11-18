@@ -28,14 +28,16 @@ class TaskLoader:
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
-    def load_task(self, task_name: str, source_file: str = None, traces_folder: str = None) -> GenerationTask:
+    def load_task(self, task_name: str, source_file: str = None, traces_folder: str = None,
+                  spec_language: str = "tla") -> GenerationTask:
         """
         Load a specific task by name, automatically cloning repository if needed.
-        
+
         Args:
             task_name: Name of the task (e.g., "etcd")
             source_file: Specific source file path, or None for default
             traces_folder: Path to the folder containing traces, or None if not available
+            spec_language: Target specification language ("tla", "alloy", "pat")
 
         Returns:
             GenerationTask instance with source code and appropriate prompt
@@ -87,6 +89,7 @@ class TaskLoader:
             language=metadata['language'],
             description=metadata['description'],
             spec_module=metadata.get('specModule', task_name),  # Use specModule from config or task name as fallback
+            spec_language=spec_language,  # Target specification language
             # Add additional metadata
             extra_info={
                 'file_path': source_file,
@@ -217,28 +220,46 @@ class TaskLoader:
                         all_traces.append((trace_file.name, trace_content))
             return all_traces
 
-    def get_task_prompt(self, task_name: str, method_name: str) -> str:
+    def get_task_prompt(self, task_name: str, method_name: str, language: str = "tla") -> str:
         """
         Get the appropriate prompt template for a task and method.
-        
+
+        Supports language-specific prompts with fallback to default.
+        Priority: prompts/{language}/{method}.txt -> prompts/{method}.txt
+
         Args:
             task_name: Name of the task
             method_name: Name of the generation method
-            
+            language: Target specification language (tla, alloy, pat)
+
         Returns:
             Prompt template string
-            
+
         Raises:
             FileNotFoundError: If prompt file is not found
         """
         task_dir = self.tasks_dir / task_name
-        prompt_file = task_dir / "prompts" / f"{method_name}.txt"
-        
-        if not prompt_file.exists():
-            raise FileNotFoundError(f"Prompt file not found: {prompt_file}")
-        
-        with open(prompt_file, 'r', encoding='utf-8') as f:
-            return f.read()
+
+        # Normalize language name (remove "+")
+        language_normalized = language.lower().replace("+", "")
+
+        # Try language-specific prompt first (e.g., prompts/alloy/agent_based.txt)
+        lang_specific_prompt = task_dir / "prompts" / language_normalized / f"{method_name}.txt"
+        if lang_specific_prompt.exists():
+            with open(lang_specific_prompt, 'r', encoding='utf-8') as f:
+                return f.read()
+
+        # Fallback to default prompt (e.g., prompts/agent_based.txt)
+        default_prompt = task_dir / "prompts" / f"{method_name}.txt"
+        if default_prompt.exists():
+            with open(default_prompt, 'r', encoding='utf-8') as f:
+                return f.read()
+
+        # Neither found
+        raise FileNotFoundError(
+            f"Prompt file not found for task='{task_name}', method='{method_name}', language='{language}'. "
+            f"Tried: {lang_specific_prompt}, {default_prompt}"
+        )
     
     def list_available_tasks(self) -> List[str]:
         """List all available task names."""
@@ -305,6 +326,7 @@ def get_task_loader() -> TaskLoader:
         _task_loader = TaskLoader()
     return _task_loader
 
-def load_task(task_name: str, source_file: str = None, traces_folder: str = None) -> GenerationTask:
+def load_task(task_name: str, source_file: str = None, traces_folder: str = None,
+              spec_language: str = "tla") -> GenerationTask:
     """Convenience function to load a task."""
-    return get_task_loader().load_task(task_name, source_file, traces_folder)
+    return get_task_loader().load_task(task_name, source_file, traces_folder, spec_language)

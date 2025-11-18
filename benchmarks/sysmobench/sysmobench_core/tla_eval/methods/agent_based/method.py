@@ -9,7 +9,7 @@ import logging
 import time
 from typing import Dict, Any, Optional, List, Tuple
 
-from ..base import TLAGenerationMethod, GenerationTask, GenerationOutput
+from ..base import TLAGenerationMethod, GenerationTask, GenerationOutput, format_prompt_template
 from ...config import get_configured_model
 from ...core.verification.validators import TLAValidator, ValidationResult
 from ...models.base import GenerationConfig
@@ -211,9 +211,13 @@ class AgentBasedMethod(TLAGenerationMethod):
         while correction_attempts < self.max_correction_attempts:
             logger.info(f"Validation attempt {correction_attempts + 1}/{self.max_correction_attempts}")
             
-            # Validate current specification
+            # Validate current specification (with language support)
             validation_start = time.time()
-            validation_result = self._validate_specification(current_spec, task.spec_module)
+            validation_result = self._validate_specification(
+                current_spec,
+                task.spec_module,
+                task.spec_language
+            )
             validation_time = time.time() - validation_start
             
             logger.info(f"Validation completed in {validation_time:.2f}s: {'✓ PASS' if validation_result.success else '✗ FAIL'}")
@@ -284,9 +288,13 @@ class AgentBasedMethod(TLAGenerationMethod):
         
         # Max attempts reached without success
         logger.warning(f"Maximum correction attempts ({self.max_correction_attempts}) reached")
-        
+
         # Final validation to get current error state
-        final_validation = self._validate_specification(current_spec, task.spec_module)
+        final_validation = self._validate_specification(
+            current_spec,
+            task.spec_module,
+            task.spec_language
+        )
         
         # Print final error summary
         logger.error("=== FINAL VALIDATION ERRORS AFTER ALL CORRECTION ATTEMPTS ===")
@@ -326,68 +334,87 @@ class AgentBasedMethod(TLAGenerationMethod):
             'error_message': f"Failed to correct specification after {correction_attempts} attempts"
         }
     
-    def _validate_specification(self, specification: str, module_name: Optional[str] = None) -> ValidationResult:
+    def _validate_specification(self, specification: str, module_name: Optional[str] = None,
+                              spec_language: str = "tla") -> ValidationResult:
         """
-        Validate TLA+ specification for syntax and basic semantic errors without saving to disk.
-        
+        Validate specification for syntax and basic semantic errors (multi-language support).
+
         Args:
-            specification: TLA+ specification content
+            specification: Specification content
             module_name: Optional module name
-            
+            spec_language: Specification language (tla, alloy, etc.)
+
         Returns:
             ValidationResult with validation outcome
         """
         try:
-            # Create a temporary validator that doesn't save files
             import tempfile
             import os
             from pathlib import Path
-            
-            # Create temporary file for validation with meaningful name
-            import tempfile
-            temp_dir = tempfile.gettempdir()
-            
-            if not module_name:
-                raise ValueError("Module name is required for validation but was not provided")
-            
-            temp_file_path = os.path.join(temp_dir, f"{module_name}.tla")
-            
-            with open(temp_file_path, 'w', encoding='utf-8') as temp_file:
-                temp_file.write(specification)
-            
+            from ...core.verification.validator_factory import get_validator
+
+            # Create temporary directory for validation
+            temp_dir = Path(tempfile.mkdtemp())
+
             try:
-                # Run SANY validation on temporary file
-                from ...core.verification.validators import TLAValidator
-                temp_validator = TLAValidator(timeout=self.validation_timeout)
-                
-                # Call the internal validation method directly
-                success, output = temp_validator._run_sany_validation(temp_file_path)
-                
-                # Parse errors from output
-                syntax_errors, semantic_errors = temp_validator._parse_errors(output) if not success else ([], [])
-                
-                # Create ValidationResult object
-                result = ValidationResult(
-                    success=success,
-                    output=output,
-                    syntax_errors=syntax_errors,
-                    semantic_errors=semantic_errors,
-                    compilation_time=0.0
-                )
-                
-                logger.debug(f"Validation result: success={result.success}, "
-                            f"syntax_errors={len(result.syntax_errors)}, "
-                            f"semantic_errors={len(result.semantic_errors)}")
-                
-                return result
-                
+                # Get appropriate validator for language
+                validator = get_validator(spec_language, self.validation_timeout)
+
+                if spec_language.lower() == "alloy":
+                    # Alloy validation
+                    if not module_name:
+                        module_name = "temp_spec"
+
+                    temp_file_path = temp_dir / f"{module_name}.als"
+                    temp_file_path.write_text(specification, encoding='utf-8')
+
+                    # AlloyValidator.validate() expects spec_content and output_dir
+                    result = validator.validate(specification, temp_dir)
+
+                    logger.debug(f"Alloy validation result: success={result.success}, "
+                                f"syntax_errors={len(result.syntax_errors)}, "
+                                f"semantic_errors={len(result.semantic_errors)}")
+
+                    return result
+
+                else:
+                    # TLA+ validation
+                    if not module_name:
+                        raise ValueError("Module name is required for TLA+ validation but was not provided")
+
+                    temp_file_path = temp_dir / f"{module_name}.tla"
+                    temp_file_path.write_text(specification, encoding='utf-8')
+
+                    # TLAValidator - call internal validation directly
+                    from ...core.verification.validators import TLAValidator
+                    success, output = validator._run_sany_validation(str(temp_file_path))
+
+                    # Parse errors from output
+                    syntax_errors, semantic_errors = validator._parse_errors(output) if not success else ([], [])
+
+                    # Create ValidationResult object
+                    result = ValidationResult(
+                        success=success,
+                        output=output,
+                        syntax_errors=syntax_errors,
+                        semantic_errors=semantic_errors,
+                        compilation_time=0.0
+                    )
+
+                    logger.debug(f"TLA+ validation result: success={result.success}, "
+                                f"syntax_errors={len(result.syntax_errors)}, "
+                                f"semantic_errors={len(result.semantic_errors)}")
+
+                    return result
+
             finally:
-                # Clean up temporary file
+                # Clean up temporary directory
+                import shutil
                 try:
-                    os.unlink(temp_file_path)
+                    shutil.rmtree(temp_dir)
                 except:
                     pass
-            
+
         except Exception as e:
             logger.error(f"Validation failed with exception: {e}")
             return ValidationResult(
@@ -459,12 +486,17 @@ class AgentBasedMethod(TLAGenerationMethod):
             }
     
     def _create_initial_prompt(self, task: GenerationTask) -> str:
-        """Create initial generation prompt."""
+        """Create initial generation prompt (multi-language support)."""
         # Get task-specific prompt template (same as direct_call method)
+        # Use spec_language to select language-specific prompt
         from ...tasks.loader import get_task_loader
         task_loader = get_task_loader()
-        prompt_template = task_loader.get_task_prompt(task.task_name, "direct_call")  # Use direct_call prompt for initial generation
-        
+        prompt_template = task_loader.get_task_prompt(
+            task.task_name,
+            "agent_based",  # Use agent_based prompt for initial generation
+            task.spec_language  # Language-specific prompt
+        )
+
         # Prepare format variables
         format_vars = {
             'language': task.language,
@@ -472,13 +504,13 @@ class AgentBasedMethod(TLAGenerationMethod):
             'system_type': task.system_type,
             'source_code': '{source_code}'  # Keep this placeholder for the model adapter
         }
-        
+
         # Add extra info if available
         if task.extra_info:
             format_vars.update(task.extra_info)
-        
-        # Format template with task information
-        return prompt_template.format(**format_vars)
+
+        # Format template with task information (without escaping literal braces)
+        return format_prompt_template(prompt_template, format_vars)
     
     def _create_correction_prompt(self, task: GenerationTask, current_spec: str, 
                                 validation_result: ValidationResult, attempt_num: int) -> str:
@@ -494,16 +526,20 @@ class AgentBasedMethod(TLAGenerationMethod):
         Returns:
             Formatted correction prompt
         """
-        # Get agent-based correction prompt template
+        # Get agent-based correction prompt template (language-specific)
         from ...tasks.loader import get_task_loader
         task_loader = get_task_loader()
-        
+
         try:
-            correction_template = task_loader.get_task_prompt(task.task_name, self.name)
+            correction_template = task_loader.get_task_prompt(
+                task.task_name,
+                "agent_correction",  # Use correction-specific prompt
+                task.spec_language  # Language-specific
+            )
         except Exception:
             # Fallback to a default correction prompt if task-specific one doesn't exist
-            logger.warning(f"No agent_based prompt found for task {task.task_name}, using default correction prompt")
-            correction_template = self._get_default_correction_prompt()
+            logger.warning(f"No agent_correction prompt found for task {task.task_name}/{task.spec_language}, using default correction prompt")
+            correction_template = self._get_default_correction_prompt(task.spec_language)
         
         # Extract error information
         error_summary = self._extract_error_summary(validation_result)
@@ -559,37 +595,39 @@ class AgentBasedMethod(TLAGenerationMethod):
         
         return "\n".join(errors) if errors else "No specific errors identified"
     
-    def _get_default_correction_prompt(self) -> str:
+    def _get_default_correction_prompt(self, spec_language: str = "tla") -> str:
         """Default correction prompt template when task-specific prompt is not available."""
-        return """You are an expert in TLA+ specification language. I need you to fix errors in a TLA+ specification.
+        language_name = "TLA+" if spec_language.lower() == "tla" else spec_language.upper()
 
-Original task: Create a TLA+ specification for a {system_type} system.
+        return f"""You are an expert in {language_name} specification language. I need you to fix errors in a {language_name} specification.
 
-Description: {description}
+Original task: Create a {language_name} specification for a {{system_type}} system.
 
-Current TLA+ specification (with errors):
-```tla
-{current_specification}
+Description: {{description}}
+
+Current {language_name} specification (with errors):
+```
+{{current_specification}}
 ```
 
 Validation errors found:
-{error_summary}
+{{error_summary}}
 
 Detailed syntax errors:
-{syntax_errors}
+{{syntax_errors}}
 
 Detailed semantic errors:
-{semantic_errors}
+{{semantic_errors}}
 
-This is correction attempt {attempt_number} of {max_attempts}.
+This is correction attempt {{attempt_number}} of {{max_attempts}}.
 
-Please provide a corrected TLA+ specification that fixes these errors. Focus on:
+Please provide a corrected {language_name} specification that fixes these errors. Focus on:
 1. Fixing syntax errors (missing operators, incorrect syntax)
 2. Resolving semantic errors (undefined variables, incorrect logic)
 3. Maintaining the original intent and structure where possible
-4. Ensuring the specification is valid TLA+
+4. Ensuring the specification is valid {language_name}
 
-Return only the corrected TLA+ specification without explanations."""
+Return only the corrected {language_name} specification without explanations."""
     
     def get_method_info(self) -> Dict[str, Any]:
         """Get information about agent-based method."""

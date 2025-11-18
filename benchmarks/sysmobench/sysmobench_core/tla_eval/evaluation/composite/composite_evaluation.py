@@ -37,45 +37,89 @@ class CompositeEvaluator(BaseEvaluator):
     - Invariant verification (semantics, conditional on compilation success)
     """
     
-    def __init__(self, 
+    def __init__(self,
                  validation_timeout: int = 90,
                  invariant_iterations: int = 3,
                  keep_temp_files: bool = False,
                  max_correction_attempts: int = 3,
-                 enable_coverage: bool = True):
+                 enable_coverage: bool = True,
+                 spec_language: str = "tla"):
         """
         Initialize composite evaluator.
-        
+
         Args:
-            validation_timeout: Timeout for TLA+ validation in seconds
+            validation_timeout: Timeout for validation in seconds
             invariant_iterations: Number of invariant verification iterations
             keep_temp_files: Whether to keep temporary files for debugging
             max_correction_attempts: Maximum number of global correction attempts
             enable_coverage: Whether to run coverage analysis
+            spec_language: Target specification language ("tla", "alloy", "pat")
         """
         super().__init__(timeout=validation_timeout)
         self.max_iterations = invariant_iterations
         self.keep_temp_files = keep_temp_files
         self.max_correction_attempts = max_correction_attempts
         self.enable_coverage = enable_coverage
-        
-        # Initialize sub-evaluators
-        self.action_evaluator = ActionDecompositionEvaluator(
-            validation_timeout=validation_timeout,
-            keep_temp_files=keep_temp_files
-        )
-        self.compilation_evaluator = CompilationCheckEvaluator(
-            validation_timeout=validation_timeout
-        )
-        self.runtime_check_evaluator = RuntimeCheckEvaluator(
-            tlc_timeout=validation_timeout
-        )
-        self.manual_invariant_evaluator = ManualInvariantEvaluator(
-            tlc_timeout=validation_timeout
-        )
-        self.coverage_evaluator = CoverageEvaluator(
-            tlc_timeout=validation_timeout
-        )
+        self.spec_language = spec_language.lower().replace("+", "").strip()
+
+        # Initialize language-specific evaluators
+        self._init_evaluators(validation_timeout)
+
+    def _init_evaluators(self, validation_timeout: int):
+        """
+        Initialize evaluators based on specification language.
+
+        For TLA+: ActionDecomposition, Compilation, Runtime, ManualInvariant, Coverage
+        For Alloy: Compilation, Runtime, ManualInvariant, Coverage (no action decomposition)
+
+        Args:
+            validation_timeout: Timeout for validation in seconds
+        """
+        if self.spec_language == "tla":
+            # TLA+ evaluators
+            self.action_evaluator = ActionDecompositionEvaluator(
+                validation_timeout=validation_timeout,
+                keep_temp_files=self.keep_temp_files
+            )
+            self.compilation_evaluator = CompilationCheckEvaluator(
+                validation_timeout=validation_timeout
+            )
+            self.runtime_check_evaluator = RuntimeCheckEvaluator(
+                tlc_timeout=validation_timeout
+            )
+            self.manual_invariant_evaluator = ManualInvariantEvaluator(
+                tlc_timeout=validation_timeout
+            )
+            self.coverage_evaluator = CoverageEvaluator(
+                tlc_timeout=validation_timeout
+            )
+
+        elif self.spec_language == "alloy":
+            # Alloy evaluators - no action decomposition
+            from ..syntax.alloy_compilation_check import AlloyCompilationCheckEvaluator
+            from ..semantics.alloy_runtime_check import AlloyRuntimeCheckEvaluator
+            from ..semantics.alloy_invariant_check import AlloyInvariantCheckEvaluator
+            from ..semantics.alloy_coverage import AlloyCoverageEvaluator
+
+            self.action_evaluator = None  # Alloy doesn't have action decomposition
+            self.compilation_evaluator = AlloyCompilationCheckEvaluator(
+                validation_timeout=validation_timeout
+            )
+            self.runtime_check_evaluator = AlloyRuntimeCheckEvaluator(
+                validation_timeout=validation_timeout
+            )
+            self.manual_invariant_evaluator = AlloyInvariantCheckEvaluator(
+                validation_timeout=validation_timeout
+            )
+            self.coverage_evaluator = AlloyCoverageEvaluator(
+                validation_timeout=validation_timeout
+            )
+
+        else:
+            raise ValueError(
+                f"Unsupported specification language: '{self.spec_language}'. "
+                f"Supported: tla, alloy"
+            )
     
     def evaluate(self, 
                 generation_result: GenerationResult,
@@ -149,29 +193,37 @@ class CompositeEvaluator(BaseEvaluator):
                     'errors': []
                 }
                 
-                # Phase 1: Action Decomposition
-                logger.info(f"Iteration {iteration} - Phase 1/3: Action Decomposition")
-                try:
-                    action_result = self.action_evaluator.evaluate(
-                        current_generation_result, task_name, method_name, model_name, spec_module
-                    )
-                    iteration_data['action_result'] = action_result
-                    
-                    success_rate = getattr(action_result, 'action_success_rate', 0.0) * 100
-                    success_status = "✓ PASS" if action_result.overall_success else "✗ FAIL"
-                    logger.info(f"  Action Decomposition: {success_status} ({success_rate:.1f}% actions successful)")
-                    
-                    if not action_result.overall_success:
-                        iteration_data['errors'].append(f"Action decomposition failed: {getattr(action_result, 'generation_error', 'Unknown error')}")
-                        
-                except Exception as e:
-                    logger.error(f"  Action Decomposition failed with exception: {e}")
+                # Phase 1: Action Decomposition (TLA+ only, Alloy doesn't have this phase)
+                if self.action_evaluator is not None:
+                    logger.info(f"Iteration {iteration} - Phase 1/3: Action Decomposition")
+                    try:
+                        action_result = self.action_evaluator.evaluate(
+                            current_generation_result, task_name, method_name, model_name, spec_module
+                        )
+                        iteration_data['action_result'] = action_result
+
+                        success_rate = getattr(action_result, 'action_success_rate', 0.0) * 100
+                        success_status = "✓ PASS" if action_result.overall_success else "✗ FAIL"
+                        logger.info(f"  Action Decomposition: {success_status} ({success_rate:.1f}% actions successful)")
+
+                        if not action_result.overall_success:
+                            iteration_data['errors'].append(f"Action decomposition failed: {getattr(action_result, 'generation_error', 'Unknown error')}")
+
+                    except Exception as e:
+                        logger.error(f"  Action Decomposition failed with exception: {e}")
+                        from ..base.result_types import SyntaxEvaluationResult
+                        action_result = SyntaxEvaluationResult(task_name, method_name, model_name)
+                        action_result.overall_success = False
+                        action_result.generation_error = str(e)
+                        iteration_data['action_result'] = action_result
+                        iteration_data['errors'].append(f"Action decomposition exception: {str(e)}")
+                else:
+                    # Alloy: Skip action decomposition, create success result
+                    logger.info(f"Iteration {iteration} - Phase 1/3: Action Decomposition (SKIPPED for {self.spec_language.upper()})")
                     from ..base.result_types import SyntaxEvaluationResult
                     action_result = SyntaxEvaluationResult(task_name, method_name, model_name)
-                    action_result.overall_success = False
-                    action_result.generation_error = str(e)
+                    action_result.overall_success = True  # Auto-pass for languages without action decomposition
                     iteration_data['action_result'] = action_result
-                    iteration_data['errors'].append(f"Action decomposition exception: {str(e)}")
                 
                 # Phase 2: Compilation Check
                 logger.info(f"Iteration {iteration} - Phase 2/3: Compilation Check")
@@ -1134,22 +1186,25 @@ class CompositeEvaluator(BaseEvaluator):
 
 
 # Convenience function for backward compatibility
-def create_composite_evaluator(validation_timeout: int = 30, 
+def create_composite_evaluator(validation_timeout: int = 30,
                               invariant_iterations: int = 3,
-                              keep_temp_files: bool = False) -> CompositeEvaluator:
+                              keep_temp_files: bool = False,
+                              spec_language: str = "tla") -> CompositeEvaluator:
     """
     Factory function to create a composite evaluator.
-    
+
     Args:
-        validation_timeout: Timeout for TLA+ validation in seconds
+        validation_timeout: Timeout for validation in seconds
         invariant_iterations: Number of invariant verification iterations
         keep_temp_files: Whether to keep temporary files for debugging
-        
+        spec_language: Target specification language ("tla", "alloy", "pat")
+
     Returns:
         CompositeEvaluator instance
     """
     return CompositeEvaluator(
         validation_timeout=validation_timeout,
         invariant_iterations=invariant_iterations,
-        keep_temp_files=keep_temp_files
+        keep_temp_files=keep_temp_files,
+        spec_language=spec_language
     )

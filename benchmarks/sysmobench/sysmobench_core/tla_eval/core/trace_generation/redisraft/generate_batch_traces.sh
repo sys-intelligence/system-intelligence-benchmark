@@ -6,7 +6,9 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-OUTPUT_BASE="/home/ubuntu/LLM_Gen_TLA_benchmark_framework/data/sys_traces/redisraft"
+# Use fixed relative path for consistency
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
+OUTPUT_BASE="$PROJECT_ROOT/data/sys_traces/redisraft"
 GENERATOR="$SCRIPT_DIR/raft_trace_generator"
 
 # Configuration

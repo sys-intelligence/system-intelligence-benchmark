@@ -116,7 +116,7 @@ class AnthropicAdapter(ModelAdapter):
         
         # Format prompt - check if prompt_template already contains the content
         if "{source_code}" in prompt_template:
-            user_prompt = prompt_template.format(source_code=source_code)
+            user_prompt = prompt_template.replace("{source_code}", source_code)
         else:
             # Prompt is already formatted, use as-is
             user_prompt = prompt_template

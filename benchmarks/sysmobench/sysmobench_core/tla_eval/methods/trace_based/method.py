@@ -15,7 +15,7 @@ from pathlib import Path
 
 from tla_eval.methods.agent_based.method import AgentBasedMethod
 
-from ..base import TLAGenerationMethod, GenerationTask, GenerationOutput
+from ..base import TLAGenerationMethod, GenerationTask, GenerationOutput, format_prompt_template
 from ...config import get_configured_model
 from ...core.verification.validators import TLAValidator, ValidationResult
 from ...models.base import GenerationConfig
@@ -202,8 +202,8 @@ class TraceBasedMethod(AgentBasedMethod):
         if task.extra_info:
             format_vars.update(task.extra_info)
         
-        # Format template with task information
-        return prompt_template.format(**format_vars)
+        # Format template with task information and keep literal braces intact
+        return format_prompt_template(prompt_template, format_vars)
 
     def _convert_ndjson_to_tsv(self, ndjson_str: str) -> str:
         """Convert NDJSON payload into TSV while abbreviating long capitalized values."""
