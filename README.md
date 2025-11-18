@@ -1,22 +1,26 @@
 # System Intelligence Benchmark: A Benchmark Suite for Evaluating LLM's System Capabilities
 
-It is a comprehensive benchmarking framework for evaluating the performance of Large Language Models (LLMs) and AI systems across critical system capabilities. It features example benchmarks for system course exams, course projects, and cache algorithm design, and offers both CLI tools and an SDK for further development.
+System Intelligence Benchmark is a comprehensive benchmark suite for evaluating the performance of Large Language Models (LLMs) and AI systems across critical system capabilities. It features tutorial, example benchmarks and offers both CLI tools and an SDK for further development.
 
 ## Benchmark Overview
-### Benchmark Concept
-A benchmark is a standard or point of reference against which things may be compared or assessed. In the context of AI and LLMs, benchmarks are essential for evaluating model capabilities, guiding research directions, and measuring progress. The following figure illustrates the main components of a AI benchmark. We abstract the benchmark into 4 components: the taskset, the environment, the executor, and the evaluator. This abstraction ensures a clear flow from tasks to metrics. You can see [benchmark_abstraction.md](doc/benchmark_abstract.md) for details.
+A benchmark is a standard or point of reference against which things may be compared or assessed. In the context of AI and LLMs, benchmarks are essential for evaluating model capabilities, guiding research directions, and measuring progress. 
+
+### Benchmark Framework
+
+To advance benchmark development, we propose the System Intelligence Benchmark Framework, a modular and extensible framework designed to support diverse research domains and problem types. As shown in the below figure, the framework comprises four abstractions: task set, environment, executor, and evaluator. Each task is associated with a specific environment, wherein the executor generates a solution that is subsequently assessed by the evaluator, which returns the evaluation metrics. This design enables the flexible integration of heterogeneous agents and their systematic evaluation. Additionally, the framework includes built-in executors (agents), evaluators (methodologies and grading rubrics), and tutorials. In an ideal case, users need only supply tasks that represent specific capabilities, select an evaluator, and quickly create and run a new benchmark. You can see [benchmark_abstraction.md](doc/benchmark_abstract.md) for details.
 
 <img src="doc/benchmark.png" alt="Dashboard Screenshot" width="600"/>
 
+The benchmark framework is **still under development**. If you have any questions, feel free to open an issue or contact us directly.  
+
 ### Benchmarks
 
-System Intelligence Benchmark currently includes the following example benchmarks. Some examples are still under development — we're actively updating them. Stay tuned!
+System Intelligence Benchmark currently includes the following example benchmarks. Each benchmark assesses specific capabilities across multiple levels within a given research direction. Some benchmarks are still under development — we're actively updating them. Stay tuned!
 
-- **Course Exam Benchmark** ([benchmarks/course_exam_bench/](benchmarks/course_exam_bench/)) - Tests LLM understanding of system concepts through university course exams (54 questions across 4 exams)
-- **Course Project Benchmark** ([benchmarks/course_project_bench/](benchmarks/course_project_bench/)) - Assesses AI capability on practical system course projects
-- **Cache Benchmark** ([benchmarks/cache_bench/](benchmarks/cache_bench/)) - Evaluates AI performance on cache algorithm design tasks
-- **ArtEval Benchmark** ([benchmarks/arteval_bench/](benchmarks/arteval_bench/)) - Evaluates AI performance on writing Kusto Query Language (KQL) queries for platform operations
-- **SysMoBench** (`benchmarks/sysmobench/`) - Evaluates an agent's ability to produce correct TLA+ models for real-world concurrent and distributed systems
+- **System Exam Benchmark** ([benchmarks/course_exam_bench/](benchmarks/course_exam_bench/)) - Tests LLM understanding of system concepts through university course exams (54 questions across 4 exams)
+- **System Lab Benchmark** ([benchmarks/course_lab_bench/](benchmarks/course_lab_bench/)) - Assesses AI capability on practical system course labs and projects 
+- **System Artifact Benchmark** ([benchmarks/arteval_bench/](benchmarks/arteval_bench/)) - Evaluates AI performance on artifact evaluation
+- **System Modeling Benchmark** ([benchmarks/sysmobench/](benchmarks/sysmobench/)) - Evaluates an agent's ability to produce correct TLA+ models for real-world concurrent and distributed systems, covering system capabilities across system comprehension, abstraction, and potentially tool fluency.
 - **Example Benchmark** ([benchmarks/example_bench/](benchmarks/example_bench/)) - Template and reference implementation for creating new benchmarks
 
 ## Quick Start
@@ -39,7 +43,7 @@ System Intelligence Benchmark currently includes the following example benchmark
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/systemintelligence/system_intelligence_benchmark.git
+   git clone https://github.com/sys-intelligence/system_intelligence_benchmark.git
    cd system_intelligence_benchmark
    ```
 
@@ -82,29 +86,19 @@ Benchmarks generate standardized outputs in `cli/outputs/{benchmark_name}__{mode
 
 You can find more detailed usage guides in the CLI [README.md](cli/README.md).
 
-## Adding Benchmarks
+## Contribute to Benchmarks
+
+We welcome community contributions to enrich existing benchmarks (e.g., by adding more exam problems to the System Exam benchmark and more system artifacts to System Artifact and System Modeling benchmark), port your existing benchmarks, and more importantly to create new system intelligence benchmarks with our framework. See below for detailed instructions. We believe that such collective community efforts will advance AI to its next level and help realize System Intelligence, unlocking the potential of AI-driven computing system innovations. If you are interested in contributing or already have good system benchmarks, please let us know. We have set up a [slack channel](system-intelligence.slack.com) at system-intelligence.slack.com.
 
 > [!NOTE] 
-> We suggest getting starting by walking through the basic concept of a AI benchmark: [Benchmark Abstraction](doc/benchmark_abstract.md).
+> We suggest getting starting by walking through the basic concept of a AI benchmark: [Benchmark Abstraction](doc/benchmark_abstract.md). After understanding the basic concept, you can decide whether to Contribute to Existing Benchmarks, Porting Existing Benchmarks, or  Creating New Benchmarks.
 
-After understanding the basic concept, you can decide whether to add more tasks for existing benchmarks or create new benchmarks that map to different levels of system capabilities.
+### Contribute to Existing Benchmarks
+The easiest way to contribute is to add more tasks to existing benchmarks. Currently, the following two are highly recommended. You can simply follow the provided guidelines to submit your data—once that’s done, you’re all set.
+- **SystemExam**: If you are a professor teaching one or more courses, we highly recommend contributing **more exam problems** to SystemExam (see [this doc](https://github.com/sys-intelligence/system_intelligence_benchmark/tree/main/benchmarks/course_exam_bench#how-to-extend-the-benchmark) for step-by-step guidance).
+- **SystemArtifact**: If you are a researcher submitting artifacts, or an AE chair involved in artifact evaluation, we highly recommend contributing **more system artifacts** to SystemArtifact (see [this doc](https://github.com/sys-intelligence/system_intelligence_benchmark/blob/main/benchmarks/arteval_bench/README.md) for step-by-step guidance).
 
-### Contribute to existing Benchmarks
-The easiest way to contribute is to add more tasks to existing benchmarks. For example, you can add more questions to the course exam benchmark or more projects to the course project benchmark. You can add more system algorithm design problems into algorithm design benchmark. Please follow the existing format and structure for adding new tasks. You can also improve the existing benchmarks by adding more advanced evaluators with improved metrics.
-
-### Creating New Benchmarks
-> [!NOTE]
-> See [custom_benchmark.md](doc/custom_benchmark.md) for step-by-step guidelines.
-
-To create a new benchmark, follow these steps:
-1. Create a new benchmark directory in `benchmarks/`
-   1. Based on your specific requirements, copy an example benchmark as a starting point
-   2. Update the `src/main.py` file with your specific evaluation logic
-   3. Update the README.md with benchmark-specific details
-   4. Add test cases in the `tests/` directory
-2. Add an `env.toml` configuration file
-3. Implement `install.sh` and `run.sh` scripts
-4. Update the benchmark list in `run_all_local.sh` and `run_docker.sh` if needed
+In addition, you can also help review the existing benchmarks to propose improvement ideas or directly enhance them—for example, by adding more advanced evaluators or incorporating improved metrics.
 
 ### Porting Existing Benchmarks
 > [!NOTE]
@@ -117,6 +111,19 @@ For integrating existing, independently-developed benchmark projects while maint
 - Configure bidirectional sync for pulling updates and contributing fixes
 
 **Example:** [SysMoBench](benchmarks/sysmobench/) - ported from [SysSpecBench](https://github.com/specula-org/SysSpecBench)
+
+### Creating New Benchmarks
+> [!NOTE]
+> See [custom_benchmark.md](doc/creating_benchmark.md) for step-by-step guidelines.
+
+To create a new benchmark, follow these steps:
+1. Create a new benchmark directory in `benchmarks/`
+   1. Based on your specific requirements, select and copy an example benchmark as a starting point
+   2. Update the `src/main.py` file with your specific evaluation logic (your executor and evaluator)
+   3. Add test cases in the `tests/` directory
+2. Update the README.md with benchmark-specific details
+3. Implement `install.sh` and `run.sh` scripts
+4. Update the benchmark list in `run_all_local.sh` and `run_docker.sh` if needed
 
 ## Contributing
 

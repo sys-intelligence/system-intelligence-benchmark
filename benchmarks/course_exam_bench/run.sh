@@ -20,10 +20,5 @@ NEW_MODEL_NAME="${MODEL_NAME//\//_}"
 
 source .venv/bin/activate
 echo "==> Start to run CourseExamBench with model: ${MODEL_NAME}"
-# Note that if you benchmark has multiple tasks, you need to add --task <task> 
-# in your code to enable task selection.
-python src/main.py \
-    --model_name "${MODEL_NAME}" 
-    # --save_path "./outputs/systemcourseexam__${NEW_MODEL_NAME}__$(date +"%Y-%m-%d_%H-%M-%S")" \
-
+python src/main.py --model_name "${MODEL_NAME}"
 deactivate

@@ -1,19 +1,22 @@
-# How to Add a Custom Benchmark
+# How to Create a Custom Benchmark
 
-This guide will walk you through creating a custom benchmark for SysCapBench. By following these steps, you'll be able to evaluate AI models on your own system-related tasks and integrate them into the SysCapBench framework.
+This guide will walk you through how to create a custom system-intelligence benchmark using the framework. By following these steps, you’ll be able to evaluate the latest models and agents on your own system-related tasks and seamlessly integrate your benchmark into the framework.
 
 ## Prerequisites
 
 Before creating a custom benchmark, ensure you have:
 
 - Python 3.9 or higher
-- Basic understanding of the SysCapBench structure
-- A clear evaluation task in mind
-- Test data or scenarios to evaluate
+- Basic understanding of the benchmark framework
+- A clear evaluation task (tasks, how to score it) in mind
 
 ## Step 1: Create Your Benchmark Directory
 
-Choose a benchmark that is similar to your setting as a starting point. For example, if your benchmark involves algorithm design/optimization tasks, you might start with `cache_bench`. If it involves exam-style questions, consider `course_exam_bench`. Use the `course_project_bench` if your benchmark is related environment setup, system understanding/implementation, performance analysis, debugging tasks.
+Choose an example benchmark that **is similar to** your setting as a starting point. 
+
+If your tasks involve exam-style questions, consider starting from [course_exam_bench](https://github.com/sys-intelligence/system_intelligence_benchmark/tree/main/benchmarks/course_exam_bench). If your benchmark focuses on algorithm design or optimization tasks, you might use [algo_cache_bench](https://github.com/sys-intelligence/system_intelligence_benchmark/tree/main/benchmarks/algo_cache_bench) as a template. These tasks can often be handled by a minimal agent (an LLM call plus a response parser).
+
+Use [course_lab_bench](https://github.com/sys-intelligence/system_intelligence_benchmark/tree/main/benchmarks/course_exam_bench), if your benchmark is related to **environment setup, system understanding/implementation, performance analysis, or debugging tasks**, and each task may need different runing environments. These tasks typically require an LLM to autonomously call tools (such as the File Editor, Bash, etc.), navigate a large codebase, and run experiments or tests—similar to what a human developer would do. To support this, we provide several advanced agents (e.g., Claude Code, MiniSWEAgent) in this example, along with guidance for [integrating new agents](https://github.com/sys-intelligence/system_intelligence_benchmark/blob/main/benchmarks/course_lab_bench/add_agents.md).
 
 1. Navigate to the benchmarks directory:
 
@@ -28,7 +31,7 @@ Choose a benchmark that is similar to your setting as a starting point. For exam
    cd your_bench_name/
    ```
 
-3. Your benchmark directory should have the following structure:
+3. Your benchmark directory should have the following mininal structure:
 
    ```
    your_bench_name/
@@ -58,18 +61,18 @@ Create your evaluation dataset in a structured format:
 
 2. Define your test cases in JSONL format (recommended):
 
+   The following is mininal example.
    ```jsonl
    {"id": "task_001", "sys_prompt": "You are a helpful assistant.", "user_prompt": "Solve this problem...", "response": "Expected answer..."}
    {"id": "task_002", "sys_prompt": "You are a helpful assistant.", "user_prompt": "Another task...", "response": "Expected answer..."}
    ```
-
-   Each line should contain:
+   Each line contains:
    - `id`: Unique identifier for the test case
    - `sys_prompt`: System prompt for the LLM
    - `user_prompt`: User query/task description
    - `response`: Expected/ground truth response
 
-3. For more complex scenarios, you can use JSON or custom formats. See `course_exam_bench` and `course_project_bench` for examples.
+3. **NOTES:** for more complex scenarios, you can use **any custom formats**. See [course_exam_bench](https://github.com/sys-intelligence/system_intelligence_benchmark/blob/main/benchmarks/course_exam_bench/data/benchmark/questions.jsonl) and [course_lab_bench](https://github.com/sys-intelligence/system_intelligence_benchmark/blob/main/benchmarks/course_lab_bench/data/benchmark/env_setup_examples.jsonl) for examples.
 
 ## Step 3: Select or Implement Your Executor and Evaluator
 
@@ -251,8 +254,8 @@ class CustomEvaluator(Evaluator):
 
 - **`example_bench/src/main.py`**: Uses `SimpleExecutor` + `BasicEvaluator` for basic evaluation with multiple similarity metrics
 - **`course_exam_bench/`**: Uses `SimpleExecutor` + `ExamEvaluator` for grading exam questions
-- **`cache_bench/`**: Uses custom executor for code execution and performance testing
-- **`course_project_bench/`**: Uses agent-based executor for complex project evaluation
+- **`algo_cache_bench/`**: Uses custom evaluator for code execution and performance testing
+- **`course_lab_bench/`**: Uses agent-based executor for complex project execution
 
 ## Step 4: Configure Your Benchmark
 
@@ -330,7 +333,7 @@ echo "Results saved to: outputs/"
 1. **Scenario Description**: Explain what your benchmark evaluates
 2. **Task Details**: Describe input, output, and evaluation criteria
 3. **Setup Instructions**: Docker and manual setup steps
-4. **Example Results**: Show sample outputs or performance metrics
+4. **Example Results (optional)**: Show sample outputs or performance metrics
 
 See the template in `benchmarks/example_bench/README.md` for structure.
 
@@ -377,7 +380,7 @@ Run tests:
    ./run.sh
    ```
 
-### Docker Testing
+### Docker Testing (optional)
 
 1. Build the Docker image:
 
@@ -414,7 +417,7 @@ Once your benchmark is complete and tested:
 2. Update the main README.md to list your benchmark
 3. Submit a pull request following the [contribution guidelines](README.md#contributing)
 
-Your contributions help make SysCapBench more comprehensive and valuable for evaluating AI systems!
+Your contributions help make the system intelligence benchmark more comprehensive, robust, and valuable for evaluating AI systems!
 
 
 ## Others
@@ -434,9 +437,9 @@ Follow the [PreChecks.md](PreChecks.md) for code formatting and linting guidelin
 Refer to existing benchmarks for inspiration:
 
 - **`example_bench/`**: Minimal template with `SimpleExecutor` + `BasicEvaluator`
-- **`cache_bench/`**: Code execution, algorithm simulation and performance evaluation
+- **`algo_cache_bench/`**: Code execution, algorithm simulation and performance evaluation
 - **`course_exam_bench/`**: Multiple-choice and short-answer questions with `ExamEvaluator`
-- **`course_project_bench/`**: Complex project-based evaluation with agent executors
+- **`course_lab_bench/`**: Complex project-based evaluation with agent executors
 
 ### Getting Help
 

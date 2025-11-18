@@ -1,0 +1,14 @@
+{
+  "sys_prompt": "You are a university student who has completed the Distributed System Engineering course. You are now answering a final exam question. This is a SingleChoice problem. Please return your response in JSON format with 'answer' and 'explanation' fields.",
+  "user_prompt": "Below is the problem description:\n# I MapReduce  \n\nThe MapReduce paper (MapReduce: Simplified Data Processing on Large Clusters, by Dean and Ghemawat) says in Section 3.1 that the intermediate key space is partitioned among the R reduce tasks using hash(key) mod R.  \n\nThea is running the word-count MapReduce job (pseudo-code in the paper\u2019s Section 2.1) on a cluster with 10 worker machines. M is 20 and R is 40. There are no failures, the network is reliable, no machines are slower than expected, and there is no competing work on any of the machines or networks involved. The Map input is divided into 20 pieces of 16 megabytes each.  \n\n1. [5 points]: By mistake, the hash(key) function Thea is using with MapReduce always returns 1. What effect will that have on the execution of the word-count job, compared to using a well-behaved hash function? Circle the single best answer.  A. the job will produce incorrect final output   \n   B. 10 times as much total CPU time will be needed for Reduce phase   \n   C. 10 times as much total wall-clock time will be needed for Reduce phase   \n   D. 40 times as much total CPU time will be needed for Reduce phase   \n   E. 40 times as much total wall-clock time will be needed for Reduce phase   \n   F. the job will never complete  ",
+  "response": "{\"answer\": \"C\", \"explanation\": \"Answer: C. The total amount of computation is unchanged, but it\\u2019s all done by one worker rather than divided up in parallel among 10 workers. B is not correct because the total amount of work doesn\\u2019t change; the only thing that the hash function changes is which worker does the work.  \"}",
+  "metadata": {
+    "course": "Distributed System Engineering",
+    "exam": "6.5840 Distributed System Engineering: Spring 2025 Exam I",
+    "question_type": "SingleChoice",
+    "points": 5,
+    "instance_id": 1,
+    "topic": "MapReduce",
+    "data_quality": "high"
+  }
+}
