@@ -1,8 +1,8 @@
-# System Course Project Benchmark
+# System Course Lab Benchmark [Under Development]
 
 ## Scenario Description
 
-This benchmark evaluates AI agents on their ability to complete systems course projects and labs, particularly from MIT's 6.5840 (Distributed Systems). The benchmark tests agents on realistic programming assignments that require:
+This benchmark evaluates AI agents on their ability to complete systems course labs and projects, particularly from MIT's 6.5840 (Distributed Systems). The benchmark tests agents on realistic programming assignments that require:
 
 - Understanding complex codebases written in Go
 - Implementing distributed systems concepts (MapReduce, Raft, key-value stores)

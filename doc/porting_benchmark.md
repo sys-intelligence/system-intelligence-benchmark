@@ -1,8 +1,7 @@
 # How to Port an Existing Benchmark
 
-A guide for integrating mature, independently-developed benchmarks using SysMoBench as example.
+A guide for integrating mature, independently-developed benchmarks using `SysMoBench` as an example.
 
----
 
 ## Step 1: Choose Git Integration Method
 
@@ -25,7 +24,6 @@ When porting an existing benchmark, you need to decide how to integrate the upst
 - Benchmark codebase is very large (>500MB)
 - You need strict separation between upstream and integration code
 
----
 
 ## Step 2: Add Upstream as Git Subtree
 
@@ -38,7 +36,6 @@ git subtree add --prefix benchmarks/your_benchmark/benchmark_core \
     benchmark-upstream main --squash
 ```
 
----
 
 ## Step 3: Create Directory Structure
 
@@ -57,8 +54,6 @@ benchmarks/your_benchmark/
 ├── run.sh
 └── README.md
 ```
-
----
 
 ## Step 4: Write Adapter Layer
 
@@ -97,7 +92,6 @@ from tla_eval.config import get_configured_model
 
 If the upstream config system cannot be replaced, map the framework's config to upstream's format at runtime. Implementation depends on your specific benchmark.
 
----
 
 ### 4.2 Separate Executor and Evaluator
 
@@ -111,7 +105,6 @@ Any benchmark can be abstracted into two sequential modules: **Executor** (gener
 - Example: SysMoBench runs TLC checks and verification
 - Returns standardized scores and diagnostic information
 
----
 
 ### 4.3 Define Task Format
 
@@ -122,11 +115,10 @@ Convert the upstream task format to the framework's standard `tasks.jsonl` schem
 {"task_id": "task_2", "description": "...", "metadata": {}}
 ```
 
----
 
 ## Step 5: Complete Integration
 
-Most remaining steps (testing, documentation, root-level integration) are identical to creating a custom benchmark. See [Creating New Benchmarks](custom_benchmark.md) for detailed guidelines.
+Most remaining steps (testing, documentation, root-level integration) are identical to creating a custom benchmark. See [Creating New Benchmarks](creating_benchmark.md) for detailed guidelines.
 
 **Porting-specific considerations:**
 
@@ -175,11 +167,10 @@ benchmark_core/.venv/
 
 ### 5.4 Other Steps
 
-- **Tests**: See [custom_benchmark.md - Testing](custom_benchmark.md#testing)
+- **Tests**: See [creating_benchmark.md - Testing](creating_benchmark.md#testing)
 - **README**: Document upstream source, version, and attribution
 - **Root integration**: Update `cli/run_all_local.sh`, `README.md`
 
----
 
 ## Sync with Upstream
 
@@ -195,4 +186,3 @@ git subtree push --prefix benchmarks/your_benchmark/benchmark_core \
     benchmark-upstream feature-branch
 ```
 
----
