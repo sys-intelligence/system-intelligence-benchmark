@@ -9,7 +9,7 @@ def covert_to_dict():
         id = 0
         # instance_id,course,year,index,part_name,introduction,getting_started,The code,description,task,hint,rules,repo_location,test_method,test_results,difficluty,link
         for row in reader:
-            if id > 25:
+            if id > 100:  # Process up to 100 tasks
                 break
             id += 1
             unique_id = row['instance_id'] + row['course'] + '_' + row['year'] + '_' + row['index']

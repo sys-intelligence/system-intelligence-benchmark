@@ -85,3 +85,56 @@ The benchmark supports multiple AI agents:
 
 To add your own agent to the benchmark, see [add_agents.md](add_agents.md).
 
+## How to Extend the Benchmark
+
+This section describes how to add additional labs to the benchmark. We show the workflow using the existing [MapReduce lab](http://nil.csail.mit.edu/6.5840/2024/labs/lab-mr.html) as an example:
+
+### Step 1: Add a row to the CSV file
+
+Edit `data/benchmark/lab_exam_data_20250529.csv` and add a new row. Here is what each column represents:
+
+| Column            | Value                            | Description                                                |
+| ----------------- | -------------------------------- | ---------------------------------------------------------- |
+| `instance_id`     | `1`                              | Unique numeric ID for the task                             |
+| `course`          | `6.5840: Distributed Systems`    | Course name                                                |
+| `year`            | `Spring 2024`                    | Course term/year                                           |
+| `index`           | `Lab 1: MapReduce`               | Lab name                                                   |
+| `introduction`    | `In this lab you'll build...`    | Goes into markdown: Problem Context → Introduction         |
+| `getting_started` | `You need to setup Go...`        | Goes into markdown: Getting Started section                |
+| `The code`        | (starter code description)       | Goes into markdown: The Code section                       |
+| `description`     | `Your job is to implement...`    | Goes into markdown: Your Task section                      |
+| `repo`            | `6.5840-golabs-2024`             | Repository folder name (will be prefixed with `projects/`) |
+| `test_method`     | `cd src/main && bash test-mr.sh` | Shell command to run tests                                 |
+| `test_results`    | `*** PASSED ALL TESTS`           | Expected test output when solution is correct              |
+| `difficluty`      | `moderate/hard`                  | Difficulty: `easy`, `moderate`, `moderate/hard`, or `hard` |
+| `link`            | `http://.../lab-mr.html`         | URL to original course lab assignment                      |
+
+### Step 2: Run the conversion script
+
+```bash
+cd data/benchmark
+python3 convert_promblems.py
+```
+
+This generates:
+
+- `problems/system_lab_<id>.md` - Markdown file with task description
+- Updates `system_lab_tasks.jsonl` - JSONL with all tasks
+
+### Step 3: Update `install.sh` (if adding a new repository)
+
+```bash
+if [ -d "6.5840-golabs-2024" ]; then
+    echo "==> 6.5840-golabs-2024 already exists, skipping clone."
+else
+    echo "==> Cloning 6.5840-golabs-2024..."
+    git clone git://g.csail.mit.edu/6.5840-golabs-2024
+fi
+```
+
+### Step 4: Test your addition
+
+```bash
+./install.sh
+./run.sh <model_name>
+```
