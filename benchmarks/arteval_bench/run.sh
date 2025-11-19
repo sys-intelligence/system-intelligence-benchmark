@@ -19,7 +19,7 @@ NEW_MODEL_NAME="${MODEL_NAME//\//_}"
 # export OPENAI_API_KEY="EMPTY"
 
 source .venv/bin/activate
-echo "==> Start to run SystemCoursePoject"
+echo "==> Start to run ArtEvalBench"
 # Note that if you benchmark has multiple tasks, you need to add --task <task> 
 # in your code to enable task selection.
 # sweagent --help
