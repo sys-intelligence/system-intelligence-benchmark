@@ -1,0 +1,2 @@
+Retry location!!!Retry caller!!!Injection site!!!Injection location!!!Exception
+https://github.com/apache/hive/blob/e08a60029f93e52182908b61fff32e8659e78daa/druid-handler/src/java/org/apache/hadoop/hive/druid/DruidStorageHandlerUtils.java#L765!!!org.apache.hadoop.hive.druid.DruidStorageHandlerUtils.publishSegmentWithShardSpec!!!org.apache.hadoop.fs.FileSystem.mkdirs!!!DruidStorageHandlerUtils.java:774!!!java.io.IOException

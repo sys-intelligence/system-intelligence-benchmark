@@ -1,0 +1,119 @@
+# ----------------------
+# General
+# ----------------------
+*.lock
+*.log
+*.bak
+*.pkl
+*.png
+*.jpg
+*.jpeg
+*.pdf
+*.xls
+*.csv
+*.doc
+
+# Logs / temp
+logs/
+log/
+*.tmp
+*.temp
+*.swp
+*.swo
+*.orig
+
+# Trash / scratch areas
+__pycache__/
+trash/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# ----------------------
+# Python
+# ----------------------
+
+# Byte-compiled / optimized / DLL files
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Distribution / packaging
+build/
+dist/
+eggs/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+*.whl
+
+# Test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# Type checking / tooling
+.mypy_cache/
+.pyre/
+.pytype/
+
+# ----------------------
+# Java
+# ----------------------
+
+# Compiled files
+*.class
+
+# Build outputs
+target/
+bin/
+out/
+
+# Maven / Gradle
+.mvn/
+.settings/
+.gradle/
+build/
+
+# IDE project files
+*.iml
+.idea/
+.project
+.classpath
+
+# Archives
+*.jar
+*.war
+*.ear
+
+# ----------------------
+# C / C++
+# ----------------------
+
+# Object / compiled files
+*.o
+*.obj
+*.so
+*.dll
+*.dylib
+*.a
+*.lib
+*.lo
+
+# Executables
+a.out
+*.exe
+*.out
+
+# Build directories
+build/
+cmake-build-*/

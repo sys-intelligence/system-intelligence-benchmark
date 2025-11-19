@@ -1,0 +1,2 @@
+Retry location!!!Retry caller!!!Injection site!!!Injection location!!!Exception
+https://github.com/apache/hive/blob/e08a60029f93e52182908b61fff32e8659e78daa/ql/src/java/org/apache/hadoop/hive/ql/lockmgr/DbLockManager.java#L101!!!org.apache.hadoop.hive.ql.lockmgr.DbLockManager.lock!!!org.apache.hadoop.hive.ql.lockmgr.DbTxnManager.getMS!!!DbLockManager.java:104!!!org.apache.hadoop.hive.ql.lockmgr.LockException

@@ -19,11 +19,19 @@ NEW_MODEL_NAME="${MODEL_NAME//\//_}"
 # export OPENAI_API_KEY="EMPTY"
 
 source .venv/bin/activate
-echo "==> Start to run ExampleBench"
+echo "==> Start to run ArtEvalBench"
 # Note that if you benchmark has multiple tasks, you need to add --task <task> 
 # in your code to enable task selection.
-python src/main.py \
-    --model_name "${MODEL_NAME}"
-    # --save_path "./outputs/examplebench__${NEW_MODEL_NAME}__$(date +"%Y-%m-%d_%H-%M-%S")" \
-    
+# sweagent --help
+# python src/main.py \
+#     --task "test"
+    # --save_path "./outputs/systemcourseproject__${NEW_MODEL_NAME}__$(date +"%Y-%m-%d_%H-%M-%S")" \
+
+python src/main_setup.py
+    # --model "$MODEL_NAME" \
+    # --save_path "./outputs/systemcourseproject__${NEW_MODEL_NAME}__$(date +"%Y-%m-%d_%H-%M-%S")" \
+
+# python src/main_setup.py \
+#     --input_json "./data/benchmark/course_lab_task_examples.jsonl" 
+
 deactivate
