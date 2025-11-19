@@ -1,1 +1,1 @@
-"""Init file for the example_bench package."""
+"""Init file for the ArtEval package."""
