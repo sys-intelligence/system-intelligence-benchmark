@@ -17,10 +17,14 @@ def main():
     ok = checker.run()
     name = cls.__name__
     logger.info(f"{name}: {'PASS' if ok else 'FAIL'}")
-    results[name] = 1 if ok else 0
+    if ok:
+      results[name] = 1
+      score += 1
+    else:
+      results[name] = 0
 
   logger.info(f"Agent scores: {results}")
-  return results
+  return score
 
 
 if __name__ == "__main__":
