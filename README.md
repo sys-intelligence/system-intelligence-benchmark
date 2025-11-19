@@ -1,61 +1,149 @@
-# ArtEvalBench
+# System Intelligence Benchmark: A Benchmark Suite for Evaluating LLM's System Capabilities
 
-`ArtEvalBench` is a benchmark for evaluating AI agents that support the Artifact Evaluation (AE) process by auditing research prototypes (artifacts) that accompany research papers, as part of the peer-review process. Artifact evaluation involves reconstructing a reference environment from (partial) specifications, building and configuring complex codebases with often implicit assumptions, preparing datasets and third-party benchmarks whose availability may change over time, orchestrating multi-stage experiments under controlled resource and time budgets, and validating that observed results fall within acceptable tolerance bounds relative to those reported in the paper. Despite the intricacy of the process, we believe AI agents can be trained to support reviewers in evaluating artifacts that accompany research papers by automating most of these stages.
+System Intelligence Benchmark is a comprehensive benchmark suite for evaluating the performance of Large Language Models (LLMs) and AI systems across critical system capabilities. It features tutorial, example benchmarks and offers both CLI tools and an SDK for further development.
 
-Want to find out more or contribute? Jump to the [contributor's guide](#contributors-guide).
+## Benchmark Overview
+A benchmark is a standard or point of reference against which things may be compared or assessed. In the context of AI and LLMs, benchmarks are essential for evaluating model capabilities, guiding research directions, and measuring progress. 
 
-## Goals and Objectives
+### Benchmark Framework
 
-Artifact evaluation has become a standard component of the peer-review process across a wide range of conferences in Computer Science, especially in Systems and related areas. Despite this progress however, the practical work of provisioning operational environments, resolving dependencies, building artifacts, preparing benchmarks, running experiments, and checking results remains brittle and time-consuming. To alleviate this burden, we envision an automated artifact evaluation AI assistant that executes repeatable steps under (human) reviewer supervision. This "AE assistant" would target artifact mechanics (e.g., code compilation, dataset/benchmark preparation, experiment orchestration, and output validation) alongside code auditing (e.g., does the artifact implementation match the paper prose? are results closely matching those in the paper?). The agent's output can then inform more a complex methodological assessment, design trade-off analysis, and results interpretation that reviewers need to perform to complete the AE process.
+To advance benchmark development, we propose the System Intelligence Benchmark, a modular and extensible framework designed to support diverse research domains and problem types. As shown in the below figure, the framework comprises four abstractions: task set, environment, executor, and evaluator. Each task is associated with a specific environment, wherein the executor generates a solution that is subsequently assessed by the evaluator, which returns the evaluation metrics. This design enables the flexible integration of heterogeneous agents and their systematic evaluation. Additionally, the framework includes built-in executors (agents), evaluators (methodologies and grading rubrics), and tutorials. In an ideal case, users need only supply tasks that represent specific capabilities, select an evaluator, and quickly create and run a new benchmark. You can see [benchmark_abstraction.md](doc/benchmark_abstract.md) for details.
 
-Concretely, given an artifact (code, documentation, experiment framework), a complete installation & operation guide, and the paper itself, the AE assistant:
+<img src="doc/benchmark.png" alt="Dashboard Screenshot" width="600"/>
 
-1. provisions the reference environment;
+The benchmark framework is **still under development**. If you have any questions, feel free to open an issue or contact us directly.  
 
-2. builds/installs a particular version of the artifact using the specified toolchain;
+### Benchmarks
 
-3. retrieves and prepares datasets or other third-party targets;
+System Intelligence Benchmark currently includes the following example benchmarks. Each benchmark assesses specific capabilities across multiple levels within a given research direction. Some benchmarks are still under development — we're actively updating them. Stay tuned!
 
-4. orchestrates experiments with explicit configuration, time and resource budgets; and
+- **System Exam Benchmark** ([benchmarks/course_exam_bench/](benchmarks/course_exam_bench/)) - Tests LLM understanding of system concepts through university course exams (54 questions across 4 exams)
+- **System Lab Benchmark** ([benchmarks/course_lab_bench/](benchmarks/course_lab_bench/)) - Assesses AI capability on practical system course labs and projects 
+- **System Artifact Benchmark** ([benchmarks/arteval_bench/](benchmarks/arteval_bench/)) - Evaluates AI performance on artifact evaluation
+- **System Modeling Benchmark** ([benchmarks/sysmobench/](benchmarks/sysmobench/)) - Evaluates an agent's ability to produce correct TLA+ models for real-world concurrent and distributed systems, covering system capabilities across system comprehension, abstraction, and potentially tool fluency.
+- **Example Benchmark** ([benchmarks/example_bench/](benchmarks/example_bench/)) - Template and reference implementation for creating new benchmarks
 
-5. generates a human-readable report that summarizes the outcome of each step, indicating any blockers (e.g., install missing dependencies) and how it managed to overcome them.
+## Quick Start
+### Repo Structure
 
-The goal is to reduce reviewer effort on mechanical tasks so attention can shift to scientific auditing.
+- **Benchmarks** (`benchmarks/`) - Contains individual benchmark implementations, each with its own source code, tests, and configuration
+- **CLI Tools** (`cli/`) - Command-line interface for running benchmarks and managing evaluations
+- **SDK** (`sdk/`) - Software development kit providing evaluators, LLM interfaces, and utility functions
+- **Documentation** (`doc/`) - Guides and documentation for using and contributing to SysCapBench
 
-## Background
+### Prerequisites
 
-#### » The artifact evaluation process
+- Python 3.9+
+- Docker (optional, for containerized execution)
 
-Most conferences award badges to incentivize high-quality artifacts that support the paper's claims by asking authors to participate in a multi-stage evaluation process where reviewers attempt to download, install, and operate the artifacts themselves. The following summarizes the widely used criteria for each badge:
+> Docker images currently only support x86_64/AMD64 architecture. ARM64 (Apple Silicon M1/M2/M3) is not yet supported
 
-* Artifact Available. This badge indicates that the artifact itself (code, documentation, scripts, benchmarks, etc.) is publicly accessible with a persistent identifier (e.g., DOI, commit ID) on an (ideally, long-term) archival repository (e.g., Zenodo, Github). Availability does not imply the artifact can compile, build, or is functionally correct. It only confirms that the materials needed to verify key claims, reproduce experimental results, and reuse the tool itself are open-sourced.
+### Installation
 
-* Artifact Functional. This badge indicates that the artifact installs/builds in a reference environment and runs at least a subset of the documented experiments. It confirms that dependencies and configurations are explicitly recorded, and outputs, at least for said subset of experiments, are consistent with the paper's prose.
+1. Clone the repository:
 
-* Results Reproduced. This badge indicates that a third party can re-execute all necessary experiments to obtain results consistent with the paper, with a reasonable degree of tolerance (e.g., within relative error bounds, confidence intervals, or rank-ordering equivalence). On top of re-obtaining results that support the paper's claims, reproducibility further requires verifiable provenance (e.g., SW/HW environment characteristics, configuration parameters, experiment logs) and principled handling of non-determinism (e.g., repeated trials, fixed initial states, or variance analysis).
+   ```bash
+   git clone https://github.com/sys-intelligence/system-intelligence-benchmark.git
+   cd system-intelligence-benchmark
+   ```
 
-Further reading and a detailed description of criteria for each badge can be found [here](https://sysartifacts.github.io/eurosys2026/badges) and [here](https://sysartifacts.github.io/evaluator-guide.html).
+2. Install dependencies for a specific benchmark:
 
-#### » What makes AE challenging in practice?
+   ```bash
+   cd cli
+   ./install.sh
+   ```
+3. Each benchmark includes an `env.toml` file for configuration. You should add your own llm endpoint url and key there.
 
-Reproducibility and reusability can be obstructed by multiple factors including, but not limited to: (i) environment drift (e.g., legacy libraries no longer available, drivers mismatch in newer OS versions); (ii) undocumented or implicit build assumptions (e.g., hard-coded compiler flags, directory paths, IPs, or reliance on OS-wide libraries that differ across distributions); (iii) brittle preprocessing of third-party benchmarks or datasets (e.g., broken download URL, non-deterministic compilation steps that silently invalidate subsequent stages); and (iv) unspecified results tolerance bounds that complicate validation for non-deterministic experiments (e.g., performance claims without clarifying what constitutes an acceptable deviation when running within a similar SW/HW setup).
+### Running Benchmarks
 
-Overcoming such challenges require persistence and careful bookkeeping, precisely where an automated AE assistant can provide leverage.
+#### Run All Benchmarks
 
-## Contributor's guide
+To run all benchmarks sequentially:
 
-#### » Overview and structure
+```bash
+cd cli
+./run_all_local.sh <model_name>
+```
 
-To train and improve AE agents in a principled way we introduce ArtEvalBench, a curated collection of artifacts accompanying peer-reviewed papers. To ensure a fair comparison we include artifacts that have been already evaluated in an official AE process and awarded all three badges by the committee. Each entry includes the original artifact (instructions, code, scripts, datasets/benchmarks, etc.), the original paper, and a collection of "checker" scripts that define objective checkpoints at four canonical stages: environment setup, build/install, benchmark preparation, and experiment execution.
+#### Run a Single Benchmark
 
-ArtEvalBench is designed to evaluate agents on capability (which stages they complete), efficiency (wall-clock time and intervention count), and fidelity (how closely reproduced results match those reported).
+To run just one benchmark locally:
 
-To check capability, each artifact includes checker scripts that encode minimal, verifiable success criteria for the four stages. Checkers are invoked non-interactively and must be idempotent. A checker returns exit status 0 on success and non-zero on failure. Conceptually, these for stages correspond to:
+```bash
+cd benchmarks/<benchmark_name>
+./install.sh  # Only needed the first time
+./run.sh <model_name>
+```
 
-1. Environment Setup: verifies presence and versions of required tools, libraries, or other dependencies; confirms hardware availability when applicable; and checks that configurations are portable rather than hardcoded or tied to a specific machine.
+#### Output Format
 
-2. Build/Install: confirms a complete build (or install) operation from a specified version, with expected binaries/modules present; running tests, when available, or simple validation commands like invoking `--help` or equivalent.
+Benchmarks generate standardized outputs in `cli/outputs/{benchmark_name}__{model_name}__{agent}_{timestamp}/`:
 
-3. Benchmark Preparation: asserts that datasets/benchmarks are present and checksums match; verifies that necessary third-party tools compile and the artifact's instrumentation/monitoring hooks are enabled, if applicable.
+- `result.jsonl`: Detailed evaluation results
+- `summary.json`: Aggregated performance metrics
+- Test-specific breakdowns and comparisons
 
-4. Experiment Runs: executes each experiment according to the authors' guidelines; checks that the artifact produces the expected metrics, logs, files, figures, etc.; provides an initial assessment relative to specified tolerance bounds.
+You can find more detailed usage guides in the CLI [README.md](cli/README.md).
+
+## Contribute to Benchmarks
+
+We welcome community contributions to enrich existing benchmarks (e.g., by adding more exam problems to the System Exam benchmark and more system artifacts to System Artifact and System Modeling benchmark), port your existing benchmarks, and more importantly to create new system intelligence benchmarks with our framework. See below for detailed instructions. We believe that such collective community efforts will advance AI to its next level and help realize System Intelligence, unlocking the potential of AI-driven computing system innovations. If you are interested in contributing or already have good system benchmarks, please let us know. We have set up a [slack channel](https://join.slack.com/t/sys-intelligence/shared_invite/zt-3hpkgr2aa-NnuPxUbyHr45S89DFi_N1A) at sys-intelligence.slack.com.
+
+> [!NOTE] 
+> We suggest getting starting by walking through the basic concept of a AI benchmark: [Benchmark Abstraction](doc/benchmark_abstract.md). After understanding the basic concept, you can decide whether to Contribute to Existing Benchmarks, Porting Existing Benchmarks, or  Creating New Benchmarks.
+
+### Contribute to Existing Benchmarks
+The easiest way to contribute is to add more tasks to existing benchmarks. Currently, the following two are highly recommended. You can simply follow the provided guidelines to submit your data—once that’s done, you’re all set.
+- **SystemExam**: If you are a professor teaching one or more courses, we highly recommend contributing **more exam problems** to SystemExam (see [this doc](https://github.com/sys-intelligence/system-intelligence-benchmark/tree/main/benchmarks/course_exam_bench#how-to-extend-the-benchmark) for step-by-step guidance).
+- **SystemArtifact**: If you are a researcher submitting artifacts, or an AE chair involved in artifact evaluation, we highly recommend contributing **more system artifacts** to SystemArtifact (see [this doc](https://github.com/sys-intelligence/system-intelligence-benchmark/blob/main/benchmarks/arteval_bench/README.md) for step-by-step guidance).
+
+In addition, you can also help review the existing benchmarks to propose improvement ideas or directly enhance them—for example, by adding more advanced evaluators or incorporating improved metrics.
+
+### Porting Existing Benchmarks
+> [!NOTE]
+> See [porting_benchmark.md](doc/porting_benchmark.md) for step-by-step guidelines.
+
+For integrating existing, independently-developed benchmark projects while maintaining synchronization with upstream:
+
+- Use Git Subtree/Submodule to incorporate upstream code
+- Write a bridge layer to connect upstream evaluators with framework SDK
+- Configure bidirectional sync for pulling updates and contributing fixes
+
+**Example:** [SysMoBench](benchmarks/sysmobench/) - ported from [SysSpecBench](https://github.com/specula-org/SysSpecBench)
+
+### Creating New Benchmarks
+> [!NOTE]
+> See [custom_benchmark.md](doc/creating_benchmark.md) for step-by-step guidelines.
+
+To create a new benchmark, follow these steps:
+1. Create a new benchmark directory in `benchmarks/`
+   1. Based on your specific requirements, select and copy an example benchmark as a starting point
+   2. Update the `src/main.py` file with your specific evaluation logic (your executor and evaluator)
+   3. Add test cases in the `tests/` directory
+2. Update the README.md with benchmark-specific details
+3. Implement `install.sh` and `run.sh` scripts
+4. Update the benchmark list in `run_all_local.sh` and `run_docker.sh` if needed
+
+## Contributing
+
+This project welcomes contributions and suggestions.  Most contributions require you to agree to a
+Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
+the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
+
+When you submit a pull request, a CLA bot will automatically determine whether you need to provide
+a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
+provided by the bot. You will only need to do this once across all repos using our CLA.
+
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
+contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+## Trademarks
+
+This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft 
+trademarks or logos is subject to and must follow 
+[Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+Any use of third-party trademarks or logos are subject to those third-party's policies.
+
