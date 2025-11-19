@@ -6,44 +6,38 @@ The testing component of WASABI triggers retry bugs by using a combination of st
 
 To get started, users should create a new directory structure, clone this repository, work on the `main` branch of the repository, configure and install dependencies, by following these steps:
 
-1. Create a new workspace directory and clone the WASABI repository:
+1. If not already in place, create a the appropriate directory structure:
+
+Note that your current working directory where the `README.md` is located id `~/sosp24_wasabi/benchmarks/wasabi`
 ```bash
-mkdir -p ~/wasabi-workspace/benchmarks
-cd ~/wasabi-workspace/
-git clone https://github.com/bastoica/wasabi
+mkdir -p ~/sosp24_wasabi/benchmarks
+cd ~/sosp24_wasabi/
+ls -la .
 ```
 
 The working directory structure should look similar to the one below:
 ```plaintext
-~/wasabi-workspace
+~/sosp24_wasabi
   ├── benchmarks/
   └── wasabi/
-      ├── LICENSE
+      ├── config/
       ├── README.md
-      ├── wasabi-static/
-      │   ├── README.md
-      │   ├── codeql-if-detection
-      │   ├── gpt-when-detection
-      |   ├── retry_issue_set_artifact.xlsx
-      |   └── wasabi_gpt_detection_results--table4.xlsx
-      └── wasabi-testing
-          ├── README.md
-          ├── config/
-          ├── pom-java11.xml
-          ├── pom-java8.xml
-          ├── pom.xml
-          ├── src/
-          └── utils/
+      ├── config/
+      ├── pom-java11.xml
+      ├── pom-java8.xml
+      ├── pom.xml
+      ├── src/
+      └── utils/
 ```
 The `wasabi` directory contains the codebase of WASABI, while the `bugfinding` directory is where users can add applications that they want to use WASABI to find retry bugs.
 
 2. Set up the `WASABI_ROOT_DIR` environment variable:
 ```
-export WASABI_ROOT_DIR=$(echo $HOME)/wasabi-workspace/wasabi
+export WASABI_ROOT_DIR=$(echo $HOME)/sosp24_wasabi/wasabi
 ```
 3. Installing necessary dependnecies:
 ```
-cd ~/wasabi-workspace/wasabi/wasabi-testing/utils
+cd ~/sosp24_wasabi/wasabi/wasabi-testing/utils
 sudo ./prereqs.sh
 ```
 
@@ -74,7 +68,7 @@ export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/jre
 
 Next, run Maven's `clean`, `compile`, and `install` Maven from the `wasabi-testing` directory, to build WASABI. Note that the current codebase includes AspectJ for each of the applications used to evaluate WASABI (see Section 4 from our [paper](https://bastoica.github.io/files/papers/2024_sosp_wasabi.pdf)). In this walkthrough we build WASABI for finding bugs in HDFS (Hadoop) and use triggering HDFS-17590 as an example, [below](README.md#6-running-example-reproducing-hdfs-17590). 
 ```bash
-cd ~/wasabi-workspace/wasabi/wasabi-testing
+cd ~/sosp24_wasabi/wasabi/wasabi-testing
 mvn clean install -U -fn -B -Dinstrumentation.target=hadoop -DskipTests 2>&1 | tee wasabi-install.log
 ```
 
@@ -173,7 +167,7 @@ Successful weaving should produce log messages like this one:
 [INFO] Join point 'method-execution(...)' in Type 'org.apache.hadoop.metrics2.util.SampleStat' ...
 ```
 
-Users should also check out [examples](https://github.com/bastoica/wasabi/tree/wasabi-workspace/wasabi-testing) of target applications instrumented with WASABI from our `sosp24-ae` branch. These not only include detailed weaving steps, but also the modified `pom.xml` files.
+Users should also check out [examples](https://github.com/bastoica/wasabi/tree/sosp24_wasabi/wasabi-testing) of target applications instrumented with WASABI from our `sosp24-ae` branch. These not only include detailed weaving steps, but also the modified `pom.xml` files.
 
 ### 4.2 Load-time weaving (Gradle, Ant, others)
 
@@ -276,7 +270,7 @@ where
 * injection_policy: One of no-injection, forever, or max-count.
 * max_injection_count: Positive integer specifying the upper limit of injections (used with max-count policy).
 
-The users can check out examples of `.data` and `.conf` files in the `./config` directory, or on the `sosp24-ae` [branch](https://github.com/bastoica/wasabi/tree/wasabi-workspace/wasabi-testing/config).
+The users can check out examples of `.data` and `.conf` files in the `./config` directory, or on the `sosp24-ae` [branch](https://github.com/bastoica/wasabi/tree/sosp24_wasabi/wasabi-testing/config).
 
 
 ## Find retry bugs 
@@ -292,7 +286,7 @@ mvn clean install -U -fn -B -DskipTests 2>&1 | tee wasabi-build.log
 mvn surefire:test -fn -B -DconfigFile="$(echo $HOME)/wasabi/wasabi-testing/config/example_hdfs.conf" -Dtest=[TEST_NAME] 2>&1 | tee wasabi-test.log
 ```
 
-2. Option #2: run the entire test suite and inject faults at multiple locations in the same testing runs. Users can opt to inject faults at multiple locations in the same testing run if they are confident that injecting at an earlier location does not affect the execution of a later location. In this case, users can create a multi-location `.data` file (e.g., like [this one](https://github.com/bastoica/wasabi/blob/wasabi-workspace/wasabi-testing/config/hadoop/hadoop_retry_locations.data) for Hadoop).
+2. Option #2: run the entire test suite and inject faults at multiple locations in the same testing runs. Users can opt to inject faults at multiple locations in the same testing run if they are confident that injecting at an earlier location does not affect the execution of a later location. In this case, users can create a multi-location `.data` file (e.g., like [this one](https://github.com/bastoica/wasabi/blob/sosp24_wasabi/wasabi-testing/config/hadoop/hadoop_retry_locations.data) for Hadoop).
 
 ```bash
 cd [target_application_path]
@@ -314,12 +308,12 @@ To illustrate how WASABI work, we walk users through an example that reproduces 
 
 3. Clone Hadoop (note: HDFS is part of Hadoop),
 ```bash
-cd ~/wasabi-workspace/benchmarks
+cd ~/sosp24_wasabi/benchmarks
 git clone https://github.com/apache/hadoop
 ```
 and check out version/commit `60867de`:
 ```bash
-cd ~/wasabi-workspace/benchmarks/hadoop
+cd ~/sosp24_wasabi/benchmarks/hadoop
 git checkout 60867de
 ```
 Users can check whether `60867de` was successfully checked out by running
@@ -363,7 +357,7 @@ which should yield a line similar to this (note that number of tests might diffe
 6. Copy a modified `pom.xml` file that allows WASABI to instrument (weave) Hadoop by running
 ```bash
 cp pom.xml pom-original.xml
-cp ~/wasabi-workspace/wasabi/wasabi-testing/config/hadoop/pom-hadoop.xml pom.xml
+cp ~/sosp24_wasabi/wasabi/wasabi-testing/config/hadoop/pom-hadoop.xml pom.xml
 ```
 Note that these commands are making a copy of the original `pom.xml` and replace it with a slightly edited version that instructs the AJC compiler to instrument (weave) WASABI. Also, these alterations are specific to version `60867de`. Checking out another Hadoop commit ID requires adjustments. We provide instructions on how to adapt an original `pom.xml`, [here](README.md#instrumentation-weaving-instructions).
 
@@ -374,7 +368,7 @@ mvn clean install -U -fn -B -DskipTests 2>&1 | tee wasabi-fail-install.log
 
 8. Run the bug-triggering tests with fault injection
 ```bash
-mvn surefire:test -fn -B -DconfigFile="$(echo $HOME)/wasabi-workspace/wasabi/wasabi-testing/config/hadoop/example.conf" -Dtest=TestFSEditLogLoader 2>&1 | tee wasabi-fail-test.log
+mvn surefire:test -fn -B -DconfigFile="$(echo $HOME)/sosp24_wasabi/wasabi/wasabi-testing/config/hadoop/example.conf" -Dtest=TestFSEditLogLoader 2>&1 | tee wasabi-fail-test.log
 ```
 and check the log to for `NullPointerException` errors
 ```bash
