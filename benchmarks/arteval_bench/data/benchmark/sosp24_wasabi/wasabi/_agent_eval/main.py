@@ -12,6 +12,7 @@ from utils import logger
 def main():
   results: Dict[str, int] = {}
 
+  score = 0
   for cls in (OracleEnvSetup, OracleArtifactBuild, OracleBenchmarkPrep, OracleExperimentRuns):
     checker = cls()
     ok = checker.run()
