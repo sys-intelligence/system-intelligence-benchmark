@@ -26,6 +26,7 @@ Adding to the benchmark requires users to include a new entry into `ArtEvalBench
 - `artifact_url` the URL to the original artifact; 
 - `evaluator` is a path to the evaluator's `main.py` entrypoint;
 - `expected_score` is the total expected score for this artifact, which defaults to 4 as the agent is evaluated on it succesfully completing the four canonical AE stages ([!NOTE] Users are encouraged not to change this value, unless they opt for another universal metric for artifact evaluation).
+- `docker_evn` (optional) points to a Docker image on Docker Hub.
 
 It also requires users to extend the artifact they plan to add with a self-contained evaluator in an `_agent_eval/` directory. This evaluator encodes *minimal*, objective success criteria for the four canonical AE stages and is what the benchmark actually calls.
 
