@@ -2,7 +2,7 @@
 
 `ArtEvalBench` treats the artifact evaluation (AE) process as a training ground for AI agents to help form core [system intelligence capabilites](https://www.sigops.org/2025/defining-system-intelligence/). During AE, reviewers must reconstruct a target environment from incomplete specifications, build and configure complex software stacks with many implicit assumptions, prepare datasets and external benchmarks whose availability can change over time, run multi-stage experiments under strict resource and time constraints, and verify that reproduced results stay within acceptable margins of those reported in the paper. This makes AE a rich, realistic testbed for AI: agents must reason across all these steps, yet we believe they can be trained to reliably assist reviewers by automating most of this process.
 
-Want to find out more or contribute? Take a look at our [contributor's guide](README.md).
+Want to find out more or contribute? Take a look at our [contributor's guide](README.md#contributors-guide).
 
 ## Goals and Objectives
 
