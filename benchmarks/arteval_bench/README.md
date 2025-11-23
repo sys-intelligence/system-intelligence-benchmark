@@ -1,6 +1,6 @@
 # ArtEvalBench
 
-`ArtEvalBench` is a benchmark for evaluating AI agents that support the Artifact Evaluation (AE) process by auditing research prototypes (artifacts) that accompany research papers, as part of the peer-review process ([why artifact evaluation?](WHY.md)). Artifact evaluation involves reconstructing a reference environment from (partial) specifications, building and configuring complex codebases with often implicit assumptions, preparing datasets and third-party benchmarks whose availability may change over time, orchestrating multi-stage experiments under controlled resource and time budgets, and validating that observed results fall within acceptable tolerance bounds relative to those reported in the paper. Despite the intricacy of the process, we believe AI agents can be trained to support reviewers in evaluating artifacts that accompany research papers by automating most of these stages.
+`ArtEvalBench` is a benchmark for evaluating AI agents against Artifact Evaluation (AE) tasks ([why artifact evaluation?](WHY.md)). We believe that, despite the complexity of the AE process, AI agents can be succesfully trained to automatically evaluate artifacts that accompany research papers.
 
 ## Contributor's guide
 
@@ -25,7 +25,7 @@ Adding to the benchmark requires users to include a new entry into `ArtEvalBench
 - `artifact_readme` is the path to the artifact's README file that contains the step-by-step guide for preparing, installing, and running experiments;
 - `artifact_url` the URL to the original artifact; 
 - `evaluator` is a path to the evaluator's `main.py` entrypoint;
-- `expected_score` is the total expected score for this artifact, which defaults to 4 as the agent is evaluated on it succesfully completing the four canonical AE stages ([!NOTE] Users are encouraged not to change this value, unless they opt for another universal metric for artifact evaluation).
+- `expected_score` is the total expected score for this artifact, which defaults to 4 as the agent is evaluated on it succesfully completing the four canonical AE stages (!!NOTE!! We encourage users not to change this value, unless they opt for another universal metric for artifact evaluation).
 - `docker_evn` (optional) points to a Docker image on Docker Hub.
 
 It also requires users to extend the artifact they plan to add with a self-contained evaluator in an `_agent_eval/` directory. This evaluator encodes *minimal*, objective success criteria for the four canonical AE stages and is what the benchmark actually calls.
