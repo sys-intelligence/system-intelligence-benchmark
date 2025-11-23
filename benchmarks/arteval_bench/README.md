@@ -99,19 +99,6 @@ Using WASABI's [agent evaluator](data/benchmark/sosp24_wasabi/wasabi/_agent_eval
 
 ## Benchmark Setup
 
-#### » Install dependencies
-
-To install the benchmark, simply run the `install.sh` script to set up the environment:
- ```sh
- ./install.sh
- ```
-
- This operation will:
- - Install Python 3.12 virtual environment
- - Clone and install SWE-agent
- - Install required Python packages (pytest, pytest-cov)
- - Clone course repositories (6.5840-golabs-2024, xv6-labs-2024, etc.)
-
 #### » Run the benchmark
 
 To run the benchmark:
