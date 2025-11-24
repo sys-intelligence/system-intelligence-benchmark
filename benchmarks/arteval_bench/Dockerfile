@@ -9,6 +9,6 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     python3-venv
 
-RUN chmod +x test.sh
+RUN chmod +x install.sh test.sh && ./install.sh
  
 ENTRYPOINT ["./test.sh"]
