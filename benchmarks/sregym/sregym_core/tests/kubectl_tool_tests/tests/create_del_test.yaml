@@ -1,0 +1,37 @@
+# check file preconditions.yaml
+preconditions:
+  - "mt_ns_restarted"
+
+test:
+  - user_input: "Create a deployment \"nginx-deployment\" with nginx image in namespace mt."
+    tool_call: "exec_kubectl_cmd_safely"
+    args:
+      command: "kubectl create deployment nginx-deployment --image=nginx -n mt"
+
+    # validate_cmd will be executed in a shell
+    validate_cmd: "kubectl get deployment -n mt | awk '$1 == \"nginx-deployment\" && $4 == \"1\"'"
+
+    # validator is a valid python expression returning a boolean value
+    # opt is the output of exec validate_cmd
+    validator: "len(opt.strip()) > 0"
+
+  - user_input: "Delete the nginx-deployment deployment in namespace mt."
+    tool_call: "exec_kubectl_cmd_safely"
+    args:
+      command: "kubectl delete deployment nginx-deployment -n mt"
+    validate_cmd: "kubectl get deployment -n mt | awk '$1 == \"nginx-deployment\"'"
+    validator: "len(opt.strip()) == 0"
+
+  # No validation for this, but you can manually validate through the log information.
+  - user_input: "Show me the rollback order of previous commands"
+    tool_call: "get_previous_rollbackable_cmd"
+
+  - user_input: "Rollback the last mutating command."
+    tool_call: "rollback_command"
+    validate_cmd: "kubectl get deployment -n mt | awk '$1 == \"nginx-deployment\" && $4 == \"1\"'"
+    validator: "len(opt.strip()) > 0"
+
+  - user_input: "Rollback again."
+    tool_call: "rollback_command"
+    validate_cmd: "kubectl get deployment -n mt | awk '$1 == \"nginx-deployment\"'"
+    validator: "len(opt.strip()) == 0"

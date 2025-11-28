@@ -1,0 +1,24 @@
+mt_ns_exist:
+  validate_cmd: "kubectl get ns | awk '$1 == \"mt\" && $2 == \"Active\"'"
+  validator: "len(opt.strip()) > 0"
+  fix: "kubectl create namespace mt"
+
+mt_ns_deleted:
+  validate_cmd: "kubectl get ns | awk '$1 == \"mt\"'"
+  validator: "len(opt.strip()) == 0"
+  fix: "kubectl delete namespace mt"
+
+mt_ns_restarted:
+  preconditions:
+    - "mt_ns_deleted"
+    - "mt_ns_exist"
+
+custom_nginx_deploy_in_mt_exist:
+  preconditions:
+    - "mt_ns_restarted"
+
+#  $1:NAME; $4: AVAILABLE
+  validate_cmd: "kubectl get deployment -n mt | awk '$1 == \"nginx-deployment\" && $4 == \"2\"'"
+  validator: "len(opt.strip()) > 0"
+#  cwd should be "SREGym/tests/kubectl_tool_tests/" when running tests
+  fix: "kubectl apply -f ./tests/resources/custom_nginx_deployment.yaml -n mt"
