@@ -1,0 +1,15 @@
+preconditions:
+  - "custom_nginx_deploy_in_mt_exist"
+
+test:
+  - user_input: "Patch the deployment \"nginx-deployment\" so that its nginx container use image nginx 1.21."
+    tool_call: "exec_kubectl_cmd_safely"
+    args:
+      command: "kubectl patch deployment nginx-deployment --type=strategic -p='{\"spec\": {\"template\": {\"spec\": {\"containers\": [{\"name\": \"nginx\",\"image\": \"nginx:1.21\"}]}}}}' -n mt"
+    validate_cmd: "kubectl get deployment nginx-deployment -o jsonpath=\"{.spec.template.spec.containers[0].image}\" -n mt"
+    validator: "opt.strip() == 'nginx:1.21'"
+
+  - user_input: "Rollback the last command"
+    tool_call: "rollback_command"
+    validate_cmd: "kubectl get deployment nginx-deployment -o jsonpath=\"{.spec.template.spec.containers[0].image}\" -n mt"
+    validator: "opt.strip() == 'nginx:1.20'"
