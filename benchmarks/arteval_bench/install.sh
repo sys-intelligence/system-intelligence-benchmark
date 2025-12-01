@@ -10,9 +10,19 @@ else
 
     python3 -m venv .venv
     source .venv/bin/activate
-    pip install -r requirements.txt
-    pip install pytest
-    pip install pytest-cov
+    
+    if [ ! -d "SWE-agent" ]; then
+        echo "==> Install SWE-agent and its dependencies..."
+        git clone https://github.com/SWE-agent/SWE-agent.git
+        cd SWE-agent
+        git checkout 0c27f286303a939aa868ad2003bc4b6776771791
+        pip install --editable .
+        sweagent --help
+        cd ..
+    else
+        echo "==> SWE-agent repository already exists, skipping clone."
+    fi
+    
     deactivate
 fi
 
