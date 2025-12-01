@@ -194,20 +194,7 @@ def start_dashboard_process():
     return dashboard_process
 
 
-def main():
-    # Parse command-line arguments
-    parser = argparse.ArgumentParser(description="Run SREGym benchmark suite")
-    parser.add_argument(
-        "--problem",
-        type=str,
-        default=None,
-        help="Run only a specific problem by its ID (e.g., 'target_port')",
-    )
-    parser.add_argument(
-        "--use-external-harness", action="store_true", help="For use in external harnesses, deploy the fault and exit."
-    )
-    args = parser.parse_args()
-
+def main(args):
     # set up the logger
     init_logger()
 
@@ -286,4 +273,17 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="Run SREGym benchmark suite")
+    parser.add_argument(
+        "--problem",
+        type=str,
+        default=None,
+        help="Run only a specific problem by its ID (e.g., 'target_port')",
+    )
+    parser.add_argument(
+        "--use-external-harness", action="store_true", help="For use in external harnesses, deploy the fault and exit."
+    )
+    args = parser.parse_args()
+
+    main(args)
