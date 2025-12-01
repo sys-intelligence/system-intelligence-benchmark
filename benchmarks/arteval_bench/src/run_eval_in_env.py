@@ -6,31 +6,10 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
 
-from swerex.deployment.docker import DockerDeployment
+from swerex.deployment.docker import DockerDeploymentConfig
 from swerex.runtime.abstract import BashAction, Command, CreateBashSessionRequest, UploadRequest
 
 from sdk.logger import logger
-
-
-def get_task(file_path):
-    """Get agent task from a file"""
-    task = (f"You are an experienced software engineer.\n"
-        + f"You are asked to follow the step-by-step instructions in README.md below to set-up," 
-        + f"install, compile, and reproduce the results of Wasabi" 
-        + f"Note that you are in a docker env with root access. If sudo is needed," 
-        + f"please remove sudo command in the install file."
-        + f"Note that you can ignore branch siwitch instructions in the README as you are already" 
-        + f"in the correct branch. So do not use git branch at all."
-        + f"\nBelow is the README of the artifact:\n\n")
-    
-    try: 
-        with open(file_path, encoding='utf-8') as f:
-            lines = f.readlines()
-            task = task + "\n".join(lines)
-    except Exception as e:
-        logger.info(f'Error extracting task from {file_path}: {e}')
-
-    return task
 
 
 def write_to_file(file_path, content):
@@ -43,6 +22,11 @@ async def run_eval_in_env(deployment, project_path, task_id, task, model, agent_
     """Spoiler: This function will work with any deployment."""
     await deployment.start()
     runtime = deployment.runtime
+
+    if hasattr(runtime, "_config"):
+        logger.info(f"Current RemoteRuntime timeout: {runtime._config.timeout}s")
+        runtime._config.timeout = 1800.0
+        logger.info(f"Overriding RemoteRuntime timeout to {runtime._config.timeout}s")
 
     # Issue a few one-off commands, similar to `subprocess.run()`
     logger.info(await runtime.execute(Command(command=['echo', 'Hello, world!'])))
@@ -64,9 +48,12 @@ async def run_eval_in_env(deployment, project_path, task_id, task, model, agent_
         )
     )
     logger.info('Project files uploaded.')
-    logger.info(await runtime.run_in_session(BashAction(command='ls /repo')))
-    logger.info(await runtime.run_in_session(BashAction(command='cd /repo')))
-    logger.info(await runtime.run_in_session(BashAction(command='ls')))
+    run_results = await runtime.run_in_session(BashAction(command='cd /repo'))
+    logger.info(run_results)
+    run_results = await runtime.run_in_session(BashAction(command='pwd'))
+    logger.info(f'Current directory: {run_results}')
+    run_results = await runtime.run_in_session(BashAction(command='ls'))
+    logger.info(f'Current directory contents: {run_results}')
 
     logger.info('Uploading agent runner script...')
     logger.info(
@@ -80,31 +67,15 @@ async def run_eval_in_env(deployment, project_path, task_id, task, model, agent_
     logger.info(await runtime.run_in_session(BashAction(command='ls /agent/runner.sh')))
     logger.info('Agent runner script uploaded.')
 
-    # logger.info("Test Python and Go environment...")
-    # logger.info(await runtime.run_in_session(BashAction(command='export PATH=/usr/local/go/bin:${PATH}')))
-    # logger.info(await runtime.run_in_session(BashAction(command='export HOME=/tmp')))
-    # logger.info(await runtime.run_in_session(BashAction(command='go version')))
-    # logger.info(await runtime.run_in_session(BashAction(command='pip install pytest')))
-    # logger.info(await runtime.run_in_session(BashAction(command="pytest -v")))
-
     logger.info('Setup the agent running environment...')
     logger.info(await runtime.run_in_session(BashAction(command='chmod +x /agent/runner.sh /agent/install.sh')))
     logger.info(await runtime.run_in_session(BashAction(command='cat /agent/runner.sh')))
     logger.info(await runtime.run_in_session(BashAction(command='/agent/install.sh')))
 
     logger.info('Running runner script...')
-    run_results = await runtime.run_in_session(BashAction(command='pwd && ls && ls /agent'))
-    logger.info(f'Current directory: {run_results}')
-    run_results = await runtime.run_in_session(BashAction(command=f'/agent/runner.sh "{model}" "{task}"'))
+    run_results = await runtime.run_in_session(BashAction(command=f'/agent/runner.sh "{model}" "{task}"', timeout=1200.0))
     logger.info(f"agent's run results: {run_results}")
     logger.info('Runner script finished.')
-
-    # logger.info('Copying outputs to save path...')
-    # a = await runtime.run_in_session(BashAction(command='cat agent_trajectory.json'))
-    # output_file = os.path.join(save_path, f'{task_id}_agent_trajectory.json')
-    # os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    # write_to_file(output_file, a.output if hasattr(a, 'output') else str(a))
-    # logger.info(f'Output saved to: {output_file}')
 
     try:
         test_output = await runtime.run_in_session(BashAction(command=test_method))
@@ -132,12 +103,18 @@ async def run_eval_in_env(deployment, project_path, task_id, task, model, agent_
 
 
 def run_eval(deployment, project_path, task_id, task, model, agent_path, test_method, save_path):
-    deployment = (
-        DockerDeployment(image=deployment) if deployment else DockerDeployment(image='xuafeng/swe-go-python:latest')
+    image = deployment or 'bastoica/ae-agent-ubuntu24.04:latest'
+
+    config = DockerDeploymentConfig(
+        image=image,
+        startup_timeout=1200.0,
     )
+    deployment_obj = config.get_deployment()
+
     return asyncio.run(
-        run_eval_in_env(deployment, project_path, task_id, task, model, agent_path, test_method, save_path)
+        run_eval_in_env(deployment_obj, project_path, task_id, task, model, agent_path, test_method, save_path)
     )
+
 
 
 def test():
