@@ -32,7 +32,7 @@ def get_current_datetime_formatted():
     return formatted_datetime
 
 
-def driver_loop(conductor: Conductor, problem_filter: str = None, use_external_harness: bool = False):
+def driver_loop(conductor: Conductor, problem_filter: str = None, agent_to_run: str = "stratus", use_external_harness: bool = False):
     """
     Deploy each problem and wait for HTTP grading via POST /submit.
     Returns a list of flattened dicts with results per problem.
@@ -47,9 +47,17 @@ def driver_loop(conductor: Conductor, problem_filter: str = None, use_external_h
         console = Console()
         # give the API a moment to bind
         await asyncio.sleep(1)
-        agents_to_start = list_agents()
+        agents_to_start = list_agents().keys()
         all_results = []
-        for agent_name in agents_to_start.keys():
+        
+        if agent_to_run is not None:
+            if agent_to_run not in agents_to_start:
+                console.log(f"⚠️ Agent '{agent_to_run}' not found in registry. Available agents: {agents_to_start}")
+                sys.exit(1)
+            else:
+                agents_to_start = [agent_to_run]
+        
+        for agent_name in agents_to_start:
             console.log(f"Starting agent now: {agent_name}")
             conductor.register_agent(agent_name)
             all_results_for_agent = []
@@ -208,7 +216,7 @@ def main(args):
     # Start the driver in the background; it will call request_shutdown() when finished
     driver_thread = threading.Thread(
         target=_run_driver_and_shutdown,
-        args=(conductor, args.problem, args.use_external_harness),
+        args=(conductor, args.problem, args.agent, args.use_external_harness),
         name="driver",
         daemon=True,
     )
@@ -280,6 +288,12 @@ if __name__ == "__main__":
         type=str,
         default=None,
         help="Run only a specific problem by its ID (e.g., 'target_port')",
+    )
+    parser.add_argument(
+        "--agent",
+        type=str,
+        default=None,
+        help="Run only a specific agent by its name (e.g., 'stratus')",
     )
     parser.add_argument(
         "--use-external-harness", action="store_true", help="For use in external harnesses, deploy the fault and exit."
