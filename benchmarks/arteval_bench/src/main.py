@@ -31,10 +31,10 @@ def main(file_path, model, agent, save_path):
                 continue
 
             deployment = item.get('docker_env', None)
-            project_path = f"./data/benchmark/{item.get('repo_name', None)}"
-            task_file = item.get('task_file', None)
-            task_id = item.get('task_id', None)
-            test_method = item.get('test_method', None)
+            project_path = f"./data/benchmark/{item.get('artifact_dir', None)}"
+            task_file = item.get('artifact_readme', None)
+            task_id = item.get('artifact_id', None)
+            test_method = item.get('evaluator', None)
 
             task = get_task(task_file)
 
