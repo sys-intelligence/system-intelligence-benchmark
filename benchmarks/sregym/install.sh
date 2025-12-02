@@ -155,7 +155,10 @@ else
     echo "==> To set up a remote cluster, create inventory.yml from inventory.yml.example"
 fi
 
+cd -
 
+source sregym_core/.venv/bin/activate
 
+# uv pip install -r requirements.txt
 
-
+deactivate
