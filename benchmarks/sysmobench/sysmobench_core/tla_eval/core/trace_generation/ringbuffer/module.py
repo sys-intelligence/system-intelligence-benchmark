@@ -360,6 +360,12 @@ class RingBufferTraceGenerator(TraceGenerator):
                 "scenario_type": "real_kernel_test",
                 "description": "Producer-consumer interleaving"
             },
+            "randomized": {
+                "test_name": "test_rb_trace_randomized",
+                "num_runs": 1,
+                "scenario_type": "real_kernel_test",
+                "description": "Deterministic random operations to diversify traces"
+            },
             "all_tests": {
                 "test_name": "test_rb_trace",
                 "num_runs": 4,

@@ -42,8 +42,11 @@ from tla_eval.utils.setup_utils import (
 TLA_TOOLS_URL = "https://github.com/tlaplus/tlaplus/releases/download/v1.8.0/tla2tools.jar"
 COMMUNITY_MODULES_URL = "https://github.com/tlaplus/CommunityModules/releases/download/202505152026/CommunityModules-deps.jar"
 
-# Alloy Analyzer URL
-ALLOY_URL = "https://github.com/AlloyTools/org.alloytools.alloy/releases/download/v6.1.0/org.alloytools.alloy.dist.jar"
+# Alloy Analyzer URLs and helpers
+ALLOY_BASE_URL = "https://github.com/AlloyTools/org.alloytools.alloy/releases/download"
+# Default to current latest release. Users can override via ALLOY_URL or ALLOY_VERSION env vars.
+DEFAULT_ALLOY_VERSION = "v6.2.0"
+DEFAULT_ALLOY_URL = f"{ALLOY_BASE_URL}/{DEFAULT_ALLOY_VERSION}/org.alloytools.alloy.dist.jar"
 
 # PAT (Process Analysis Toolkit) URL
 # PAT 3.5.1 full distribution (includes PAT.Console.exe)
@@ -155,10 +158,25 @@ def setup_alloy_tools():
     lib_dir = PROJECT_ROOT / "lib"
     lib_dir.mkdir(exist_ok=True)
 
+    def resolve_alloy_url() -> str:
+        """Resolve Alloy download URL with env overrides."""
+        if os.environ.get("ALLOY_URL"):
+            return os.environ["ALLOY_URL"].strip()
+
+        version = os.environ.get("ALLOY_VERSION")
+        if version:
+            tag = version if version.startswith("v") else f"v{version}"
+            return f"{ALLOY_BASE_URL}/{tag}/org.alloytools.alloy.dist.jar"
+
+        return DEFAULT_ALLOY_URL
+
+    alloy_url = resolve_alloy_url()
+    print_status(f"Using Alloy download URL: {alloy_url}")
+
     # Download alloy.jar if not exists
     alloy_path = get_alloy_jar_path()
     if not alloy_path.exists():
-        if download_file(ALLOY_URL, alloy_path):
+        if download_file(alloy_url, alloy_path):
             print_success("Alloy Analyzer setup completed successfully")
             return True
         else:

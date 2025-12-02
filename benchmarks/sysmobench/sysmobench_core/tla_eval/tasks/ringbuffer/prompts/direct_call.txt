@@ -68,49 +68,6 @@ CRITICAL OUTPUT REQUIREMENTS:
 5. End your response with the closing ====
 6. **DO NOT define invariants** (like MutualExclusion, SafetyProperty, etc.) - focus on modeling the system behavior
 7. **MANDATORY Spec Definition**: The Spec definition should include Init and Next, with fairness assumptions
-
-## Trace Validation Conventions
-
-To enable automated trace validation against real system traces, your specification MUST follow these naming conventions:
-
-### MANDATORY: Action/Event Names
-Your specification must use these EXACT action names to match trace events:
-
-**System Lifecycle Actions** (must appear in traces):
-- `Create` - RingBuffer creation (initial state)
-- `Split` - Separation into producer and consumer
-
-**Producer Actions** (actor="producer"):
-- `Push` - Single item enqueue operation
-- `PushSlice` - Batch item enqueue operation
-
-**Consumer Actions** (actor="consumer"):
-- `Pop` - Single item dequeue operation
-- `PopSlice` - Batch item dequeue operation
-
-### MANDATORY: State Variables
-Your specification must include these state variables with EXACT names:
-
-**Core Buffer State**:
-- `head` - Consumer read position (natural number, tracks wrapping)
-- `tail` - Producer write position (natural number, tracks wrapping)
-- `capacity` - Fixed buffer size (CONSTANT, must be power of 2)
-
-**Operation Status** (for each action):
-- Track success/failure of operations (buffer full/empty conditions)
-
-### Validation Matching Logic
-During trace validation, the system will:
-1. Match trace event "action" field to your TLA+ action names
-2. Check that state variables (head, tail, capacity) exist
-3. Verify state transitions match trace sequences
-4. Allow flexibility in other aspects of your specification
-
-## Final Reminders
-
-- Use EXACT action names: Create, Split, Push, Pop, PushSlice, PopSlice
-- Use EXACT state variable names: head, tail, capacity
-- DO NOT include invariants in the spec (they're added separately)
-- Focus on BEHAVIOR modeling, not on proving properties
+8. **Next Operator Structure**: The 'Next' operator SHOULD be a disjunction of atomic actions (e.g., Next == \/ \E t \in Threads : AcquireLock(t)...).
 
 Generate a complete, compilable TLA+ specification that captures the core lock-free ring buffer semantics while respecting the trace validation naming conventions.
