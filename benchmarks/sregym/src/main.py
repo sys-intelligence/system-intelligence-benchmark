@@ -1,120 +1,103 @@
-"""Example for benchmarking the performance of a model on a specific task."""
-
 import argparse
+import datetime
 import json
 import os
 import sys
-from datetime import datetime
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
+# Add parent directory to path to allow importing sregym_core
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 
-from sdk.utils import set_llm_endpoint_from_config
-
-set_llm_endpoint_from_config('env.toml')
-
-from sdk.evaluator import BasicEvaluator  # noqa: E402
-from sdk.executor import SimpleExecutor  # noqa: E402
-
-
-def main(_input_file, output_dir, _model_name, agent_name):
-    """Main function for running the benchmark."""
-    total_score = []
-    with (
-        open(_input_file, encoding='utf-8') as data,
-        open(os.path.join(output_dir, 'result.jsonl'), 'w', encoding='utf-8') as output_file,
-    ):
-        for line in data:
-            item = json.loads(line)
-            print('============ ' + item['id'] + ' ============')
-            if agent_name == 'llm':
-                executor = SimpleExecutor(_model_name, item['sys_prompt'])
-            else:
-                # You can add more agents here
-                raise ValueError(f'Unknown agent name: {agent_name}')
-            response = executor.run(item['user_prompt'])
-
-            evaluator = BasicEvaluator(_model_name)
-            offline_metrics = evaluator.eval(question=item['user_prompt'], answer=response, groundtruth=item)
-
-            total_score.append(
-                (
-                    offline_metrics['syntax_acc'],
-                    offline_metrics['exact_match'],
-                    offline_metrics['jaccard_similarity'],
-                    offline_metrics['cosine_similarity'],
-                    offline_metrics['embeddings_similarity'],
-                    offline_metrics['llmjudger_rating'],
-                )
-            )  # drop llmjudger_answer
-
-            result = {
-                'id': item['id'],
-                'sys_prompt': item['sys_prompt'],
-                'user_prompt': item['user_prompt'],
-                'groundtruth': item['response'],
-                'response': response,
-                'syntax_acc': offline_metrics['syntax_acc'],
-                'exact_match': offline_metrics['exact_match'],
-                'jaccard_similarity': offline_metrics['jaccard_similarity'],
-                'cosine_similarity': offline_metrics['cosine_similarity'],
-                'embeddings_similarity': offline_metrics['embeddings_similarity'],
-                'llmjudger_rating': offline_metrics['llmjudger_rating'],
-                'llmjudger_answer': offline_metrics['llmjudger_answer'],
-            }
-            print('Evaluation Result:')
-            print(result)
-            output_file.write(json.dumps(result))
-            output_file.write('\n')
-
-    avg_score = [sum(values) / len(values) for values in list(zip(*total_score))]
-    avg_score_dict = {
-        'syntax_acc': avg_score[0],
-        'exact_match': avg_score[1],
-        'jaccard_similarity': avg_score[2],
-        'cosine_similarity': avg_score[3],
-        'embeddings_similarity': avg_score[4],
-        'llmjudger_rating': avg_score[5],
-        'final_score': sum(avg_score[:5]) / 5,  # Average of the first five metrics
-    }
-    with open(os.path.join(output_dir, 'avg_score.json'), 'w', encoding='utf-8') as avg_score_file:
-        json.dump(avg_score_dict, avg_score_file, indent=4)
-    print('************ Final average score ************')
-    print(avg_score_dict)
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='example benchmark')
-    parser.add_argument(
-        '-i',
-        '--input_file',
-        help='Benchmark input file',
-        default='./data/benchmark/example_bench_benchmark_timestamp.jsonl',
+try:
+    from sregym_core.main import main as sregym_main
+except ImportError:
+    # In case sregym_core is not found in parent, try explicit path
+    sys.path.append(
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "../sregym_core"))
     )
-    parser.add_argument('-o', '--save_path', help='Result save path', default=None)
-    # Add a parameter for agent
-    parser.add_argument('-a', '--agent', help='Agent Name', default='llm')
+    from sregym_core.main import main as sregym_main
 
-    parser.add_argument(
-        '-m',
-        '--model_name',
-        help='Model Name',
-    )
-    # Note that if your benchmark has multiple tasks, you need to add --task <task>
-    # in your code to enable task selection.
-    parser.add_argument('-t', '--task', help='specify task in scenarios', default=None)
+import logging
 
-    args = parser.parse_args()
+logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
+logger = logging.getLogger(__name__)
 
-    model_name = args.model_name
-    input_file = args.input_file
-    save_path = args.save_path
 
-    if save_path is None:
-        str_model_name = model_name.replace('/', '_')
-        timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        save_path = os.path.join('./outputs', f'examplebench__{str_model_name}__{args.agent}__{timestamp}')
+def main(input_file: str, output_dir: str, model_name: str, agent_name: str):
+    # Set the environment variable for the model so the agent can find it
+    os.environ["PROVIDER_OVERWRITE"] = model_name
 
-    save_path = os.path.abspath(os.path.expanduser(save_path))
+    # Ensure output directory exists
+    save_path = os.path.abspath(os.path.expanduser(output_dir))
     os.makedirs(save_path, exist_ok=True)
 
-    main(input_file, save_path, model_name, agent_name=args.agent)
+    scores = []
+
+    with open(input_file) as f, open(
+        os.path.join(output_dir, "result.jsonl"), "w"
+    ) as out:
+        for line in f:
+            item = json.loads(line)
+            task_id, task_name = item["id"], item["task_name"]
+            logger.info(f"\n{'='*70}\nTask: {task_id} ({task_name})\n{'='*70}")
+
+            try:
+                sregym_args = argparse.Namespace(
+                    agent=agent_name,
+                    model=model_name,
+                    problem=task_name,
+                    use_external_harness=False,
+                )
+
+                result = sregym_main(sregym_args)
+
+                output = {
+                    "id": task_id,
+                    "task_name": task_name,
+                    "model_name": model_name,
+                    "success": result.success,
+                    "final_score": 1.0 if result.success else 0.0,
+                    "total_time": result.total_time,
+                }
+                if result.error:
+                    output["error"] = result.error
+
+                scores.append(1.0 if result.success else 0.0)
+            except Exception as e:
+                logger.error(f"Error: {e}")
+                output = {"id": task_id, "error": str(e), "final_score": 0.0}
+                scores.append(0.0)
+
+            out.write(json.dumps(output) + "\n")
+            out.flush()
+
+    # Save summary
+    avg_score = {
+        "final_score": sum(scores) / len(scores) if scores else 0.0,
+        "total_tasks": len(scores),
+    }
+    with open(os.path.join(output_dir, "avg_score.json"), "w") as f:
+        json.dump(avg_score, f, indent=2)
+
+    logger.info(f"\n{'='*70}\nFinal Score: {avg_score['final_score']:.3f}\n{'='*70}")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="SREGym Benchmark Runner")
+    parser.add_argument(
+        "--input_file",
+        type=str,
+        default="./data/benchmark/tasks.jsonl",
+        help="Path to input file",
+    )
+    parser.add_argument(
+        "--output_dir", type=str, default=None, help="Path to output directory"
+    )
+    parser.add_argument("--model_name", type=str, default="openai", help="Model name")
+    parser.add_argument("--agent_name", type=str, default="stratus", help="Agent name")
+
+    args = parser.parse_args()
+    if args.output_dir is None:
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        args.output_dir = f"./outputs/sregym__{args.model_name.replace('/', '_')}__{args.agent_name}___{timestamp}"
+
+    main(args.input_file, args.output_dir, args.model_name, args.agent_name)
