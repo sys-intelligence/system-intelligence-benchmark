@@ -14,13 +14,13 @@ try:
     PROVIDER = os.environ["PROVIDER"]
 except KeyError:
     PROVIDER = "openai"
-    print("Unable to find environment variable - PROVIDER, setting to openai...")
+    print("Unable to find environment variable - PROVIDER")
     raise
 
 try:
     PROVIDER_TOOLS = os.environ["PROVIDER_TOOLS"]
 except KeyError:
-    PROVIDER_TOOLS = ""
+    PROVIDER_TOOLS = PROVIDER
     print("Unable to find environment variable - PROVIDER_TOOLS.")
     raise
 
@@ -108,33 +108,24 @@ except KeyError:
     MAX_TOKENS_TOOLS = 16000
     print(f"Unable to find environment variable - MAX_TOKENS_TOOLS. Setting to {MAX_TOKENS_TOOLS}.")
 
+### For framework running ###
+global PROVIDER_OVERWRITE
+
+try:
+    PROVIDER_OVERWRITE = os.environ["PROVIDER_OVERWRITE"]
+except KeyError:
+    PROVIDER_OVERWRITE = None
+    print(f"Unable to find environment variable - PROVIDER_OVERWRITE. Setting to {PROVIDER_OVERWRITE}.")
+
 
 def get_llm_backend_for_tools():
-    if PROVIDER == "watsonx":
-        try:
-            WATSONX_API_KEY = os.environ["WATSONX_API_KEY"]
-        except KeyError:
-            print(f"Unable to find environment variable - WATSONX_API_KEY. Exiting...")
-            exit(1)
+    # If SREGym is running in an external framework (i.e. System Intelligence), we allow the provider to be overridden
+    if PROVIDER_OVERWRITE is not None:
+        # Framwork run, use LiteLLMBackend
         return LiteLLMBackend(
-            provider=PROVIDER,
-            model_name=MODEL_TOOLS,
-            url=URL_TOOLS,
-            api_key=WATSONX_API_KEY,
-            api_version=API_VERSION_TOOLS,
-            seed=SEED_TOOLS,
-            top_p=TOP_P_TOOLS,
-            temperature=TEMPERATURE_TOOLS,
-            reasoning_effort=REASONING_EFFORT_TOOLS,
-            max_tokens=MAX_TOKENS_TOOLS,
-            thinking_tools=THINKING_TOOLS,
-            thinking_budget_tools=THINKING_BUDGET_TOOLS,
-        )
-    elif PROVIDER == "openai":
-        return LiteLLMBackend(
-            provider=PROVIDER,
-            model_name=MODEL_TOOLS,
-            url=URL_TOOLS,
+            provider="litellm",
+            model_name=PROVIDER_OVERWRITE,
+            url=URL_TOOLS,  # not used
             api_key=API_KEY_TOOLS,
             api_version=API_VERSION_TOOLS,
             seed=SEED_TOOLS,
@@ -145,33 +136,69 @@ def get_llm_backend_for_tools():
             thinking_tools=THINKING_TOOLS,
             thinking_budget_tools=THINKING_BUDGET_TOOLS,
         )
-    elif PROVIDER == "litellm":
-        return LiteLLMBackend(
-            provider=PROVIDER,
-            model_name=MODEL_TOOLS,
-            url=URL_TOOLS, # not used
-            api_key=API_KEY_TOOLS,
-            api_version=API_VERSION_TOOLS,
-            seed=SEED_TOOLS,
-            top_p=TOP_P_TOOLS,
-            temperature=TEMPERATURE_TOOLS,
-            reasoning_effort=REASONING_EFFORT_TOOLS,
-            thinking_tools=THINKING_TOOLS,
-            thinking_budget_tools=THINKING_BUDGET_TOOLS,
-            max_tokens=MAX_TOKENS_TOOLS,
-        )
-    elif PROVIDER == "compatible":
-        return LiteLLMBackend(
-            provider=PROVIDER,
-            model_name=MODEL_TOOLS,
-            url=URL_TOOLS,
-            api_key=API_KEY_TOOLS,
-            api_version=API_VERSION_TOOLS,
-            seed=SEED_TOOLS,
-            top_p=TOP_P_TOOLS,
-            temperature=TEMPERATURE_TOOLS,
-            reasoning_effort=REASONING_EFFORT_TOOLS,
-            thinking_tools=THINKING_TOOLS,
-            thinking_budget_tools=THINKING_BUDGET_TOOLS,
-            max_tokens=MAX_TOKENS_TOOLS,
-        )
+    else:
+        if PROVIDER == "watsonx":
+            try:
+                WATSONX_API_KEY = os.environ["WATSONX_API_KEY"]
+            except KeyError:
+                print(f"Unable to find environment variable - WATSONX_API_KEY. Exiting...")
+                exit(1)
+            return LiteLLMBackend(
+                provider=PROVIDER,
+                model_name=MODEL_TOOLS,
+                url=URL_TOOLS,
+                api_key=WATSONX_API_KEY,
+                api_version=API_VERSION_TOOLS,
+                seed=SEED_TOOLS,
+                top_p=TOP_P_TOOLS,
+                temperature=TEMPERATURE_TOOLS,
+                reasoning_effort=REASONING_EFFORT_TOOLS,
+                max_tokens=MAX_TOKENS_TOOLS,
+                thinking_tools=THINKING_TOOLS,
+                thinking_budget_tools=THINKING_BUDGET_TOOLS,
+            )
+        elif PROVIDER == "openai":
+            return LiteLLMBackend(
+                provider=PROVIDER,
+                model_name=MODEL_TOOLS,
+                url=URL_TOOLS,
+                api_key=API_KEY_TOOLS,
+                api_version=API_VERSION_TOOLS,
+                seed=SEED_TOOLS,
+                top_p=TOP_P_TOOLS,
+                temperature=TEMPERATURE_TOOLS,
+                reasoning_effort=REASONING_EFFORT_TOOLS,
+                max_tokens=MAX_TOKENS_TOOLS,
+                thinking_tools=THINKING_TOOLS,
+                thinking_budget_tools=THINKING_BUDGET_TOOLS,
+            )
+        elif PROVIDER == "litellm":
+            return LiteLLMBackend(
+                provider=PROVIDER,
+                model_name=MODEL_TOOLS,
+                url=URL_TOOLS,  # not used
+                api_key=API_KEY_TOOLS,
+                api_version=API_VERSION_TOOLS,
+                seed=SEED_TOOLS,
+                top_p=TOP_P_TOOLS,
+                temperature=TEMPERATURE_TOOLS,
+                reasoning_effort=REASONING_EFFORT_TOOLS,
+                thinking_tools=THINKING_TOOLS,
+                thinking_budget_tools=THINKING_BUDGET_TOOLS,
+                max_tokens=MAX_TOKENS_TOOLS,
+            )
+        elif PROVIDER == "compatible":
+            return LiteLLMBackend(
+                provider=PROVIDER,
+                model_name=MODEL_TOOLS,
+                url=URL_TOOLS,
+                api_key=API_KEY_TOOLS,
+                api_version=API_VERSION_TOOLS,
+                seed=SEED_TOOLS,
+                top_p=TOP_P_TOOLS,
+                temperature=TEMPERATURE_TOOLS,
+                reasoning_effort=REASONING_EFFORT_TOOLS,
+                thinking_tools=THINKING_TOOLS,
+                thinking_budget_tools=THINKING_BUDGET_TOOLS,
+                max_tokens=MAX_TOKENS_TOOLS,
+            )

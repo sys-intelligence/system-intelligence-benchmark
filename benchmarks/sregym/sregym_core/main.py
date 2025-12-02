@@ -8,6 +8,7 @@ import sys
 import threading
 import time
 from datetime import datetime
+from pathlib import Path
 
 import uvicorn
 from rich.console import Console
@@ -32,7 +33,9 @@ def get_current_datetime_formatted():
     return formatted_datetime
 
 
-def driver_loop(conductor: Conductor, problem_filter: str = None, agent_to_run: str = "stratus", use_external_harness: bool = False):
+def driver_loop(
+    conductor: Conductor, problem_filter: str = None, agent_to_run: str = "stratus", use_external_harness: bool = False
+):
     """
     Deploy each problem and wait for HTTP grading via POST /submit.
     Returns a list of flattened dicts with results per problem.
@@ -47,16 +50,16 @@ def driver_loop(conductor: Conductor, problem_filter: str = None, agent_to_run: 
         console = Console()
         # give the API a moment to bind
         await asyncio.sleep(1)
-        agents_to_start = list_agents().keys()
+        agents_to_start = list_agents(path=Path(os.path.dirname(os.path.abspath(__file__))) / "agents.yaml").keys()
         all_results = []
-        
+
         if agent_to_run is not None:
             if agent_to_run not in agents_to_start:
                 console.log(f"⚠️ Agent '{agent_to_run}' not found in registry. Available agents: {agents_to_start}")
                 sys.exit(1)
             else:
                 agents_to_start = [agent_to_run]
-        
+
         for agent_name in agents_to_start:
             console.log(f"Starting agent now: {agent_name}")
             conductor.register_agent(agent_name)
@@ -89,7 +92,7 @@ def driver_loop(conductor: Conductor, problem_filter: str = None, agent_to_run: 
                     return []
 
                 if not use_external_harness:
-                    reg = get_agent(agent_name)
+                    reg = get_agent(agent_name, path=Path(os.path.dirname(os.path.abspath(__file__))) / "agents.yaml")
                     if reg:
                         await LAUNCHER.ensure_started(reg)
 
@@ -145,9 +148,13 @@ def start_mcp_server_after_api():
     server.run()
 
 
-def _run_driver_and_shutdown(conductor: Conductor, problem_filter: str = None, use_external_harness: bool = False):
+def _run_driver_and_shutdown(
+    conductor: Conductor, problem_filter: str = None, agent_to_run: str = "stratus", use_external_harness: bool = False
+):
     """Run the benchmark driver, stash results, then tell the API to exit."""
-    results = driver_loop(conductor, problem_filter=problem_filter, use_external_harness=use_external_harness)
+    results = driver_loop(
+        conductor, problem_filter=problem_filter, agent_to_run=agent_to_run, use_external_harness=use_external_harness
+    )
     setattr(main, "results", results)
     # ⬇️ Ask the API server (running in main thread) to stop so we can write CSV
     request_shutdown()
@@ -277,7 +284,12 @@ def main(args):
     else:
         print("⚠️ No results to write.")
 
-    sys.exit(0)
+    if __name__ == "__main__":
+        # separate run, use exit
+        sys.exit(0)
+    else:
+        # function call run, return results
+        return results
 
 
 if __name__ == "__main__":

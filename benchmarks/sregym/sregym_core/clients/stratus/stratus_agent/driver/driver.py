@@ -1,3 +1,11 @@
+import sys
+from pathlib import Path
+
+# for external call
+sregym_core_path = Path(__file__).resolve().parents[4]
+if str(sregym_core_path) not in sys.path:
+    sys.path.insert(0, str(sregym_core_path))
+
 import asyncio
 import time
 
