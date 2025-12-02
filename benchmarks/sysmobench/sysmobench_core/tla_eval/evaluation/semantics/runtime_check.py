@@ -646,6 +646,9 @@ class RuntimeCheckEvaluator(BaseEvaluator):
                 except Exception as e:
                     logger.error(f"Failed to read config file: {e}")
                     result.config_generation_error = f"Cannot read config file: {e}"
+                    result.config_generation_successful = False
+                    result.config_file_path = str(config_file_path)
+                    logger.warning(f"Preserving original config path despite read failure: {config_file_path}")
                     return result
             else:
                 # Generate new TLC configuration

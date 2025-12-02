@@ -12,7 +12,7 @@ $invariants
 
 1. **Analyze the specification** to identify the main specification name and all declared constants
 2. **Generate complete .cfg file content** with SPECIFICATION, CONSTANTS, and INVARIANT/PROPERTY sections
-3. **Use small values for constants** to ensure efficient model checking (2-3 threads, small integers)
+3. **Use specific values for constants**: The constant `Threads` MUST be a set containing three distinct thread identifiers: 't1', 't2', and 't3' (matching trace data). For other constants, use small integers.
 4. **Only include invariants that are actually defined in the specification** - scan the TLA+ specification to check which invariants are defined. If an invariant name is provided but not defined in the specification, do NOT include it in the .cfg file. For included invariants, check if they use temporal operators (~>, <>) and put those in PROPERTY section instead of INVARIANT
 5. **Output ONLY the raw .cfg file content** - no explanations, no markdown, no code blocks
 

@@ -44,9 +44,13 @@ class SpinLockTraceConverterImpl:
         """Get default mapping configuration."""
         return {
             "config": {"Threads": ["t1", "t2", "t3"]},
-            "events": {"Release": "Unlock", "default": "TryToAcquire"},
+            "events": {
+                "Release": "ReleaseLock", 
+                "Acquire": "AcquireLock",
+                "default": "TryAcquireLock"
+            },
             "variables": {
-                "lock_held": {
+                "lockState": {
                     "system_path": ["state"],
                     "value_mapping": {"unlocked": False, "locked": True},
                     "default_value": False
@@ -59,11 +63,19 @@ class SpinLockTraceConverterImpl:
         """Map system thread ID to TLA+ thread name."""
         return self.mapping.get("thread_mapping", {}).get(str(thread_id), f"t{thread_id}")
     
-    def _map_event_name(self, event_name: str) -> str:
-        """Map system event name to TLA+ action name."""
+    ALLOWED_TLA_ACTIONS = {"AcquireLock", "TryAcquireLock", "ReleaseLock"}
+    ALLOWED_VARIABLES = {"lockState"}
+
+    def _map_event_name(self, event_name: str) -> Optional[str]:
+        """Map system event name to TLA+ action name. Returns None if not allowed."""
         events = self.mapping.get("events", {})
-        return events.get(event_name, events.get("default", "Step"))
-    
+        tla_action = events.get(event_name, events.get("default", "Step"))
+        
+        if tla_action not in self.ALLOWED_TLA_ACTIONS:
+            return None
+            
+        return tla_action
+
     def _map_variable_value(self, var_config: Dict[str, Any], raw_value: Any) -> Any:
         """Map system variable value to TLA+ format."""
         value_mapping = var_config.get("value_mapping", {})
@@ -76,6 +88,9 @@ class SpinLockTraceConverterImpl:
         # Map event name
         action = event.get("action", "")
         tla_action = self._map_event_name(action)
+        
+        if tla_action is None:
+            return None
         
         # Build output event
         output_event = {"event": tla_action}
@@ -189,11 +204,14 @@ class SpinLockTraceConverterImpl:
                 "error": f"Action-based conversion failed: {str(e)}"
             }
 
-    def _convert_event_with_state(self, event: Dict[str, Any], cumulative_state: Dict[str, Any]) -> Dict[str, Any]:
-        """Convert a single system event to TLA+ format with cumulative state."""
+    def _convert_event_with_state(self, event: Dict[str, Any], cumulative_state: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Convert a single system event to TLA+ format with cumulative state. Returns None if skipped."""
         # Map event name
         action = event.get("action", "")
         tla_action = self._map_event_name(action)
+
+        if tla_action is None:
+            return None
 
         # Build output event
         output_event = {"event": tla_action}
@@ -206,6 +224,9 @@ class SpinLockTraceConverterImpl:
         variables_config = self.mapping.get("variables", {})
 
         for var_name, var_config in variables_config.items():
+            if var_name not in self.ALLOWED_VARIABLES:
+                continue
+
             var_type = var_config.get("type", "scalar")
 
             if var_type == "function":
@@ -325,7 +346,8 @@ class SpinLockTraceConverterImpl:
             # Convert each event with cumulative state
             for event in events:
                 converted_event = self._convert_event_with_state(event, cumulative_state)
-                output_lines.append(json.dumps(converted_event))
+                if converted_event is not None:
+                    output_lines.append(json.dumps(converted_event))
             
             # Write output
             with open(output_trace_path, 'w') as f:

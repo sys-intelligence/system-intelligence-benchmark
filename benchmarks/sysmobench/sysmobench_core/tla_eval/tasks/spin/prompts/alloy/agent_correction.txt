@@ -51,8 +51,8 @@ Common Alloy syntax issues to avoid:
 Ensure the corrected specification uses these exact names:
 
 **Thread/Lock atoms**:
-- `one sig Thread0, Thread1 extends Thread {{}}`
-- `one sig Lock0 extends Lock {{}}`
+- `one sig Thread0, Thread1 extends Thread {}`
+- `one sig Lock0 extends Lock {}`
 
 **State fields**:
 - `thread_status: Thread -> one Status`
@@ -60,8 +60,8 @@ Ensure the corrected specification uses these exact names:
 - `time: one Time`
 
 **Status values**:
-- `abstract sig Status {{}}`
-- `one sig Idle, Trying, Locked extends Status {{}}`
+- `abstract sig Status {}`
+- `one sig Idle, Trying, Locked extends Status {}`
 
 CRITICAL OUTPUT REQUIREMENTS:
 1. The module name must remain exactly "spinlock" (module spinlock)

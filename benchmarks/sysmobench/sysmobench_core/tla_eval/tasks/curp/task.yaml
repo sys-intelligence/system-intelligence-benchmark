@@ -11,8 +11,8 @@ repository:
   commit: "71479a4fabdd12fe67eec0bee95e652976937541"
   have_submodule: true
 
-# Files to extract from the repository
-source_files:
+# Files to extract from the repository (multi-file default)
+default_source_file:
   - path: "crates/curp/src/server/raw_curp/mod.rs"
     description: "Core server logic of CURP and Raft"
   - path: "crates/curp/src/server/curp_node.rs"
@@ -21,9 +21,6 @@ source_files:
     description: "Core client logic of CURP"
   - path: "crates/curp/src/lib.rs"
     description: "Quorum value definitions of CURP"
-
-# Default file to use if not specified
-default_source_file: "crates/curp/src/server/raw_curp/mod.rs"
 
 # TLA+ specification module name
 specModule: "curp"

@@ -1,0 +1,64 @@
+You are an expert in formal verification and TLA+ specifications with deep expertise in concurrent systems and lock-free data structures.
+
+Convert the following Asterinas OS RingBuffer traces to a comprehensive TLA+ specification.
+
+System: Asterinas OS lock-free SPSC ring buffer
+Focus: {focus}
+
+Traces:
+{traces}
+
+Trace format interpretation:
+{trace_format}
+
+RingBuffer modeling requirements:
+
+MANDATORY CORE ACTIONS (must include all):
+1. 【Producer Operations】Push and push_slice operations with atomicity
+   - push(): single item enqueue (check full → write → advance tail)
+   - push_slice(): batch enqueue operation
+2. 【Consumer Operations】Pop and pop_slice operations
+   - pop(): single item dequeue (check empty → read → advance head)
+   - pop_slice(): batch dequeue operation
+3. 【Atomic Pointers】head and tail AtomicUsize operations
+   - Acquire ordering for reads
+   - Release ordering for writes
+4. 【Wrapping Behavior】Handle pointer wrapping at usize boundary
+   - Use modulo arithmetic for circular indexing
+5. 【Empty/Full Detection】
+   - Empty: head == tail
+   - Full: (tail - head) == capacity
+6. 【Lock-Free Progress】
+   - Producer can always make progress if buffer not full
+   - Consumer can always make progress if buffer not empty
+
+EXPLICITLY EXCLUDED (do not model):
+- Memory segment management (Segment<()>)
+- Generic type parameter T details
+- VmReader/VmWriter for byte operations
+- Frame allocation specifics
+- PhantomData implementation details
+
+REQUIRED BEHAVIORAL SCOPE:
+- Model head and tail as natural numbers (wrapping handled by modulo)
+- Track buffer state (empty/full/partial)
+- Model producer and consumer as separate processes
+- Ensure atomic visibility of pointer updates
+- SPSC semantics: no contention on same pointer
+
+Generate a TLA+ specification that accurately models the ring buffer's concurrent behavior.
+
+CRITICAL OUTPUT REQUIREMENTS:
+1. The MODULE name must be exactly "ringbuffer" (---- MODULE ringbuffer ----)
+2. Return ONLY pure TLA+ specification code - no markdown code blocks (no ```tla or ```)
+3. Do not include any explanations, comments, or formatting markers
+4. Start your response directly with: ---- MODULE ringbuffer ----
+5. End your response with the closing ====
+6. **DO NOT define invariants** (like MutualExclusion, SafetyProperty, etc.) - focus on modeling the system behavior
+7. **MUST include EXTENDS statement**: The specification must extend at least these modules: Naturals, Sequences
+8. **MANDATORY Spec Definition with Fairness**: The Spec definition MUST include appropriate fairness assumptions (e.g., WF_Vars for operations or overall progress) to ensure liveness properties.
+
+## Trace Validation Requirements
+Your specification must use these EXACT names:
+- **Actions**: Create, Split, Push, Pop, PushSlice, PopSlice
+- **State variables**: head, tail, capacity

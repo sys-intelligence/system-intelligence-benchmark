@@ -1,0 +1,104 @@
+You are an expert PAT (Process Analysis Toolkit) CSP# specification specialist with extensive experience in concurrent systems and spinlock synchronization.
+
+I need you to fix errors in a CSP# specification for a spinlock {system_type} system.
+
+## Original Task Description
+{description}
+
+## Current CSP# Specification (with errors)
+```csp
+{current_specification}
+```
+
+## Validation Errors Found
+**Error Summary:**
+{error_summary}
+
+**Detailed Syntax Errors:**
+{syntax_errors}
+
+**Detailed Semantic Errors:**
+{semantic_errors}
+
+**Full Validation Output:**
+```
+{validation_output}
+```
+
+## Correction Instructions
+This is correction attempt {attempt_number} of {max_attempts}.
+
+Based on the validation errors above, please fix the CSP# specification to ensure it compiles correctly while maintaining the intended spinlock synchronization semantics.
+
+Key considerations for spinlock correctness:
+1. Ensure proper modeling of atomic test-and-set operations using guards
+2. Maintain mutual exclusion and safety properties
+3. Fix any syntax errors while preserving the spinlock logic
+4. Ensure all variables, channels, and processes are properly declared
+5. Preserve dual API semantics: blocking lock() vs non-blocking try_lock()
+6. **CRITICAL SEMANTIC DISTINCTION**:
+   - lock(): blocking call that can spin (idle → trying → spinning → ... → locked)
+   - try_lock(): non-blocking call that never spins (idle → trying → locked OR idle)
+   - Model different state transitions based on call type
+   - try_lock() requests MUST NEVER enter "spinning" state
+
+Common CSP# syntax issues to avoid:
+- Variable declarations: Use `var name = value;` syntax
+- Array initialization: Use `var arr[size] = [val1, val2, ...];`
+- Channel declarations: Use `channel name:{range};` or `channel name;`
+- Guards: Use `[condition]` before actions
+- Assignments in processes: Use `{var = value;}` for state updates
+- Process definitions: Use `P = event -> P'` or `P = [guard] action -> P'`
+- Choice operators: Use `[]` for external choice, `|~|` for internal choice
+- Parallel composition: Use `|||` for interleaving, `||` for synchronization
+- Comments: Use `//` for single-line comments
+
+Process definition syntax:
+```
+ProcessName(params) =
+  [guard1] event1 -> {assignments;} -> NextProcess1(params)
+  [] [guard2] event2 -> {assignments;} -> NextProcess2(params);
+```
+
+Variable and channel scoping:
+- Global variables must be declared before processes
+- Channels must be declared before being used in processes
+- Use meaningful variable names for readability
+
+CRITICAL OUTPUT REQUIREMENTS:
+1. Return ONLY the corrected CSP# specification code - no markdown code blocks
+2. Do not include explanations, just the fixed specification
+3. Start your response directly with variable/channel declarations or process definitions
+4. Include ONLY ONE basic assertion (e.g., `#assert System deadlockfree;`)
+5. DO NOT include complex invariant assertions - these will be added separately
+6. Ensure the code is syntactically valid for PAT Console
+7. Maintain clear separation between:
+   - Variable declarations
+   - Channel declarations
+   - Process definitions
+   - System composition
+   - Assertions
+
+Example corrected structure:
+```
+// Variables (if syntax error was here, fix it)
+var lock_holder = -1;
+var thread_state[2] = [0, 0];
+
+// Channels (ensure proper syntax)
+channel acquire:{0..1};
+channel release:{0..1};
+
+// Process definitions (fix process logic)
+Thread(tid) = ...;
+
+// System composition
+System = Thread(0) ||| Thread(1);
+
+// Basic assertion
+#assert System deadlockfree;
+```
+
+IMPORTANT: Do NOT include complex invariant assertions (like mutual exclusion checks with #define) in the corrected specification. Only include ONE basic deadlock-freedom assertion. Complex invariants will be added separately during the invariant verification phase.
+
+Please provide the corrected CSP# specification that compiles successfully in PAT Console.

@@ -1,0 +1,81 @@
+# Invariants for Asterinas RingBuffer Systems
+# Includes both generic SPSC ring buffer properties and Asterinas-specific features
+
+invariants:
+  # Generic SPSC Ring Buffer Invariants (applicable to all SPSC implementations)
+  - name: "BufferBoundsInvariant"
+    type: "safety"
+    natural_language: "The number of items in the buffer never exceeds its capacity"
+    formal_description: "The fundamental capacity constraint: the difference between tail and head (representing the number of items) must never exceed the buffer capacity"
+    tla_example: |
+      BufferBoundsInvariant ==
+        (tail - head) <= capacity
+
+  - name: "EmptyFullConsistency"
+    type: "safety"
+    natural_language: "The buffer cannot be both empty and full simultaneously"
+    formal_description: "Empty condition (head = tail) and full condition ((tail - head) = capacity) are mutually exclusive"
+    tla_example: |
+      EmptyFullConsistency ==
+        ~((head = tail) /\ ((tail - head) = capacity))
+
+  # Asterinas-specific RingBuffer Invariants
+  - name: "ProducerSafety"
+    type: "safety"
+    natural_language: "Producer always checks if buffer is full before pushing"
+    formal_description: "Asterinas push semantics: producer must verify free_len() > 0 before writing, ensuring no buffer overflow"
+    tla_example: |
+      ProducerSafety ==
+        \A p \in Producers :
+          (Pushing(p)) => ((tail - head) < capacity)
+
+  - name: "ConsumerSafety"
+    type: "safety"
+    natural_language: "Consumer always checks if buffer is empty before popping"
+    formal_description: "Asterinas pop semantics: consumer must verify len() > 0 before reading, ensuring no invalid reads"
+    tla_example: |
+      ConsumerSafety ==
+        \A c \in Consumers :
+          (Popping(c)) => (head < tail)
+
+  - name: "BatchOperationAtomicity"
+    type: "safety"
+    natural_language: "Batch operations (push_slice/pop_slice) are all-or-nothing"
+    formal_description: "Asterinas batch semantics: push_slice/pop_slice either completes fully or fails immediately, no partial operations"
+    tla_example: |
+      BatchOperationAtomicity ==
+        /\ \A p \in Producers, n \in Nat :
+            (PushingSlice(p, n)) => ((tail - head + n) <= capacity)
+        /\ \A c \in Consumers, n \in Nat :
+            (PoppingSlice(c, n)) => ((tail - head) >= n)
+
+
+  # Generic Liveness Properties
+  - name: "EventualProducerProgress"
+    type: "liveness"
+    natural_language: "If the buffer is not full, the producer will eventually be able to push"
+    formal_description: "Lock-free progress guarantee: under fair scheduling, if there is free space, producer can make progress. Use ENABLED to express that the action can be executed."
+    tla_example: |
+      EventualProducerProgress ==
+        (~IsFull) ~> ENABLED Push
+      \* Alternative forms depending on spec structure:
+      \* (~Full(head, tail)) ~> ENABLED Produce
+      \* ((tail - head) < capacity) ~> ENABLED ProducerAction
+
+  - name: "EventualConsumerProgress"
+    type: "liveness"
+    natural_language: "If the buffer is not empty, the consumer will eventually be able to pop"
+    formal_description: "Lock-free progress guarantee: under fair scheduling, if there are items, consumer can make progress. Use ENABLED to express that the action can be executed."
+    tla_example: |
+      EventualConsumerProgress ==
+        (~IsEmpty) ~> ENABLED Pop
+      \* Alternative forms depending on spec structure:
+      \* (~Empty(head, tail)) ~> ENABLED Consume
+      \* (head # tail) ~> ENABLED ConsumerAction
+
+metadata:
+  total_invariants: 7
+  safety_invariants: 5
+  liveness_invariants: 2
+  generic_invariants: 4  # BufferBoundsInvariant, EmptyFullConsistency, EventualProducerProgress, EventualConsumerProgress
+  asterinas_specific_invariants: 4  # ProducerSafety, ConsumerSafety, BatchOperationAtomicity, WrappingCorrectness

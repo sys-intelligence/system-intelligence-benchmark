@@ -1,3 +1,599 @@
+diff --git a/OSDK.toml b/OSDK.toml
+index aee0727..e8efd67 100644
+--- a/OSDK.toml
++++ b/OSDK.toml
+@@ -53,7 +53,7 @@ build.strip_elf = false
+ qemu.args = """\
+     -cpu rv64,zba=true,zbb=true \
+     -machine virt \
+-    -m 8G \
++    -m 2G \
+     --no-reboot \
+     -nographic \
+     -display none \
+@@ -74,7 +74,7 @@ build.strip_elf = false
+ 
+ qemu.args = """\
+     -machine virt \
+-    -m 8G \
++    -m 2G \
+     -smp 1 \
+     --no-reboot \
+     -nographic \
+diff --git a/kernel/Cargo.toml b/kernel/Cargo.toml
+index a995e11..c978f0f 100644
+--- a/kernel/Cargo.toml
++++ b/kernel/Cargo.toml
+@@ -78,6 +78,8 @@ loongArch64 = "0.2.5"
+ all = ["cvm_guest"]
+ cvm_guest = ["dep:tdx-guest", "ostd/cvm_guest", "aster-virtio/cvm_guest"]
+ coverage = ["ostd/coverage"]
++# Enable TLA+ trace generation (forward to ostd)
++tla-trace = ["ostd/tla-trace"]
+ 
+ [lints]
+ workspace = true
+diff --git a/kernel/src/util/mod.rs b/kernel/src/util/mod.rs
+index 8520b9a..f26f4d1 100644
+--- a/kernel/src/util/mod.rs
++++ b/kernel/src/util/mod.rs
+@@ -6,4 +6,7 @@ pub mod per_cpu_counter;
+ pub mod random;
+ pub mod ring_buffer;
+ 
++#[cfg(feature = "tla-trace")]
++pub mod ring_buffer_trace;
++
+ pub use iovec::{MultiRead, MultiWrite, VmReaderArray, VmWriterArray};
+
+diff --git a/kernel/src/util/ring_buffer_trace.rs b/kernel/src/util/ring_buffer_trace.rs
+new file mode 100644
+index 0000000..5164755
+--- /dev/null
++++ b/kernel/src/util/ring_buffer_trace.rs
+@@ -0,0 +541,541 @@
++// SPDX-License-Identifier: MPL-2.0
++
++//! TLA+ trace support for RingBuffer
++//!
++//! This module provides instrumentation for generating execution traces
++//! of RingBuffer operations for validation against TLA+ specifications.
++
++use core::{
++    marker::PhantomData,
++    num::Wrapping,
++    ops::Deref,
++    sync::atomic::{AtomicUsize, AtomicU64, Ordering},
++};
++
++use inherit_methods_macro::inherit_methods;
++use ostd::mm::{FrameAllocOptions, Segment, UntypedMem, VmIo};
++
++use super::{MultiRead, MultiWrite};
++use crate::prelude::*;
++
++// Global trace sequence counter
++static TRACE_SEQUENCE: AtomicU64 = AtomicU64::new(0);
++
++/// Output a trace event via serial port
++fn trace_event(
++    action: &str,
++    actor: &str,
++    rb_id: usize,
++    head: usize,
++    tail: usize,
++    capacity: usize,
++    success: bool,
++) {
++    // Skip tracing during early boot
++    if crate::IN_BOOTSTRAP_CONTEXT.load(Ordering::Relaxed) {
++        return;
++    }
++
++    let seq = TRACE_SEQUENCE.fetch_add(1, Ordering::Relaxed);
++
++    // Build JSON trace event
++    // Format: {"seq":N,"action":"Push","actor":"producer","rb":0,"head":H,"tail":T,"capacity":C,"success":true}
++
++    let json_start = b"{\"seq\":";
++    for &b in json_start {
++        unsafe { crate::arch::serial::send(b); }
++    }
++
++    // Output sequence number
++    output_number(seq);
++
++    // Output action
++    let action_part = b",\"action\":\"";
++    for &b in action_part {
++        unsafe { crate::arch::serial::send(b); }
++    }
++    for &b in action.as_bytes() {
++        unsafe { crate::arch::serial::send(b); }
++    }
++    unsafe { crate::arch::serial::send(b'\"'); }
++
++    // Output actor (producer/consumer)
++    let actor_part = b",\"actor\":\"";
++    for &b in actor_part {
++        unsafe { crate::arch::serial::send(b); }
++    }
++    for &b in actor.as_bytes() {
++        unsafe { crate::arch::serial::send(b); }
++    }
++    unsafe { crate::arch::serial::send(b'\"'); }
++
++    // Output ringbuffer ID
++    let rb_part = b",\"rb\":";
++    for &b in rb_part {
++        unsafe { crate::arch::serial::send(b); }
++    }
++    output_number(rb_id as u64);
++
++    // Output head
++    let head_part = b",\"head\":";
++    for &b in head_part {
++        unsafe { crate::arch::serial::send(b); }
++    }
++    output_number(head as u64);
++
++    // Output tail
++    let tail_part = b",\"tail\":";
++    for &b in tail_part {
++        unsafe { crate::arch::serial::send(b); }
++    }
++    output_number(tail as u64);
++
++    // Output capacity
++    let cap_part = b",\"capacity\":";
++    for &b in cap_part {
++        unsafe { crate::arch::serial::send(b); }
++    }
++    output_number(capacity as u64);
++
++    // Output success flag
++    let success_part = b",\"success\":";
++    for &b in success_part {
++        unsafe { crate::arch::serial::send(b); }
++    }
++    if success {
++        for &b in b"true" {
++            unsafe { crate::arch::serial::send(b); }
++        }
++    } else {
++        for &b in b"false" {
++            unsafe { crate::arch::serial::send(b); }
++        }
++    }
++
++    // Close JSON
++    unsafe { crate::arch::serial::send(b'}'); }
++    unsafe { crate::arch::serial::send(b'\n'); }
++}
++
++/// Helper to output a number via serial
++fn output_number(mut num: u64) {
++    if num == 0 {
++        unsafe { crate::arch::serial::send(b'0'); }
++        return;
++    }
++
++    let mut digits = [0u8; 20];
++    let mut count = 0;
++    while num > 0 {
++        digits[count] = (num % 10) as u8 + b'0';
++        num /= 10;
++        count += 1;
++    }
++
++    for i in (0..count).rev() {
++        unsafe { crate::arch::serial::send(digits[i]); }
++    }
++}
++
++/// A lock-free SPSC FIFO ring buffer with TLA+ trace support
++pub struct RingBuffer<T> {
++    segment: Segment<()>,
++    capacity: usize,
++    tail: AtomicUsize,
++    head: AtomicUsize,
++    rb_id: usize, // Unique ID for this ring buffer instance
++    phantom: PhantomData<T>,
++}
++
++/// A producer of a [`RingBuffer`].
++pub struct Producer<T, R: Deref<Target = RingBuffer<T>>> {
++    rb: R,
++    phantom: PhantomData<T>,
++}
++
++/// A consumer of a [`RingBuffer`].
++pub struct Consumer<T, R: Deref<Target = RingBuffer<T>>> {
++    rb: R,
++    phantom: PhantomData<T>,
++}
++
++pub type RbProducer<T> = Producer<T, Arc<RingBuffer<T>>>;
++pub type RbConsumer<T> = Consumer<T, Arc<RingBuffer<T>>>;
++
++// Static counter for assigning unique IDs to ring buffers
++static RB_ID_COUNTER: AtomicUsize = AtomicUsize::new(0);
++
++impl<T> RingBuffer<T> {
++    const T_SIZE: usize = core::mem::size_of::<T>();
++
++    /// Creates a new [`RingBuffer`] with the given capacity.
++    pub fn new(capacity: usize) -> Self {
++        assert!(
++            capacity.is_power_of_two(),
++            "capacity must be a power of two"
++        );
++
++        let nframes = capacity
++            .checked_mul(Self::T_SIZE)
++            .unwrap()
++            .div_ceil(PAGE_SIZE);
++        let segment = FrameAllocOptions::new()
++            .zeroed(false)
++            .alloc_segment(nframes)
++            .unwrap();
++
++        let rb_id = RB_ID_COUNTER.fetch_add(1, Ordering::Relaxed);
++
++        let rb = Self {
++            segment,
++            capacity,
++            tail: AtomicUsize::new(0),
++            head: AtomicUsize::new(0),
++            rb_id,
++            phantom: PhantomData,
++        };
++
++        // Trace the creation
++        trace_event("Create", "system", rb_id, 0, 0, capacity, true);
++
++        rb
++    }
++
++    /// Splits the [`RingBuffer`] into a producer and a consumer.
++    pub fn split(self) -> (RbProducer<T>, RbConsumer<T>) {
++        let rb_id = self.rb_id;
++        let capacity = self.capacity;
++
++        let producer = Producer {
++            rb: Arc::new(self),
++            phantom: PhantomData,
++        };
++        let consumer = Consumer {
++            rb: Arc::clone(&producer.rb),
++            phantom: PhantomData,
++        };
++
++        // Trace the split
++        trace_event("Split", "system", rb_id, 0, 0, capacity, true);
++
++        (producer, consumer)
++    }
++
++    /// Gets the capacity of the `RingBuffer`.
++    pub fn capacity(&self) -> usize {
++        self.capacity
++    }
++
++    /// Checks if the `RingBuffer` is empty.
++    pub fn is_empty(&self) -> bool {
++        self.len() == 0
++    }
++
++    /// Checks if the `RingBuffer` is full.
++    pub fn is_full(&self) -> bool {
++        self.free_len() == 0
++    }
++
++    /// Gets the number of items in the `RingBuffer`.
++    pub fn len(&self) -> usize {
++        (self.tail() - self.head()).0
++    }
++
++    /// Gets the number of free items in the `RingBuffer`.
++    pub fn free_len(&self) -> usize {
++        self.capacity - self.len()
++    }
++
++    /// Gets the head number of the `RingBuffer`.
++    pub fn head(&self) -> Wrapping<usize> {
++        Wrapping(self.head.load(Ordering::Acquire))
++    }
++
++    /// Gets the tail number of the `RingBuffer`.
++    pub fn tail(&self) -> Wrapping<usize> {
++        Wrapping(self.tail.load(Ordering::Acquire))
++    }
++
++    pub(self) fn advance_tail(&self, mut tail: Wrapping<usize>, len: usize) {
++        tail += len;
++        self.tail.store(tail.0, Ordering::Release);
++    }
++
++    pub(self) fn advance_head(&self, mut head: Wrapping<usize>, len: usize) {
++        head += len;
++        self.head.store(head.0, Ordering::Release);
++    }
++
++    fn get_rb_id(&self) -> usize {
++        self.rb_id
++    }
++}
++
++impl<T: Pod, R: Deref<Target = RingBuffer<T>>> Producer<T, R> {
++    const T_SIZE: usize = core::mem::size_of::<T>();
++
++    /// Pushes an item to the `RingBuffer`.
++    pub fn push(&mut self, item: T) -> Option<()> {
++        let rb = &self.rb;
++        let rb_id = rb.get_rb_id();
++        let capacity = rb.capacity();
++        let head = rb.head().0;
++        let tail = rb.tail().0;
++
++        // Check if full
++        if rb.is_full() {
++            trace_event("Push", "producer", rb_id, head, tail, capacity, false);
++            return None;
++        }
++
++        let tail_wrap = rb.tail();
++        let offset = tail_wrap.0 & (rb.capacity - 1);
++        let byte_offset = offset * Self::T_SIZE;
++
++        let mut writer = rb.segment.writer();
++        writer.skip(byte_offset);
++        writer.write_val(&item).unwrap();
++
++        rb.advance_tail(tail_wrap, 1);
++
++        // Trace successful push
++        let new_tail = rb.tail().0;
++        trace_event("Push", "producer", rb_id, head, new_tail, capacity, true);
++
++        Some(())
++    }
++
++    /// Pushes a slice of items to the `RingBuffer`.
++    pub fn push_slice(&mut self, items: &[T]) -> Option<()> {
++        let rb = &self.rb;
++        let rb_id = rb.get_rb_id();
++        let capacity = rb.capacity();
++        let head = rb.head().0;
++        let tail = rb.tail().0;
++        let nitems = items.len();
++
++        if rb.free_len() < nitems {
++            trace_event("PushSlice", "producer", rb_id, head, tail, capacity, false);
++            return None;
++        }
++
++        let tail_wrap = rb.tail();
++        let offset = tail_wrap.0 & (rb.capacity - 1);
++        let byte_offset = offset * Self::T_SIZE;
++
++        if offset + nitems > rb.capacity {
++            // Write into two separate parts
++            rb.segment
++                .write_slice(byte_offset, &items[..rb.capacity - offset])
++                .unwrap();
++            rb.segment
++                .write_slice(0, &items[rb.capacity - offset..])
++                .unwrap();
++        } else {
++            rb.segment.write_slice(byte_offset, items).unwrap();
++        }
++
++        rb.advance_tail(tail_wrap, nitems);
++
++        let new_tail = rb.tail().0;
++        trace_event("PushSlice", "producer", rb_id, head, new_tail, capacity, true);
++
++        Some(())
++    }
++}
++
++#[inherit_methods(from = "self.rb")]
++impl<T, R: Deref<Target = RingBuffer<T>>> Producer<T, R> {
++    pub fn capacity(&self) -> usize;
++    pub fn is_empty(&self) -> bool;
++    pub fn is_full(&self) -> bool;
++    pub fn len(&self) -> usize;
++    pub fn free_len(&self) -> usize;
++    pub fn head(&self) -> Wrapping<usize>;
++    pub fn tail(&self) -> Wrapping<usize>;
++}
++
++impl<T: Pod, R: Deref<Target = RingBuffer<T>>> Consumer<T, R> {
++    const T_SIZE: usize = core::mem::size_of::<T>();
++
++    /// Pops an item from the `RingBuffer`.
++    pub fn pop(&mut self) -> Option<T> {
++        let rb = &self.rb;
++        let rb_id = rb.get_rb_id();
++        let capacity = rb.capacity();
++        let head = rb.head().0;
++        let tail = rb.tail().0;
++
++        if rb.is_empty() {
++            trace_event("Pop", "consumer", rb_id, head, tail, capacity, false);
++            return None;
++        }
++
++        let head_wrap = rb.head();
++        let offset = head_wrap.0 & (rb.capacity - 1);
++        let byte_offset = offset * Self::T_SIZE;
++
++        let mut reader = rb.segment.reader();
++        reader.skip(byte_offset);
++        let item = reader.read_val::<T>().unwrap();
++
++        rb.advance_head(head_wrap, 1);
++
++        let new_head = rb.head().0;
++        trace_event("Pop", "consumer", rb_id, new_head, tail, capacity, true);
++
++        Some(item)
++    }
++
++    /// Pops a slice of items from the `RingBuffer`.
++    pub fn pop_slice(&mut self, items: &mut [T]) -> Option<()> {
++        let rb = &self.rb;
++        let rb_id = rb.get_rb_id();
++        let capacity = rb.capacity();
++        let head = rb.head().0;
++        let tail = rb.tail().0;
++        let nitems = items.len();
++
++        if rb.len() < nitems {
++            trace_event("PopSlice", "consumer", rb_id, head, tail, capacity, false);
++            return None;
++        }
++
++        let head_wrap = rb.head();
++        let offset = head_wrap.0 & (rb.capacity - 1);
++        let byte_offset = offset * Self::T_SIZE;
++
++        if offset + nitems > rb.capacity {
++            // Read from two separate parts
++            rb.segment
++                .read_slice(byte_offset, &mut items[..rb.capacity - offset])
++                .unwrap();
++            rb.segment
++                .read_slice(0, &mut items[rb.capacity - offset..])
++                .unwrap();
++        } else {
++            rb.segment.read_slice(byte_offset, items).unwrap();
++        }
++
++        rb.advance_head(head_wrap, nitems);
++
++        let new_head = rb.head().0;
++        trace_event("PopSlice", "consumer", rb_id, new_head, tail, capacity, true);
++
++        Some(())
++    }
++}
++
++#[inherit_methods(from = "self.rb")]
++impl<T, R: Deref<Target = RingBuffer<T>>> Consumer<T, R> {
++    pub fn capacity(&self) -> usize;
++    pub fn is_empty(&self) -> bool;
++    pub fn is_full(&self) -> bool;
++    pub fn len(&self) -> usize;
++    pub fn free_len(&self) -> usize;
++    pub fn head(&self) -> Wrapping<usize>;
++    pub fn tail(&self) -> Wrapping<usize>;
++}
++
++#[cfg(ktest)]
++mod test {
++    use ostd::prelude::*;
++    use super::*;
++
++    /// Test basic push and pop operations with tracing
++    #[ktest]
++    fn test_rb_trace_basic() {
++        println!("=== TRACE_1: RingBuffer Basic Push/Pop ===");
++
++        let rb = RingBuffer::<u32>::new(4);
++        let (mut prod, mut cons) = rb.split();
++
++        // Push 3 items
++        assert!(prod.push(100).is_some());
++        assert!(prod.push(200).is_some());
++        assert!(prod.push(300).is_some());
++
++        // Pop 2 items
++        assert_eq!(cons.pop(), Some(100));
++        assert_eq!(cons.pop(), Some(200));
++
++        // Push 2 more (should wrap around)
++        assert!(prod.push(400).is_some());
++        assert!(prod.push(500).is_some());
++
++        // Pop remaining
++        assert_eq!(cons.pop(), Some(300));
++        assert_eq!(cons.pop(), Some(400));
++        assert_eq!(cons.pop(), Some(500));
++
++        // Try pop empty
++        assert_eq!(cons.pop(), None);
++    }
++
++    /// Test full buffer scenarios
++    #[ktest]
++    fn test_rb_trace_full() {
++        println!("=== TRACE_2: RingBuffer Full Buffer ===");
++
++        let rb = RingBuffer::<u32>::new(4);
++        let (mut prod, mut cons) = rb.split();
++
++        // Fill the buffer
++        assert!(prod.push(1).is_some());
++        assert!(prod.push(2).is_some());
++        assert!(prod.push(3).is_some());
++        assert!(prod.push(4).is_some());
++
++        // Try to push when full (should fail)
++        assert!(prod.push(5).is_none());
++
++        // Pop one
++        assert_eq!(cons.pop(), Some(1));
++
++        // Now push should succeed
++        assert!(prod.push(5).is_some());
++    }
++
++    /// Test slice operations
++    #[ktest]
++    fn test_rb_trace_slice() {
++        println!("=== TRACE_3: RingBuffer Slice Operations ===");
++
++        let rb = RingBuffer::<u32>::new(4);
++        let (mut prod, mut cons) = rb.split();
++
++        // Push slice
++        let data = [10, 20, 30];
++        assert!(prod.push_slice(&data).is_some());
++
++        // Pop slice
++        let mut result = [0u32; 3];
++        assert!(cons.pop_slice(&mut result).is_some());
++        assert_eq!(result, data);
++
++        // Try to pop more than available
++        let mut result2 = [0u32; 2];
++        assert!(cons.pop_slice(&mut result2).is_none());
++    }
++
++    /// Test producer-consumer interleaving
++    #[ktest]
++    fn test_rb_trace_interleaving() {
++        println!("=== TRACE_4: RingBuffer Producer-Consumer Interleaving ===");
++
++        let rb = RingBuffer::<u32>::new(4);
++        let (mut prod, mut cons) = rb.split();
++
++        // Interleaved operations
++        assert!(prod.push(1).is_some());
++        assert_eq!(cons.pop(), Some(1));
++
++        assert!(prod.push(2).is_some());
++        assert!(prod.push(3).is_some());
++        assert_eq!(cons.pop(), Some(2));
++
++        assert!(prod.push(4).is_some());
++        assert_eq!(cons.pop(), Some(3));
++        assert_eq!(cons.pop(), Some(4));
++    }
++}
++
 diff --git a/ostd/Cargo.toml b/ostd/Cargo.toml
 index b740a6e..689986e 100644
 --- a/ostd/Cargo.toml
@@ -1247,10 +1843,10 @@ index 0000000..c902814
 \ No newline at end of file
 diff --git a/ostd/src/sync/spin_trace.rs b/ostd/src/sync/spin_trace.rs
 new file mode 100644
-index 0000000..5a82677
+index 0000000..8ca98ee
 --- /dev/null
 +++ b/ostd/src/sync/spin_trace.rs
-@@ -0,0 +1,523 @@
+@@ -0,0 +1,525 @@
 +// SPDX-License-Identifier: MPL-2.0
 +
 +use alloc::sync::Arc;
@@ -1442,7 +2038,6 @@ index 0000000..5a82677
 +        // Record RequestTryLock (after setting state to trying_nonblocking)
 +        let lock_addr = self as *const Self as *const () as usize;
 +        let current_state = self.inner.lock.load(Ordering::Relaxed);
-+        trace_event("TryAcquireNonBlocking", lock_addr, thread_id, current_state);
 +        
 +        if self.try_acquire_lock_with_id(thread_id) {
 +            let lock_guard = SpinTraceGuard_ {
@@ -1451,8 +2046,11 @@ index 0000000..5a82677
 +                thread_id: thread_id,
 +            };
 +            return Some(lock_guard);
++        } else {
++            // Explicitly record failure
++            trace_event("AcquireFail", lock_addr, thread_id, false);
++            None
 +        }
-+        None
 +    }
 +
 +    /// Returns a mutable reference to the underlying data.
@@ -1996,3 +2594,25 @@ index 0000000..abe0868
 +    }
 +}
 \ No newline at end of file
+diff --git a/tools/qemu_args.sh b/tools/qemu_args.sh
+index f667097..6ea8e62 100755
+--- a/tools/qemu_args.sh
++++ b/tools/qemu_args.sh
+@@ -48,7 +48,7 @@ fi
+ 
+ if [ "$1" = "tdx" ]; then
+     QEMU_ARGS="\
+-        -m ${MEM:-8G} \
++        -m ${MEM:-2G} \
+         -smp ${SMP:-1} \
+         -vga none \
+         -nographic \
+@@ -76,7 +76,7 @@ fi
+ COMMON_QEMU_ARGS="\
+     -cpu Icelake-Server,+x2apic \
+     -smp ${SMP:-1} \
+-    -m ${MEM:-8G} \
++    -m ${MEM:-2G} \
+     --no-reboot \
+     -nographic \
+     -display vnc=0.0.0.0:${VNC_PORT:-42} \

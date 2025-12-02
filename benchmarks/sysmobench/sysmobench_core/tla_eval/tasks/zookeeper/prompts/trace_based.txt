@@ -1,0 +1,47 @@
+You are an expert in formal verification and TLA+ specifications with deep expertise in distributed systems, particularly ZooKeeper and leader election.
+
+Convert the following traces from an execution of ZooKeeper to a comprehensive TLA+ specification.
+
+System: ZooKeeper Fast Leader Election
+Focus: {focus}
+
+Traces:
+{traces}
+
+Trace format interpretation:
+{trace_format}
+
+ZooKeeper-specific modeling requirements:
+
+MANDATORY CORE ACTIONS (must include all):
+1. 【Election Notification】Vote exchange messages between servers
+2. 【State Transitions】Server states: LOOKING, FOLLOWING, LEADING
+3. 【Vote Comparison】Compare votes based on (epoch, zxid, server_id) ordering
+4. 【Quorum Detection】Track votes and determine majority
+5. 【Leader Selection】Elect leader based on vote comparison rules
+
+EXPLICITLY EXCLUDED (do not model):
+- ZAB broadcast phase (PROPOSAL, COMMIT)
+- Data synchronization (DIFF, TRUNC, SNAP)
+- Client request handling
+- Network layer details
+- Transaction processing
+
+REQUIRED BEHAVIORAL SCOPE:
+- Notification message passing between servers
+- State changes: LOOKING → FOLLOWING/LEADING
+- Vote tracking and quorum calculation
+- Epoch advancement rules
+- Leader uniqueness guarantee
+- Basic message delays and network partitions
+
+Generate a TLA+ specification that accurately models ZooKeeper's leader election behavior.
+
+CRITICAL OUTPUT REQUIREMENTS:
+1. The MODULE name must be exactly "zookeeper" (---- MODULE zookeeper ----)
+2. Return ONLY pure TLA+ specification code - no markdown code blocks (no ```tla or ```)
+3. Do not include any explanations, comments, or formatting markers
+4. Start your response directly with: ---- MODULE zookeeper ----
+5. End your response with the closing ====
+6. **DO NOT define invariants** (like LeaderUniqueness, etc.) - focus on modeling the system behavior
+7. **MUST include EXTENDS statement**: The specification must extend at least these modules: TLC, Sequences, Naturals, FiniteSets

@@ -1,0 +1,115 @@
+You are an expert in formal verification and PAT (Process Analysis Toolkit) CSP# specifications with deep expertise in concurrent systems and synchronization primitives.
+
+Convert the following Asterinas OS spinlock source code to a comprehensive CSP# specification for PAT.
+
+System: Asterinas OS spinlock synchronization primitive
+Focus: {focus}
+
+Source Code from {file_path}:
+```rust
+{source_code}
+```
+
+Spinlock modeling requirements:
+
+MANDATORY CORE CONCEPTS:
+1. 【Lock/Unlock Operations】Distinguish between lock() and try_lock() with different semantics:
+   - lock(): blocking call that spins until acquisition
+   - try_lock(): non-blocking call that returns immediately
+2. 【Atomic CAS】compare_exchange operation on AtomicBool
+3. 【Thread States】Model thread states: Idle, Trying, Spinning, Locked
+4. 【Lock Status】Model lock status: held by at most one thread
+5. 【Concurrent Processes】Multiple thread processes executing concurrently
+
+CRITICAL SEMANTIC DISTINCTION:
+- **lock() METHOD**: Blocking semantics - thread spins until acquisition
+  * States: Idle → Trying → (Spinning if failed) → Trying → ... → Locked
+  * On CAS failure: enters spinning loop and keeps trying
+  * Eventually acquires the lock
+
+- **try_lock() METHOD**: Non-blocking semantics - attempts once
+  * States: Idle → Trying → (Locked | Idle)
+  * On CAS failure: returns to Idle immediately
+  * No spinning loop
+
+CSP# MODELING APPROACH:
+- Use process definitions to model thread behavior
+- Use channels for synchronization and communication
+- Use variables to track system state (lock holder, thread states)
+- Use guards (#define) and assertions (#assert) carefully
+- Model interleaving of concurrent thread processes
+
+REQUIRED STRUCTURE:
+1. **Channels** (for synchronization events):
+   - channel acquire, release, try_acquire, etc.
+
+2. **Variables** (for state tracking):
+   - var lock_holder = -1;  // -1 means unlocked, thread ID when locked
+   - var thread_status[N];   // Status array for each thread
+
+3. **Process Definitions**:
+   - Thread(id): Model individual thread behavior with lock/try_lock/unlock
+   - System: Parallel composition of all threads
+
+4. **State Transitions** (using process algebra):
+   - Lock acquisition: acquire.id -> ... (blocking)
+   - Try-lock attempt: try_acquire.id -> (success or failure) (non-blocking)
+   - Lock release: release.id -> ...
+
+5. **Basic Deadlock Check** (single assertion only):
+   - Include ONE basic assertion to check system properties
+   - Example: `#assert System deadlockfree;`
+   - DO NOT include complex invariant assertions (handled separately)
+
+EXPLICITLY EXCLUDED (do not model):
+- PreemptDisabled vs LocalIrqDisabled guard behaviors
+- Arc-based locking
+- UnsafeCell implementation details
+- Debug formatting and trait implementations
+- Complex memory ordering details
+- get_mut() zero-cost access
+
+CRITICAL OUTPUT REQUIREMENTS:
+1. Return ONLY pure CSP# specification code - no markdown code blocks (no ```csp or ```)
+2. Do not include any explanations, comments outside the code
+3. Use simple variable names and clear process structure
+4. Start your response directly with variable declarations or channel definitions
+5. Include process definitions for Thread and System
+6. Use `|||` for interleaved parallel composition of threads
+7. Include ONLY ONE basic assertion (e.g., deadlock freedom) - DO NOT include complex invariants
+8. Make sure the code is syntactically valid CSP# for PAT Console
+
+Example CSP# structure (simplified):
+```
+// Variables
+var lock_holder = -1;
+var thread_state[2] = [0, 0];  // 0=Idle, 1=Trying, 2=Spinning, 3=Locked
+
+// Channels
+channel acquire:{0..1};
+channel release:{0..1};
+channel try_acquire:{0..1};
+
+// Thread process (simplified)
+Thread(tid) =
+  [thread_state[tid] == 0] acquire.tid -> Lock(tid)
+  [] [thread_state[tid] == 0] try_acquire.tid -> TryLock(tid);
+
+Lock(tid) =
+  [lock_holder == -1] {lock_holder = tid; thread_state[tid] = 3;} -> Locked(tid)
+  [] [lock_holder != -1] {thread_state[tid] = 2;} -> Lock(tid);  // Spin
+
+TryLock(tid) =
+  [lock_holder == -1] {lock_holder = tid; thread_state[tid] = 3;} -> Locked(tid)
+  [] [lock_holder != -1] {thread_state[tid] = 0;} -> Thread(tid);  // Fail immediately
+
+Locked(tid) = release.tid -> {lock_holder = -1; thread_state[tid] = 0;} -> Thread(tid);
+
+// System composition
+System = Thread(0) ||| Thread(1);
+
+// Basic assertion
+#assert System deadlockfree;
+```
+
+Generate a complete CSP# specification that accurately models the spinlock's concurrent behavior with proper distinction between blocking lock() and non-blocking try_lock() semantics.

@@ -1,0 +1,68 @@
+You are an expert TLA+ specification specialist with extensive experience in distributed systems modeling.
+
+I need you to fix errors in a TLA+ specification for a ZooKeeper-based {system_type} system.
+
+## Original Task Description
+{description}
+
+## Current TLA+ Specification (with errors)
+```tla
+{current_specification}
+```
+
+## Current TLC Configuration
+```cfg
+{current_config}
+```
+
+## Validation Errors Found
+**Error Summary:**
+{error_summary}
+
+**Detailed Syntax Errors:**
+{syntax_errors}
+
+**Detailed Semantic Errors:**
+{semantic_errors}
+
+**Full Validation Output:**
+```
+{validation_output}
+```
+
+## Correction Instructions
+This is correction attempt {attempt_number} of {max_attempts}.
+
+Based on the validation errors above, please fix BOTH the TLA+ specification AND the TLC configuration if needed.
+
+1. **Fix all syntax errors**: Ensure proper TLA+ syntax, correct operator usage, and valid module structure
+2. **Resolve semantic errors**: Define missing variables, operators, and ensure logical consistency
+3. **Maintain original intent**: Keep the core distributed system logic and behavior from the source code
+4. **Follow TLA+ best practices**: Use appropriate data structures, actions, and invariants
+5. **Be complete and self-contained**: Include all necessary EXTENDS, CONSTANTS, VARIABLES, and operator definitions
+
+Focus specifically on:
+- Defining any missing variables or constants
+- Implementing missing operators or functions
+- Fixing syntax issues with operators, expressions, or module structure
+- Ensuring proper action definitions and state transitions
+- Maintaining consistency with ZooKeeper's leader election behavior
+- **MANDATORY**: Include weak fairness in Spec definition
+
+CRITICAL OUTPUT REQUIREMENTS:
+1. Return your response as pure JSON text with NO markdown formatting
+2. Your response must start with {{ and end with }}
+3. Use this exact structure:
+
+{{
+  "specification": "---- MODULE zookeeper ----\n...\n====",
+  "configuration": "SPECIFICATION Spec\n..."
+}}
+
+4. The MODULE name must remain exactly "zookeeper"
+5. Both fields are required - if config does not need changes, return the original
+6. Properly escape newlines as \n in the JSON strings
+7. Do NOT wrap the JSON in ```json or any other markers
+8. Start your specification directly with: ---- MODULE zookeeper ----
+9. End your specification with the closing ====
+10. Do not include explanations, just the fixed specification and configuration

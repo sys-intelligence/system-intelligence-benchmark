@@ -1,0 +1,129 @@
+You are an expert in formal verification and TLA+ specifications with deep expertise in distributed systems and consensus protocols.
+
+Convert the following ZooKeeper source code to a comprehensive TLA+ specification.
+
+System: ZooKeeper Fast Leader Election protocol
+Focus: {focus}
+
+Source Code from {file_path}:
+```java
+{source_code}
+```
+
+ZooKeeper leader election modeling requirements:
+
+MANDATORY CORE ACTIONS (must include):
+1. 【Election Notification】Notification exchange between servers
+   - Servers broadcast their votes (epoch, leader, zxid)
+   - Servers receive and compare votes
+   - Vote comparison based on: epoch > zxid > server_id
+2. 【State Transitions】Server state changes
+   - LOOKING: actively participating in election
+   - FOLLOWING: accepted another server as leader
+   - LEADING: won the election
+3. 【Vote Tracking】Track received votes and determine quorum
+   - Collect votes from other servers
+   - Check if candidate has quorum (majority)
+4. 【Leader Selection】Determine winner based on vote comparison
+   - Higher epoch wins
+   - If epoch equal, higher zxid wins
+   - If zxid equal, higher server_id wins
+
+CRITICAL SEMANTIC DISTINCTION:
+- **Fast Leader Election**: ZooKeeper's leader election algorithm
+  * Each server proposes itself initially
+  * Servers exchange votes and update based on comparison
+  * Quorum-based decision (majority required)
+  * Eventual convergence to single leader
+
+- **Vote Comparison Logic**:
+  * Compare (epoch, zxid, server_id) lexicographically
+  * Higher values win
+  * Ensures consistent leader selection
+
+MODELING REQUIREMENTS:
+- Model each server's state (LOOKING/FOLLOWING/LEADING)
+- Track current epoch and voted leader for each server
+- Model notification message passing between servers
+- Track vote counts for quorum calculation
+
+EXPLICITLY EXCLUDED (do not model):
+- TCP/IP network details
+- Message serialization format
+- QuorumCnxManager implementation
+- Thread synchronization details
+- Actual data replication (focus on election only)
+
+REQUIRED BEHAVIORAL SCOPE:
+- Model at least: Notification action for vote exchange
+- Show election process from LOOKING to convergence
+- Demonstrate quorum-based leader selection
+- Include epoch advancement scenarios
+
+CRITICAL OUTPUT REQUIREMENTS:
+1. The MODULE name must be exactly "zookeeper" (---- MODULE zookeeper ----)
+2. Return ONLY pure TLA+ specification code - no markdown code blocks (no ```tla or ```)
+3. Do not include any explanations, comments, or formatting markers
+4. Start your response directly with: ---- MODULE zookeeper ----
+5. End your response with the closing ====
+6. **DO NOT define invariants** (like LeaderUniqueness, etc.) - focus on modeling the system behavior
+7. **MANDATORY Spec Definition**: The Spec definition should include Init and Next, with fairness assumptions
+
+## Trace Validation Conventions
+
+To enable automated trace validation against real system traces, your specification MUST follow these naming conventions:
+
+### MANDATORY: Action/Event Names
+Your specification must use this EXACT action name to match trace events:
+
+**Election Actions** (must appear in traces):
+- `Notification` - Election vote exchange between servers (corresponds to trace "name" field)
+
+### MANDATORY: State Variables
+Your specification must include these state variables with EXACT names:
+
+**Core Election State** (per server):
+- `state` - Server state mapping: Server -> {LOOKING, FOLLOWING, LEADING}
+- `currentEpoch` - Current election epoch: Server -> Nat
+- `votedFor` - Current vote (proposed leader): Server -> Server
+- `lastZxid` - Last transaction ID: Server -> Nat (used for vote comparison)
+
+**Election Progress**:
+- `votes` - Received votes for each server: Server -> SUBSET Server (for quorum tracking)
+
+### Trace Event Structure
+Real system traces will have this format:
+```
+{"name": "Notification", "nid": 0, "timestamp": 0, "to": 1, "term": 1, "leader": 0, "zxid": "0x100000000"}
+```
+
+Where:
+- `name` - Action name (must be "Notification")
+- `nid` - Sending server ID
+- `to` - Receiving server ID
+- `term` - Election epoch
+- `leader` - Proposed leader in this vote
+- `zxid` - Transaction ID for comparison
+
+### Validation Matching Logic
+During trace validation, the system will:
+1. Match trace event "name" field to your TLA+ action "Notification"
+2. Check that state variables (state, currentEpoch, votedFor, lastZxid) exist
+3. Verify state transitions match trace sequences
+4. Allow flexibility in other aspects of your specification
+
+### Constants
+Define these as CONSTANTS in your spec:
+- `Server` - Set of server identifiers (e.g., {s0, s1, s2})
+- `LOOKING`, `FOLLOWING`, `LEADING` - State constants
+- `Quorum` - Majority subset of servers
+
+## Final Reminders
+
+- Use EXACT action name: Notification
+- Use EXACT state variable names: state, currentEpoch, votedFor, lastZxid, votes
+- DO NOT include invariants in the spec (they're added separately)
+- Focus on BEHAVIOR modeling, not on proving properties
+- Model the vote comparison logic correctly (epoch > zxid > server_id)
+
+Generate a complete, compilable TLA+ specification that captures the core Fast Leader Election semantics while respecting the trace validation naming conventions.
