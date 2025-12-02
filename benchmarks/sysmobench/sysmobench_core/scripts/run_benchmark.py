@@ -616,7 +616,31 @@ def run_single_benchmark(task_name: str, method_name: str, model_name: str,
                     "Currently supported: compilation_check, runtime_check, coverage, invariant_verification, trace_validation, composite"
                 )
         elif language == "PAT":
-            raise ValueError(f"PAT language support is not yet implemented")
+            # PAT (Process Analysis Toolkit) CSP# specifications
+            if metric == "compilation_check":
+                from tla_eval.evaluation.syntax.pat_compilation_check import PATCompilationCheckEvaluator
+                evaluator = PATCompilationCheckEvaluator(**filtered_params)
+                logger.info("Using PAT compilation evaluator")
+            elif metric == "runtime_check":
+                from tla_eval.evaluation.semantics.pat_runtime_check import PATRuntimeCheckEvaluator
+                evaluator = PATRuntimeCheckEvaluator(**filtered_params)
+                logger.info("Using PAT runtime evaluator")
+            elif metric == "invariant_verification":
+                from tla_eval.evaluation.semantics.pat_invariant_check import PATInvariantCheckEvaluator
+                evaluator = PATInvariantCheckEvaluator(**filtered_params)
+                logger.info("Using PAT invariant evaluator")
+            elif metric == "composite":
+                from tla_eval.evaluation.composite.composite_evaluation import create_composite_evaluator
+                evaluator = create_composite_evaluator(
+                    **filtered_params,
+                    spec_language=task.spec_language
+                )
+                logger.info("Using PAT composite evaluator")
+            else:
+                raise ValueError(
+                    f"Metric '{metric}' is not yet supported for PAT language. "
+                    "Currently supported: compilation_check, runtime_check, invariant_verification, composite"
+                )
         else:
             # TLA+ (default)
             # For trace_validation metrics, pass model_name so the evaluator uses the requested model

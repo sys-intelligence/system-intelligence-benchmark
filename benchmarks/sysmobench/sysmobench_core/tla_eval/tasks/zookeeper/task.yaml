@@ -1,0 +1,45 @@
+# zookeeper leader election task configuration
+name: "zookeeper"
+description: "ZooKeeper Zab leader election (3.9.1)"
+system_type: "distributed"
+language: "java"
+
+# Source code repository information
+repository:
+  url: "https://github.com/Lingzhi-Ouyang/Remix.git"
+  branch: "master"
+
+# Files to extract from the repository (multi-file default supported)
+default_source_file:
+  - path: "apache-zookeeper-3.9.1/zookeeper-server/src/main/java/org/apache/zookeeper/server/quorum/FastLeaderElection.java"
+    description: "Fast leader election implementation (notifications, vote comparison, rounds)"
+  - path: "apache-zookeeper-3.9.1/zookeeper-server/src/main/java/org/apache/zookeeper/server/quorum/Election.java"
+    description: "Leader election interface"
+  - path: "apache-zookeeper-3.9.1/zookeeper-server/src/main/java/org/apache/zookeeper/server/quorum/Vote.java"
+    description: "Vote structure used during election"
+  - path: "apache-zookeeper-3.9.1/zookeeper-server/src/main/java/org/apache/zookeeper/server/quorum/QuorumPeer.java"
+    description: "Quorum peer state machine driving election and role transitions"
+  - path: "apache-zookeeper-3.9.1/zookeeper-server/src/main/java/org/apache/zookeeper/server/quorum/QuorumPeerMain.java"
+    description: "ZooKeeper quorum peer entry point (starts election loop)"
+  - path: "apache-zookeeper-3.9.1/zookeeper-server/src/main/java/org/apache/zookeeper/server/quorum/QuorumPeerConfig.java"
+    description: "Configuration loader for quorum peers (peer IDs, addresses, election settings)"
+
+# TLA+ specification module name
+specModule: "zookeeper"
+
+# Traces folder location
+traces_folder: "data/sys_traces/zookeeper"
+trace_format: "zookeeper_based"
+trace_sample: 3
+
+# Metadata
+metadata:
+  original_project: "apache-zookeeper"
+  protocol_scope: "zab_leader_election_only"
+  version: "3.9.1"
+
+# Phase 3 specific configuration
+phase3:
+  trace_generation: true
+  patch_required: true
+  patch_file: "data/patches/remix_ndjson_output_complete.patch"

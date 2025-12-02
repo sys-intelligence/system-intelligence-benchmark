@@ -1,19 +1,20 @@
 (* Generic module that aims to handle trace specifications *)
-(* Just need to import it, and override some operators in order to have a trace spec that works *)
+(* Modified to support Subsequence Matching with Bounded Internal Steps *)
 ---- MODULE TraceSpec ----
 EXTENDS TLC, Sequences, SequencesExt, Naturals, FiniteSets, Bags, Json, IOUtils, TVOperators
 
 ASSUME TLCGet("config").mode = "bfs"
 
-VARIABLES l
+CONSTANT MaxInternalSteps
+
+VARIABLES l, internal_steps
 
 (* Operators to override *)
 Vars == Print(<<"Trace spec isn't valid, you should override 'Vars'.">>, <<>>)
 BaseInit == Print(<<"Trace spec isn't valid, you should override 'BaseInit'.">>, Nil)
+BaseNext == Print(<<"Trace spec isn't valid, you should override 'BaseNext'.">>, Nil)
 TraceNext == Print(<<"Trace spec isn't valid, you should override 'TraceNext'.">>, Nil)
 UpdateVariables(logline) == Print(<<"Trace spec isn't valid, you should override 'UpdateVariables'.">>, Nil)
-\*ASSUME Vars /= <<>>
-\*ASSUME TraceNext # Nil
 
 (* Read trace *)
 Trace ==
@@ -29,37 +30,35 @@ Config ==
     ELSE
         Print(<<"CONFIG_PATH environnement variable not found, use default config file.">>, ndJsonDeserialize("conf.ndjson"))
 
-(* Manage exceptions: assume that trace is free of any exception *)
+(* Manage exceptions *)
 ASSUME \A t \in ToSet(Trace) : "event" \notin DOMAIN t \/ ("event" \in DOMAIN t /\ t.event /= "__exception")
 
 logline ==
     Trace[l]
     
 IsEvent(e) ==
-    \* Equals FALSE if we get past the end of the log, causing model checking to stop.
     /\ l \in 1..Len(Trace)
     /\ IF "event" \in DOMAIN logline THEN logline.event = e ELSE TRUE
     /\ l' = l + 1
+    /\ internal_steps' = 0
     /\ UpdateVariables(logline)
     /\ l' >= TLCGet(0) => TLCSet(0, l')
 
 TraceInit ==
     /\ l = 1
+    /\ internal_steps = 0
     /\ BaseInit
     /\ TLCSet(0, 0)
 
-IsStuttering ==
-    /\ IsEvent("Stuttering")
-    /\ UNCHANGED Vars
+InternalStep ==
+    /\ l \in 1..Len(Trace)
+    /\ internal_steps < MaxInternalSteps
+    /\ l' = l
+    /\ internal_steps' = internal_steps + 1
+    /\ BaseNext
 
 TraceSpec ==
-    \* Because of  [A]_v <=> A \/ v=v'  , the following formula is logically
-     \* equivalent to the (canonical) Spec formula Init /\ [][Next]_vars.
-     \* However, TLC's breadth-first algorithm does not explore successor
-     \* states of a *seen* state.  Since one or more states may appear one or
-     \* more times in the the trace, the  UNCHANGED vars  combined with the
-     \*  TraceView  that includes  TLCGet("level")  is our workaround.
-    TraceInit /\ [][TraceNext \/ IsStuttering]_<<l, Vars>>
+    TraceInit /\ [][TraceNext \/ InternalStep]_<<l, internal_steps, Vars>>
 
 TraceAccepted ==
     LET d == TLCGet(0) IN
@@ -68,15 +67,9 @@ TraceAccepted ==
                     "TLA+ debugger breakpoint hit count " \o ToString(d+1)>>, FALSE)
 
 TraceView ==
-    \* A high-level state  s  can appear multiple times in a system trace.  Including the
-     \* current level in TLC's view ensures that TLC will not stop model checking when  s
-     \* appears the second time in the trace.  Put differently,  TraceView  causes TLC to
-     \* consider  s_i  and s_j  , where  i  and  j  are the positions of  s  in the trace,
-     \* to be different states.
-    <<Vars, TLCGet("level")>>
+    <<Vars, internal_steps, TLCGet("level")>>
 
 Termination ==
-    \* -Dtlc2.tool.queue.IStateQueue=StateDeque
     l = Len(Trace) + 1  => TLCSet("exit", TRUE)
 
 ====

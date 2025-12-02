@@ -132,7 +132,11 @@ class TraceBasedMethod(AgentBasedMethod):
         """Create initial generation prompt."""
         from ...tasks.loader import get_task_loader
         task_loader = get_task_loader()
-        prompt_template = task_loader.get_task_prompt(task.task_name, "trace_based") 
+        prompt_template = task_loader.get_task_prompt(
+            task.task_name,
+            "trace_based",
+            task.spec_language
+        ) 
 
         trace_format = task.extra_info.get("trace_format")
         if not trace_format:

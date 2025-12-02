@@ -405,34 +405,68 @@ class CoverageEvaluator(BaseEvaluator):
             # Step 1: Get or create specification files
             if spec_file_path and config_file_path:
                 # Mode 1: Use existing .tla and .cfg files (composite mode)
-                logger.info(f"✓ Composite mode: Using existing .tla and .cfg files from runtime check")
+                logger.info(f"Composite mode: Using existing .tla and .cfg files from runtime check")
                 logger.info(f"  Source spec: {spec_file_path}")
                 logger.info(f"  Source config: {config_file_path}")
-                
-                # Copy files to coverage output directory for consistency and debugging
-                spec_name = Path(spec_file_path).stem
-                final_spec_path = output_dir / f"{spec_name}.tla"
-                final_config_path = output_dir / f"{spec_name}.cfg"
-                
-                # Copy spec file
-                with open(spec_file_path, 'r', encoding='utf-8') as src:
-                    spec_content = src.read()
-                with open(final_spec_path, 'w', encoding='utf-8') as dst:
-                    dst.write(spec_content)
-                
-                # Copy config file
-                with open(config_file_path, 'r', encoding='utf-8') as src:
-                    config_content = src.read()
-                with open(final_config_path, 'w', encoding='utf-8') as dst:
-                    dst.write(config_content)
-                
-                logger.info(f"✓ Copied files to coverage output directory:")
-                logger.info(f"  Target spec: {final_spec_path}")
-                logger.info(f"  Target config: {final_config_path}")
-                
-                # Convert back to string paths for TLC execution
-                final_spec_path = str(final_spec_path)
-                final_config_path = str(final_config_path)
+
+                try:
+                    # Copy files to coverage output directory for consistency and debugging
+                    spec_name = Path(spec_file_path).stem
+                    final_spec_path = output_dir / f"{spec_name}.tla"
+                    final_config_path = output_dir / f"{spec_name}.cfg"
+
+                    # Copy spec file
+                    with open(spec_file_path, 'r', encoding='utf-8') as src:
+                        spec_content = src.read()
+                    with open(final_spec_path, 'w', encoding='utf-8') as dst:
+                        dst.write(spec_content)
+
+                    # Copy config file
+                    if not Path(config_file_path).exists():
+                        logger.warning(f"Config file does not exist: {config_file_path}")
+                        logger.info("Fallback: Generating new config file")
+                        final_config_path = self._generate_basic_config_file(
+                            spec_file_path=str(final_spec_path),
+                            config_dir=final_spec_path.parent,
+                            task_name=task_name,
+                            model_name=model_name
+                        )
+                    else:
+                        with open(config_file_path, 'r', encoding='utf-8') as src:
+                            config_content = src.read()
+                        with open(final_config_path, 'w', encoding='utf-8') as dst:
+                            dst.write(config_content)
+
+                    logger.info(f"Copied files to coverage output directory:")
+                    logger.info(f"  Target spec: {final_spec_path}")
+                    logger.info(f"  Target config: {final_config_path}")
+
+                    # Convert back to string paths for TLC execution
+                    final_spec_path = str(final_spec_path)
+                    final_config_path = str(final_config_path)
+
+                except Exception as e:
+                    logger.error(f"Failed to copy files: {e}")
+                    logger.info("Fallback to Mode 2: Generate config from spec file")
+                    final_spec_path = spec_file_path
+                    spec_dir = Path(final_spec_path).parent
+                    final_config_path = self._generate_basic_config_file(
+                        spec_file_path=final_spec_path,
+                        config_dir=spec_dir,
+                        task_name=task_name,
+                        model_name=model_name
+                    )
+                    # Keep a copy of the generated config in the coverage output directory for debugging
+                    try:
+                        if output_dir != spec_dir:
+                            backup_cfg_path = output_dir / Path(final_config_path).name
+                            with open(final_config_path, 'r', encoding='utf-8') as src:
+                                cfg_contents = src.read()
+                            with open(backup_cfg_path, 'w', encoding='utf-8') as dst:
+                                dst.write(cfg_contents)
+                            logger.info(f"Saved additional config copy to: {backup_cfg_path}")
+                    except Exception as copy_err:
+                        logger.warning(f"Failed to copy generated config to coverage output dir: {copy_err}")
                 
             elif spec_file_path:
                 # Mode 2: Use existing .tla file, generate .cfg file
@@ -440,7 +474,24 @@ class CoverageEvaluator(BaseEvaluator):
                 final_spec_path = spec_file_path
                 
                 # Generate basic config file
-                final_config_path = self._generate_basic_config_file(spec_file_path, output_dir, task_name, model_name)
+                spec_dir = Path(final_spec_path).parent
+                final_config_path = self._generate_basic_config_file(
+                    spec_file_path=final_spec_path,
+                    config_dir=spec_dir,
+                    task_name=task_name,
+                    model_name=model_name
+                )
+                # Keep a copy in coverage output directory for debugging
+                try:
+                    if output_dir != spec_dir:
+                        backup_cfg_path = output_dir / Path(final_config_path).name
+                        with open(final_config_path, 'r', encoding='utf-8') as src:
+                            cfg_contents = src.read()
+                        with open(backup_cfg_path, 'w', encoding='utf-8') as dst:
+                            dst.write(cfg_contents)
+                        logger.info(f"Saved additional config copy to: {backup_cfg_path}")
+                except Exception as copy_err:
+                    logger.warning(f"Failed to copy generated config to coverage output dir: {copy_err}")
                 
             else:
                 # Mode 3: Create both files from GenerationResult
@@ -464,7 +515,12 @@ class CoverageEvaluator(BaseEvaluator):
                     f.write(tla_content)
                 
                 # Generate basic config file
-                final_config_path = self._generate_basic_config_file(str(final_spec_path), output_dir, task_name, model_name)
+                final_config_path = self._generate_basic_config_file(
+                    spec_file_path=str(final_spec_path),
+                    config_dir=Path(final_spec_path).parent,
+                    task_name=task_name,
+                    model_name=model_name
+                )
             
             result.specification_file = str(final_spec_path)
             
@@ -508,19 +564,22 @@ class CoverageEvaluator(BaseEvaluator):
             
         return result
     
-    def _generate_basic_config_file(self, spec_file_path: str, output_dir: Path, task_name: str, model_name: str) -> str:
+    def _generate_basic_config_file(self, spec_file_path: str, config_dir: Path, task_name: str, model_name: str) -> str:
         """
         Generate a basic TLC configuration file for a TLA+ specification using ConfigGenerator.
         
         Args:
             spec_file_path: Path to the TLA+ specification file
-            output_dir: Output directory for the config file
+            config_dir: Directory to place the config file (should match spec directory for TLC)
             task_name: Task name for loading appropriate prompt
             model_name: Model name for config generation
             
         Returns:
             Path to the generated config file
         """
+        config_dir = Path(config_dir)
+        config_dir.mkdir(parents=True, exist_ok=True)
+        
         # Read the specification content
         with open(spec_file_path, 'r', encoding='utf-8') as f:
             tla_content = f.read()
@@ -539,7 +598,7 @@ class CoverageEvaluator(BaseEvaluator):
         
         # Save config file
         spec_name = Path(spec_file_path).stem
-        config_file_path = output_dir / f"{spec_name}.cfg"
+        config_file_path = config_dir / f"{spec_name}.cfg"
         
         with open(config_file_path, 'w', encoding='utf-8') as f:
             f.write(config_content)

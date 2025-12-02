@@ -1,0 +1,116 @@
+You are an expert in formal verification and TLA+ specifications with deep expertise in concurrent systems and lock-free data structures.
+
+Convert the following Asterinas OS RingBuffer source code to a comprehensive TLA+ specification.
+
+System: Asterinas OS lock-free SPSC ring buffer
+Focus: {focus}
+
+Source Code from {file_path}:
+```rust
+{source_code}
+```
+
+RingBuffer modeling requirements:
+
+MANDATORY CORE ACTIONS (must include all):
+1. 【Producer Operations】Push and push_slice operations with atomicity
+   - push(): single item enqueue (check full → write → advance tail)
+   - push_slice(): batch enqueue operation
+2. 【Consumer Operations】Pop and pop_slice operations
+   - pop(): single item dequeue (check empty → read → advance head)
+   - pop_slice(): batch dequeue operation
+3. 【Atomic Pointers】head and tail AtomicUsize operations
+   - Acquire ordering for reads
+   - Release ordering for writes
+4. 【Wrapping Behavior】Handle pointer wrapping at usize boundary
+   - Use modulo arithmetic for circular indexing
+5. 【Empty/Full Detection】
+   - Empty: head == tail
+   - Full: (tail - head) == capacity
+6. 【Lock-Free Progress】
+   - Producer can always make progress if buffer not full
+   - Consumer can always make progress if buffer not empty
+
+CRITICAL SEMANTIC DISTINCTION:
+- **SPSC Model**: Single Producer, Single Consumer
+  * No contention on same pointer (producer owns tail, consumer owns head)
+  * Lock-free progress guarantee
+
+- **Memory Ordering**:
+  * tail.load(Acquire) ensures consumer sees producer's writes
+  * head.load(Acquire) ensures producer sees consumer's reads
+  * Release ordering on pointer updates
+
+MODELING REQUIREMENTS:
+- Model head and tail as natural numbers (wrapping handled by modulo)
+- Track buffer state (empty/full/partial)
+- Model producer and consumer as separate processes
+- Ensure atomic visibility of pointer updates
+
+EXPLICITLY EXCLUDED (do not model):
+- Memory segment management (Segment<()>)
+- Generic type parameter T details
+- VmReader/VmWriter for byte operations
+- Frame allocation specifics
+- PhantomData implementation details
+
+REQUIRED BEHAVIORAL SCOPE:
+- Model at least: Create, Split, Push, Pop operations
+- Show interleaving between producer and consumer
+- Demonstrate wrapping behavior
+- Include empty/full boundary conditions
+
+CRITICAL OUTPUT REQUIREMENTS:
+1. The MODULE name must be exactly "ringbuffer" (---- MODULE ringbuffer ----)
+2. Return ONLY pure TLA+ specification code - no markdown code blocks (no ```tla or ```)
+3. Do not include any explanations, comments, or formatting markers
+4. Start your response directly with: ---- MODULE ringbuffer ----
+5. End your response with the closing ====
+6. **DO NOT define invariants** (like MutualExclusion, SafetyProperty, etc.) - focus on modeling the system behavior
+7. **MANDATORY Spec Definition**: The Spec definition should include Init and Next, with fairness assumptions
+
+## Trace Validation Conventions
+
+To enable automated trace validation against real system traces, your specification MUST follow these naming conventions:
+
+### MANDATORY: Action/Event Names
+Your specification must use these EXACT action names to match trace events:
+
+**System Lifecycle Actions** (must appear in traces):
+- `Create` - RingBuffer creation (initial state)
+- `Split` - Separation into producer and consumer
+
+**Producer Actions** (actor="producer"):
+- `Push` - Single item enqueue operation
+- `PushSlice` - Batch item enqueue operation
+
+**Consumer Actions** (actor="consumer"):
+- `Pop` - Single item dequeue operation
+- `PopSlice` - Batch item dequeue operation
+
+### MANDATORY: State Variables
+Your specification must include these state variables with EXACT names:
+
+**Core Buffer State**:
+- `head` - Consumer read position (natural number, tracks wrapping)
+- `tail` - Producer write position (natural number, tracks wrapping)
+- `capacity` - Fixed buffer size (CONSTANT, must be power of 2)
+
+**Operation Status** (for each action):
+- Track success/failure of operations (buffer full/empty conditions)
+
+### Validation Matching Logic
+During trace validation, the system will:
+1. Match trace event "action" field to your TLA+ action names
+2. Check that state variables (head, tail, capacity) exist
+3. Verify state transitions match trace sequences
+4. Allow flexibility in other aspects of your specification
+
+## Final Reminders
+
+- Use EXACT action names: Create, Split, Push, Pop, PushSlice, PopSlice
+- Use EXACT state variable names: head, tail, capacity
+- DO NOT include invariants in the spec (they're added separately)
+- Focus on BEHAVIOR modeling, not on proving properties
+
+Generate a complete, compilable TLA+ specification that captures the core lock-free ring buffer semantics while respecting the trace validation naming conventions.

@@ -80,7 +80,11 @@ class DirectCallMethod(TLAGenerationMethod):
         # Get task-specific prompt template (lazy import to avoid circular dependency)
         from ...tasks.loader import get_task_loader
         task_loader = get_task_loader()
-        prompt_template = task_loader.get_task_prompt(task.task_name, self.name)
+        prompt_template = task_loader.get_task_prompt(
+            task.task_name,
+            self.name,
+            task.spec_language
+        )
         
         # Prepare format variables
         format_vars = {
