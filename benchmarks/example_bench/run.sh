@@ -3,7 +3,7 @@
 set -e  # Exit immediately on error.
 
 if [ $# -lt 1 ] || [ $# -gt 2 ]; then
-    echo "Usage: $0 <model_location> [agent]"
+    echo "Usage: $0 <model_location> <agent>"
     echo "Example: $0 Qwen/Qwen2.5-7B-Instruct"
     echo "Note: agent parameter is accepted for consistency but not used by this benchmark"
     exit 1

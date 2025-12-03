@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script to run install.sh and run.sh for all benchmarks
-# Usage: ./run_all_local.sh <model> [agent]
+# Usage: ./run_all_local.sh <model> <agent>
 
 set -e  # Exit immediately on error.
 
@@ -10,7 +10,7 @@ AGENT="${2:-}"
 
 if [ -z "$MODEL" ]; then
     echo "Error: Model parameter is required"
-    echo "Usage: $0 <model> [agent]"
+    echo "Usage: $0 <model> <agent>"
     echo "Example: $0 gpt-4o"
     echo "Example: $0 gpt-4o agent_based"
     exit 1

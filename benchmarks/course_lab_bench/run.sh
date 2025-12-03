@@ -3,7 +3,7 @@
 set -e  # Exit immediately on error.
 
 if [ $# -lt 1 ] || [ $# -gt 2 ]; then
-    echo "Usage: $0 <model_name> [agent]"
+    echo "Usage: $0 <model_name> <agent>"
     echo "Example: $0 claude-sonnet-4-5-20250929"
     echo "Example: $0 gpt-4o claudecode"
     exit 1
