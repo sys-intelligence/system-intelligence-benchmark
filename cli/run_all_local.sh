@@ -1,15 +1,18 @@
 #!/bin/bash
 
 # Script to run install.sh and run.sh for all benchmarks
-# Usage: ./run_all_benchmarks.sh <model>
+# Usage: ./run_all_local.sh <model> [agent]
 
 set -e  # Exit immediately on error.
 
 MODEL="$1"
+AGENT="${2:-}"
 
 if [ -z "$MODEL" ]; then
     echo "Error: Model parameter is required"
-    echo "Usage: $0 <model>"
+    echo "Usage: $0 <model> [agent]"
+    echo "Example: $0 gpt-4o"
+    echo "Example: $0 gpt-4o agent_based"
     exit 1
 fi
 
@@ -21,7 +24,11 @@ if [ ! -d "$BENCHMARKS_DIR" ]; then
     exit 1
 fi
 
-echo "Running all benchmarks with model: $MODEL"
+if [ -n "$AGENT" ]; then
+    echo "Running all benchmarks with model: $MODEL and agent: $AGENT"
+else
+    echo "Running all benchmarks with model: $MODEL"
+fi
 echo ""
 
 # Iterate through each subdirectory in benchmarks
@@ -43,8 +50,13 @@ for bench_dir in "$BENCHMARKS_DIR"/*/; do
 
         # Run run.sh if it exists
         if [ -f "$bench_dir/run.sh" ]; then
-            echo "Running run.sh for $bench_name with model $MODEL..."
-            cd "$bench_dir" && bash run.sh "$MODEL"
+            if [ -n "$AGENT" ]; then
+                echo "Running run.sh for $bench_name with model $MODEL and agent $AGENT..."
+                cd "$bench_dir" && bash run.sh "$MODEL" "$AGENT"
+            else
+                echo "Running run.sh for $bench_name with model $MODEL..."
+                cd "$bench_dir" && bash run.sh "$MODEL"
+            fi
             cd - > /dev/null
         else
             echo "Warning: run.sh not found in $bench_dir"

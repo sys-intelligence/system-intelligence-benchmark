@@ -2,13 +2,15 @@
 
 set -e  # Exit immediately on error.
 
-if [ $# -ne 1 ]; then
-    echo "Usage: $0 <model_name>"
+if [ $# -lt 1 ] || [ $# -gt 2 ]; then
+    echo "Usage: $0 <model_name> [agent]"
     echo "Example: $0 claude-sonnet-4-5-20250929"
+    echo "Example: $0 gpt-4o claudecode"
     exit 1
 fi
 
 MODEL_NAME="$1"
+AGENT="${2:-claudecode}"
 NEW_MODEL_NAME="${MODEL_NAME//\//_}"
 
 # Note: set it to "openai" if you are using your own model server (vllm)
@@ -24,7 +26,7 @@ echo "==> Start to run CourseLabBench"
 # in your code to enable task selection.
 
 python src/main.py \
-    --agent "claudecode" \
+    --agent "$AGENT" \
     --model "$MODEL_NAME" \
     # --task "test"
     # --save_path "./outputs/course_lab_bench__${NEW_MODEL_NAME}__$(date +"%Y-%m-%d_%H-%M-%S")" \
