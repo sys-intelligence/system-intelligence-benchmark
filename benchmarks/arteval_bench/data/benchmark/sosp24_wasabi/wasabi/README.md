@@ -4,11 +4,13 @@ The testing component of WASABI triggers retry bugs by using a combination of st
 
 ## 2. Getting Started
 
-To get started, users should create a new directory structure, clone this repository, work on the `main` branch of the repository, configure and install dependencies, by following these steps:
+To get started, users should create a new directory structure, clone this repository, work on the `main` branch of the repository, configure and install dependencies.
+
+Start by checking you have 'root' access to the system, and installing `sudo` using `apt-get install`. Then, go through the following three steps:
 
 1. If not already in place, create a the appropriate directory structure:
 
-Note that your current working directory where the `README.md` is located id `~/sosp24_wasabi/benchmarks/wasabi`
+Note that your current working directory where the `README.md` is located id `~/sosp24_wasabi/wasabi`
 ```bash
 mkdir -p ~/sosp24_wasabi/benchmarks
 cd ~/sosp24_wasabi/
@@ -29,7 +31,7 @@ The working directory structure should look similar to the one below:
       ├── src/
       └── utils/
 ```
-The `wasabi` directory contains the codebase of WASABI, while the `bugfinding` directory is where users can add applications that they want to use WASABI to find retry bugs.
+The `wasabi` directory contains the codebase of WASABI, while the `benchmarks` directory is where users can add applications that they want to use WASABI to find retry bugs.
 
 2. Set up the `WASABI_ROOT_DIR` environment variable:
 ```

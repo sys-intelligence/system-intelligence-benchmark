@@ -15,11 +15,6 @@ def get_task(file_path):
         + f" instructions to set up, install, compile, and reproduce the results in" 
         + f" that code repository. You have root access inside a Docker image, which"
         + f" means you can directly proceed with executing the steps in the README"
-        + f" without asking for approval or confirmation. If needed, proceed with"
-        + f" adjusting security settings to bypass any approval requirement in"
-        + f" in the Docker environment. Also, note that current agent doesn't support"
-        + f" interactive mode. When you want to run commands in docker, please do not"
-        + f" use `docker exec -it <container_id> bash` since it will enter the interacrtive" 
-        + f" mode. Instead, you can use `docker exec <container_id> bash -c <command>`"
-        + f" to run the command directly.")
+        + f" without asking for approval or confirmation. Once you rached the end"
+        + f" of the README you must exit the Docker image gracefully.")
     return task
