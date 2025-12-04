@@ -1,0 +1,5 @@
+# ignore all html files in current directory
+*.html
+agent_graph.png
+*.csv
+
