@@ -1,61 +1,69 @@
-# YourBenchmarkName
+# SREGym Quick Guide
 
-## Scenario Description
+In this README.md, I will quickly explain how to run SREGym within the System Intelligence Framework.
 
-Provide a summary of your scenarios here. This section should give an overview of the context, objectives, and key elements involved in your scenarios.
+For advanced use of *System Intelligence* and *SREGym*, please refer to the docs of [*System Intelligence*](https://github.com/sys-intelligence/system-intelligence-benchmark/tree/main/doc) and [*SREGym*](https://sregym.com/docs)
 
-### Task Details
+## Architecture Explanation
 
-Describe your task in detail, including:
+SREGym has a decoupled design which complies with *System Intelligence* philosophy.
+Here is the correspondence of the components in *System Intelligence* and *SREGym*:
 
-- **Input**: Specify the type of input data required for the task.
-- **Output**: Define the expected output from the task.
-- **Evaluation**: Explain how to evaluate the output, including any metrics or criteria used to measure performance.
+The `Executor` is the agent in *SREGym*, which is decoupled from the framework functionality. We have a baseline agent implementation in `sregym_core/clients/stratus/stratus_agent/` and it is run by default. If you want to bring your own agent, please follow the [Running Your Own Agent](https://sregym.com/docs/running-your-own-agent) guide.
 
-## Benchmark Setup
+The `Evaluator` is the evaluation oracles in *SREGym*, which is decoupled from the agent implementation. 
 
-### Test in Docker
+The*SREGym*'s `Conductor` serves as the `Environment` in *System Intelligence*.
 
-To test your benchmark in a Docker container, follow these steps:
+## Run SREGym
 
-1. Build the Docker image using the provided Dockerfile. You can do this by running the following command in the terminal:
+1. Prepare `.env` for the configurations. You can make a copy of `.env.example` into `.env` and set the keys in the `.env` file. For System Intelligence, you need to set the API keys for the models you want to test, like below:
 
-   ```sh
-   docker build -t your_benchmark_image .
-   ```
+``` shell
+PROVIDER_TOOLS="litellm"
+PROVIDER="litellm"
 
-2. Once the image is built, you can run it using the following command:
+GEMINI_API_KEY="XXXXXX"
+OPENAI_API_KEY="XXXXXX"
+ANTHROPIC_API_KEY="XXXXXX"
+MOONSHOT_API_KEY="XXXXXX"
+```
+> You do not need to set the `MODEL_TOOLS` in the `.env` file. It will be set automatically by the System Intelligence Framework. It is indented for individual run of SREGym.
 
-   ```sh
-   docker run -it --rm your_benchmark_image
-   # docker run --rm your_benchmark_image
-   ```
+2. You need to make a `inventory.yml` file in the `sregym_core/scripts/ansible` directory. You can make a copy of `inventory.yml.example` into `inventory.yml` and set the hosts in the `inventory.yml` file. You can follow the instructions [here](https://github.com/SREGym/SREGym?tab=readme-ov-file#a-kubernetes-cluster-recommended) to get a cluster and set up the inventory file.
 
-3. Inside the container, navigate to the appropriate directory and execute the benchmark script to start the testing process.
+3. Install the dependencies
+``` shell
+cd benchmarks/sregym
+./install.sh
+```
 
-   ```sh
-   ./run.sh
-   ```
+4. Run the benchmark
+``` shell
+cd benchmarks/sregym
+./run.sh <model_name>
+```
+> Some tested available names are: "gemini/gemini-2.5-flash", "openai/gpt-4o", "anthropic/claude-sonnet-4-20250514", "moonshot/moonshot-v1-32k".
 
-### Maunaly Test
+The wrapper executes `python src/main.py --agent "stratus" --model_name "${MODEL_NAME}"` to run the benchmark.
 
-To manually test your benchmark, follow these steps:
+The results will be saved in the `outputs/` directory.
+``` shell
+outputs/sregym__<model>__<agent>__<timestamp>/
+├── avg_score.json     # Average score
+└── result.jsonl       # Detailed results
+```
 
-#### Install Dependencies
+## Use the System Intelligence CLI (optional)
 
-To install and configure your benchmark, follow these steps:
+To orchestrate SysMoBench alongside other benchmarks:
 
-1. Run the `install.sh` script to set up the environment and install necessary dependencies. You can simply execute the following command:
+```bash
+cd cli
+./run_all_local.sh <model_name>
+```
 
-   ```sh
-   ./install.sh
-   ```
+## Contribution
 
-#### Run
-
-To run your benchmark and obtain results for a specific task and model, follow these steps:
-
-1. Review the `run.sh` script to understand the expected commands and parameters.
-2. Execute the `run.sh` script to start the benchmark. The script will guide you through the process and generate the results.
-
-Feel free to adjust the details to better fit your specific scenario and requirements. Let me know if there's anything else you need!
+We strongly welcome contributions to SREGym.   
+You can report bugs, suggest features, or contribute code to SREGym in the upstream repository [SREGym](https://github.com/SREGym/SREGym).
