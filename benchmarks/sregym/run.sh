@@ -17,7 +17,7 @@ MODEL_NAME="$1"
 # export OPENAI_BASE_URL="http://localhost:2327/v1"
 # export OPENAI_API_KEY="EMPTY"
 
-source benchmarks/sregym/sregym_core/.venv/bin/activate
+source sregym_core/.venv/bin/activate
 
 echo "==> Start to run SREGym"
 # Note that if you benchmark has multiple tasks, you need to add --task <task> 

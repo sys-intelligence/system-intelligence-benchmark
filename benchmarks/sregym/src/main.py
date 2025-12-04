@@ -16,11 +16,6 @@ except ImportError:
     )
     from sregym_core.main import main as sregym_main
 
-import logging
-
-logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
-logger = logging.getLogger(__name__)
-
 
 def main(input_file: str, output_dir: str, model_name: str, agent_name: str):
     # Set the environment variable for the model so the agent can find it
@@ -38,7 +33,7 @@ def main(input_file: str, output_dir: str, model_name: str, agent_name: str):
         for line in f:
             item = json.loads(line)
             task_id, task_name = item["id"], item["task_name"]
-            logger.info(f"\n{'='*70}\nTask: {task_id} ({task_name})\n{'='*70}")
+            print(f"\n{'='*70}\nTask: {task_id} ({task_name})\n{'='*70}")
 
             try:
                 sregym_args = argparse.Namespace(
@@ -47,23 +42,62 @@ def main(input_file: str, output_dir: str, model_name: str, agent_name: str):
                     problem=task_name,
                     use_external_harness=False,
                 )
+                print(f"SREGym Main Arguments: \33[94m{sregym_args}\33[0m")
 
                 result = sregym_main(sregym_args)
+
+                if type(result) != list or len(result) != 1:
+                    raise ValueError(f"Result is not a valid list: {result}")
+
+                first_agent_result = result[0].get(agent_name, None)
+
+                if first_agent_result is None:
+                    raise ValueError(
+                        f"Agent result for {agent_name} not found: {result}"
+                    )
+
+                if type(first_agent_result) != list or len(first_agent_result) != 1:
+                    raise ValueError(
+                        f"Agent result for {agent_name} is not a valid list: {first_agent_result}"
+                    )
+
+                first_problem_result = first_agent_result[0]
+
+                print(f"SREGym Problem Result: \33[94m{first_problem_result}\33[0m")
+
+                problem_id_ = first_problem_result.get("problem_id", None)
+                if problem_id_ is None or problem_id_ != task_name:
+                    raise ValueError(
+                        f"Problem ID mismatch: {problem_id_} != {task_name}"
+                    )
+                diagnosis_result = first_problem_result.get("Diagnosis.success", None)
+                mitigation_result = first_problem_result.get("Mitigation.success", None)
+                diagnosis_time = first_problem_result.get("TTL", None)
+                mitigation_time = first_problem_result.get("TTM", None)
 
                 output = {
                     "id": task_id,
                     "task_name": task_name,
                     "model_name": model_name,
-                    "success": result.success,
-                    "final_score": 1.0 if result.success else 0.0,
-                    "total_time": result.total_time,
                 }
-                if result.error:
+
+                if diagnosis_result is not None:
+                    output["diagnosis_success"] = diagnosis_result
+                    output["diagnosis_time"] = diagnosis_time
+
+                if mitigation_result is not None:
+                    output["mitigation_success"] = mitigation_result
+                    output["mitigation_time"] = mitigation_time
+
+                if hasattr(result, "error") and result.error:
                     output["error"] = result.error
 
-                scores.append(1.0 if result.success else 0.0)
+                all_success = output.get("diagnosis_success", True) and output.get(
+                    "mitigation_success", True
+                )
+                scores.append(1.0 if all_success else 0.0)
             except Exception as e:
-                logger.error(f"Error: {e}")
+                print(f"\33[91mError: {e}\33[0m")
                 output = {"id": task_id, "error": str(e), "final_score": 0.0}
                 scores.append(0.0)
 
@@ -78,7 +112,7 @@ def main(input_file: str, output_dir: str, model_name: str, agent_name: str):
     with open(os.path.join(output_dir, "avg_score.json"), "w") as f:
         json.dump(avg_score, f, indent=2)
 
-    logger.info(f"\n{'='*70}\nFinal Score: {avg_score['final_score']:.3f}\n{'='*70}")
+    print(f"\n{'='*70}\nFinal Score: {avg_score['final_score']:.3f}\n{'='*70}")
 
 
 if __name__ == "__main__":

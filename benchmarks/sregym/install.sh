@@ -2,6 +2,13 @@
 
 set -e
 
+# Clone submodule to SREGym-applications if no file in sregym_core/SREGym-applications
+if [ ! -f "sregym_core/SREGym-applications/README.md" ]; then
+    echo "==> Cloning SREGym-applications..."
+    git clone https://github.com/SREGym/SREGym-applications.git sregym_core/SREGym-applications --recurse-submodules
+else
+    echo "==> SREGym-applications already exists. Skipping clone."
+fi
 
 # Homebrew installation
 if ! command -v brew >/dev/null 2>&1; then
@@ -97,8 +104,8 @@ if [ -f "scripts/ansible/inventory.yml" ]; then
     # Check if cluster is already configured
     CLUSTER_EXISTS=false
     if kubectl get nodes >/dev/null 2>&1; then
-        READY_NODES=$(kubectl get nodes --no-headers 2>/dev/null | grep -c " Ready " || echo "0")
-        TOTAL_NODES=$(kubectl get nodes --no-headers 2>/dev/null | wc -l || echo "0")
+        READY_NODES=$(kubectl get nodes --no-headers 2>/dev/null | grep -c " Ready " || true)
+        TOTAL_NODES=$(kubectl get nodes --no-headers 2>/dev/null | wc -l || true)
         
         if [ "$TOTAL_NODES" -gt 0 ] && [ "$READY_NODES" -eq "$TOTAL_NODES" ]; then
             CLUSTER_EXISTS=true
@@ -127,8 +134,8 @@ if [ -f "scripts/ansible/inventory.yml" ]; then
                 echo ""
                 
                 # Check if nodes are in Ready state
-                READY_NODES=$(kubectl get nodes --no-headers 2>/dev/null | grep -c " Ready " || echo "0")
-                TOTAL_NODES=$(kubectl get nodes --no-headers 2>/dev/null | wc -l || echo "0")
+                READY_NODES=$(kubectl get nodes --no-headers 2>/dev/null | grep -c " Ready " || true)
+                TOTAL_NODES=$(kubectl get nodes --no-headers 2>/dev/null | wc -l || true)
                 
                 if [ "$READY_NODES" -gt 0 ] && [ "$READY_NODES" -eq "$TOTAL_NODES" ]; then
                     echo "==> ✓ All nodes are in Ready state. Cluster configuration is correct."
@@ -158,7 +165,5 @@ fi
 cd -
 
 source sregym_core/.venv/bin/activate
-
 # uv pip install -r requirements.txt
-
 deactivate
