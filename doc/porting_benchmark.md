@@ -43,7 +43,7 @@ git subtree add --prefix benchmarks/your_benchmark/benchmark_core \
 benchmarks/your_benchmark/
 ├── benchmark_core/         # Git Subtree (DO NOT manually edit)
 ├── src/                    # Bridge layer
-│   ├── main.py             # The entry point of the benchmark, including the bencmark driving logic
+│   ├── main.py             # The wrapper of the entry point of your benchmark, including the benchmark driving logic
 │   ├── executor.py      
 │   └── evaluator.py            
 ├── data/benchmark/
