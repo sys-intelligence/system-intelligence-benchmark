@@ -43,7 +43,7 @@ git subtree add --prefix benchmarks/your_benchmark/benchmark_core \
 benchmarks/your_benchmark/
 ├── benchmark_core/         # Git Subtree (DO NOT manually edit)
 ├── src/                    # Bridge layer
-│   ├── main.py             
+│   ├── main.py             # The entry point of the benchmark, including the bencmark driving logic
 │   ├── executor.py      
 │   └── evaluator.py            
 ├── data/benchmark/
@@ -93,7 +93,7 @@ from tla_eval.config import get_configured_model
 If the upstream config system cannot be replaced, map the framework's config to upstream's format at runtime. Implementation depends on your specific benchmark.
 
 
-### 4.2 Separate Executor and Evaluator
+### 4.2 Separate Executor and Evaluator (Recommended)
 
 Any benchmark can be abstracted into two sequential modules: **Executor** (generation/interaction) and **Evaluator** (scoring). Separating them improves code clarity and extensibility, and enables integrating more sophisticated executors without modifying evaluation logic.
 
@@ -105,6 +105,7 @@ Any benchmark can be abstracted into two sequential modules: **Executor** (gener
 - Example: SysMoBench runs TLC checks and verification
 - Returns standardized scores and diagnostic information
 
+> If you have already had decoupling design in your benchmark, you can skip this step, and clarify the substitution of the framework's agent/environment/evaluator in the README.md. You can simply add wrapper here to expose model/agent as parameters in the `main.py` file.
 
 ### 4.3 Define Task Format
 
@@ -171,7 +172,20 @@ benchmark_core/.venv/
 - **README**: Document upstream source, version, and attribution
 - **Root integration**: Update `cli/run_all_local.sh`, `README.md`
 
+### 5.5 Test the integration
 
+Make sure the benchmark can be run locally at least in the two ways below:
+
+```bash
+./run.sh <model_name>
+```
+
+```bash
+cd cli
+./run_all_local.sh <model_name>
+```
+
+> Be careful for the path configuration when porting the benchmark.
 ## Sync with Upstream
 
 **Update:**
