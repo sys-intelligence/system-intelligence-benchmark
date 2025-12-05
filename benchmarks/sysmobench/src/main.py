@@ -58,7 +58,7 @@ def main(input_file, output_dir, model_name, agent_name, max_iterations):
                 task = task_loader.load_task(task_name)
                 exec_result = executor.run(task)
                 evaluation_outcome = exec_result.evaluation
-                final_score = 1.0 if exec_result.success else SysMoEvaluator.final_score(evaluation_outcome)
+                final_score = evaluator.compute_score(evaluation_outcome)
 
                 output = {
                     'id': task_id,
@@ -67,7 +67,8 @@ def main(input_file, output_dir, model_name, agent_name, max_iterations):
                     'success': exec_result.success,
                     'final_score': final_score,
                     'total_time': exec_result.total_time,
-                    'iteration': exec_result.iteration or max_iterations
+                    'iteration': exec_result.iteration or max_iterations,
+                    'phase_scores': getattr(evaluation_outcome, "phase_scores", {}) if evaluation_outcome else {},
                 }
                 if exec_result.error:
                     output['error'] = exec_result.error

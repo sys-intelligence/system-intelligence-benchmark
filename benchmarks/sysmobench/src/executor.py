@@ -71,9 +71,19 @@ class SysMoExecutor:
                     total_time=time.time() - start,
                     evaluation=eval_outcome,
                     generation=current_gen,
-                )
+            )
 
-            if iteration < self.max_iterations and hasattr(self.method, "_generate_correction"):
+            # Do not attempt correction if only invariant/trace phases failed; those are not user-fixable here
+            invariant_or_trace_only = (
+                eval_outcome.phase_scores.get("syntax") == 1.0
+                and eval_outcome.phase_scores.get("runtime") == 1.0
+                and (
+                    eval_outcome.phase_scores.get("invariant", 1.0) < 1.0
+                    or eval_outcome.phase_scores.get("trace", 1.0) < 1.0
+                )
+            )
+
+            if iteration < self.max_iterations and hasattr(self.method, "_generate_correction") and not invariant_or_trace_only:
                 errors = eval_outcome.errors
                 logger.info("  Generating correction... (%s errors)", len(errors))
                 model_obj = get_configured_model(self.model_name)
@@ -85,6 +95,7 @@ class SysMoExecutor:
                     continue
 
             logger.info("  No further corrections or reached max iterations.")
+            break
 
         return ExecutorResult(
             success=False,
