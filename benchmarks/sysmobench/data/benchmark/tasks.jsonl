@@ -7,3 +7,5 @@
 {"id": "sysmobench_007", "task_name": "dqueue"}
 {"id": "sysmobench_008", "task_name": "locksvc"}
 {"id": "sysmobench_009", "task_name": "raftkvs"}
+{"id": "sysmobench_010", "task_name": "zookeeper"}
+{"id": "sysmobench_011", "task_name": "ringbuffer"}

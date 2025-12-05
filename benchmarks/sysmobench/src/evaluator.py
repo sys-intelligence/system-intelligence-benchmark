@@ -227,6 +227,7 @@ class SysMoEvaluator:
                     spec_dir=str(tmpdir_path),
                     traces_dir="data/sys_traces",
                     with_exist_traces=20,  # Prefer existing traces to avoid regeneration when available
+                    model_name="claude",
                 )
                 trace_result = trace_eval.evaluate(
                     task_name=task.task_name,
