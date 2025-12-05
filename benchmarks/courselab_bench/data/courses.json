@@ -1,0 +1,24 @@
+{
+  "courses": [
+    {
+      "course_id": "test_course",
+      "name": "Test Course",
+      "institution": "Benchmark University",
+      "year": 2024
+    },
+    {
+      "course_id": "mit_6_5840_2024",
+      "name": "6.5840: Distributed Systems",
+      "institution": "MIT",
+      "year": 2024,
+      "semester": "Spring",
+      "topics": [
+        "distributed systems",
+        "mapreduce",
+        "fault tolerance",
+        "concurrency"
+      ],
+      "course_url": "http://nil.csail.mit.edu/6.5840/2024/"
+    }
+  ]
+}
