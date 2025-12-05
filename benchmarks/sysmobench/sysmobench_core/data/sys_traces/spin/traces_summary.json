@@ -1,0 +1,128 @@
+{
+  "total_traces": 20,
+  "real_traces": 0,
+  "synthetic_traces": 20,
+  "generation_timestamp": "2025-09-08 21:48:49",
+  "traces": [
+    {
+      "id": 1,
+      "file": "trace_01.jsonl",
+      "event_count": 12,
+      "scenario": "Try Lock Mixed Operations"
+    },
+    {
+      "id": 2,
+      "file": "trace_02.jsonl",
+      "event_count": 12,
+      "scenario": "Multi Lock Contention"
+    },
+    {
+      "id": 3,
+      "file": "trace_03.jsonl",
+      "event_count": 9,
+      "scenario": "Complex Lock Patterns"
+    },
+    {
+      "id": 4,
+      "file": "trace_04.jsonl",
+      "event_count": 18,
+      "scenario": "Basic Lock Operations"
+    },
+    {
+      "id": 5,
+      "file": "trace_05.jsonl",
+      "event_count": 12,
+      "scenario": "Try Lock Mixed Operations"
+    },
+    {
+      "id": 6,
+      "file": "trace_06.jsonl",
+      "event_count": 12,
+      "scenario": "Multi Lock Contention"
+    },
+    {
+      "id": 7,
+      "file": "trace_07.jsonl",
+      "event_count": 9,
+      "scenario": "Complex Lock Patterns"
+    },
+    {
+      "id": 8,
+      "file": "trace_08.jsonl",
+      "event_count": 18,
+      "scenario": "Basic Lock Operations"
+    },
+    {
+      "id": 9,
+      "file": "trace_09.jsonl",
+      "event_count": 12,
+      "scenario": "Try Lock Mixed Operations"
+    },
+    {
+      "id": 10,
+      "file": "trace_10.jsonl",
+      "event_count": 12,
+      "scenario": "Multi Lock Contention"
+    },
+    {
+      "id": 11,
+      "file": "trace_11.jsonl",
+      "event_count": 9,
+      "scenario": "Complex Lock Patterns"
+    },
+    {
+      "id": 12,
+      "file": "trace_12.jsonl",
+      "event_count": 18,
+      "scenario": "Basic Lock Operations"
+    },
+    {
+      "id": 13,
+      "file": "trace_13.jsonl",
+      "event_count": 12,
+      "scenario": "Try Lock Mixed Operations"
+    },
+    {
+      "id": 14,
+      "file": "trace_14.jsonl",
+      "event_count": 12,
+      "scenario": "Multi Lock Contention"
+    },
+    {
+      "id": 15,
+      "file": "trace_15.jsonl",
+      "event_count": 9,
+      "scenario": "Complex Lock Patterns"
+    },
+    {
+      "id": 16,
+      "file": "trace_16.jsonl",
+      "event_count": 18,
+      "scenario": "Basic Lock Operations"
+    },
+    {
+      "id": 17,
+      "file": "trace_17.jsonl",
+      "event_count": 12,
+      "scenario": "Try Lock Mixed Operations"
+    },
+    {
+      "id": 18,
+      "file": "trace_18.jsonl",
+      "event_count": 12,
+      "scenario": "Multi Lock Contention"
+    },
+    {
+      "id": 19,
+      "file": "trace_19.jsonl",
+      "event_count": 9,
+      "scenario": "Complex Lock Patterns"
+    },
+    {
+      "id": 20,
+      "file": "trace_20.jsonl",
+      "event_count": 18,
+      "scenario": "Basic Lock Operations"
+    }
+  ]
+}

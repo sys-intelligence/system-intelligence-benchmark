@@ -1,0 +1,32 @@
+# TRACE_18: SpinLock Single Lock, 3-Thread Contention
+# Generated from test_spin_trace, Timestamp: 2025-12-01T00:19:18.443491
+{"seq": 0, "thread": 0, "lock": 0, "state": "locked", "action": "AcquireSuccess", "actor": 0}
+{"seq": 2, "thread": 0, "lock": 0, "state": "unlocked", "action": "Release", "actor": 0}
+{"seq": 4, "thread": 1, "lock": 0, "state": "unlocked", "action": "TryAcquireBlocking", "actor": 1}
+{"seq": 6, "thread": 1, "lock": 0, "state": "locked", "action": "AcquireSuccess", "actor": 1}
+{"seq": 8, "thread": 2, "lock": 0, "state": "locked", "action": "TryAcquireBlocking", "actor": 2}
+{"seq": 10, "thread": 2, "lock": 0, "state": "locked", "action": "StopSpinning", "actor": 2}
+{"seq": 12, "thread": 1, "lock": 0, "state": "unlocked", "action": "Release", "actor": 1}
+{"seq": 14, "thread": 2, "lock": 0, "state": "locked", "action": "AcquireSuccess", "actor": 2}
+{"seq": 16, "thread": 2, "lock": 0, "state": "unlocked", "action": "Release", "actor": 2}
+{"seq": 18, "thread": 1, "lock": 0, "state": "locked", "action": "AcquireSuccess", "actor": 1}
+{"seq": 20, "thread": 1, "lock": 0, "state": "unlocked", "action": "Release", "actor": 1}
+{"seq": 22, "thread": 1, "lock": 0, "state": "locked", "action": "AcquireSuccess", "actor": 1}
+{"seq": 24, "thread": 1, "lock": 0, "state": "unlocked", "action": "Release", "actor": 1}
+{"seq": 26, "thread": 2, "lock": 0, "state": "unlocked", "action": "TryAcquireBlocking", "actor": 2}
+{"seq": 28, "thread": 2, "lock": 0, "state": "locked", "action": "AcquireSuccess", "actor": 2}
+{"seq": 30, "thread": 2, "lock": 0, "state": "unlocked", "action": "Release", "actor": 2}
+{"seq": 32, "thread": 1, "lock": 0, "state": "locked", "action": "AcquireSuccess", "actor": 1}
+{"seq": 34, "thread": 1, "lock": 0, "state": "unlocked", "action": "Release", "actor": 1}
+{"seq": 36, "thread": 1, "lock": 0, "state": "locked", "action": "AcquireSuccess", "actor": 1}
+{"seq": 38, "thread": 1, "lock": 0, "state": "unlocked", "action": "Release", "actor": 1}
+{"seq": 40, "thread": 1, "lock": 0, "state": "locked", "action": "AcquireSuccess", "actor": 1}
+{"seq": 42, "thread": 1, "lock": 0, "state": "unlocked", "action": "Release", "actor": 1}
+{"seq": 44, "thread": 1, "lock": 0, "state": "locked", "action": "AcquireSuccess", "actor": 1}
+{"seq": 46, "thread": 1, "lock": 0, "state": "unlocked", "action": "Release", "actor": 1}
+{"seq": 48, "thread": 2, "lock": 0, "state": "unlocked", "action": "TryAcquireBlocking", "actor": 2}
+{"seq": 50, "thread": 2, "lock": 0, "state": "locked", "action": "AcquireSuccess", "actor": 2}
+{"seq": 52, "thread": 2, "lock": 0, "state": "unlocked", "action": "Release", "actor": 2}
+{"seq": 54, "thread": 0, "lock": 0, "state": "unlocked", "action": "TryAcquireBlocking", "actor": 0}
+{"seq": 56, "thread": 0, "lock": 0, "state": "locked", "action": "AcquireSuccess", "actor": 0}
+{"seq": 58, "thread": 0, "lock": 0, "state": "unlocked", "action": "Release", "actor": 0}
