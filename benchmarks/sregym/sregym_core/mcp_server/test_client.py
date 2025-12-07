@@ -8,9 +8,10 @@ from typing import Optional
 
 from anthropic import Anthropic
 from dotenv import load_dotenv
-from init_backend import get_llm_backend_for_tools
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+
+from llm_backend.init_backend import get_llm_backend_for_tools
 
 load_dotenv()  # load environment variables from .env
 

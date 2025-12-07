@@ -4,8 +4,8 @@ import subprocess
 import pytest
 import yaml
 
-from clients.stratus.llm_backend.init_backend import get_llm_backend_for_tools
 from clients.test_k8s_agent.k8s_agent import XAgent
+from llm_backend.init_backend import get_llm_backend_for_tools
 
 
 def get_agent():

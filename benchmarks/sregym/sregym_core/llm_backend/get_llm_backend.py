@@ -10,14 +10,12 @@ import litellm
 import openai
 from dotenv import load_dotenv
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_ibm import ChatWatsonx
 from langchain_litellm import ChatLiteLLM
 from langchain_openai import ChatOpenAI
-from litellm.utils import trim_messages
 from requests.exceptions import HTTPError
 
-from clients.stratus.llm_backend.trim_util import trim_messages_conservative
+from llm_backend.trim_util import trim_messages_conservative
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -34,30 +32,26 @@ class LiteLLMBackend:
         self,
         provider: str,
         model_name: str,
-        url: str,
         api_key: str,
-        api_version: str,
-        seed: int,
-        top_p: float,
-        temperature: float,
-        reasoning_effort: str,
-        thinking_tools: str,
-        thinking_budget_tools: int,
-        max_tokens: int,
+        url: Optional[str] = None,
+        top_p: Optional[float] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        seed: Optional[int] = None,
+        wx_project_id: Optional[str] = None,
+        azure_version: Optional[str] = None,
         extra_headers: Optional[Dict[str, str]] = None,
     ):
         self.provider = provider
         self.model_name = model_name
         self.url = url
         self.api_key = api_key
-        self.api_version = api_version
         self.temperature = temperature
         self.seed = seed
         self.top_p = top_p
-        self.reasoning_effort = reasoning_effort
-        self.thinking_tools = thinking_tools
-        self.thinking_budget_tools = thinking_budget_tools
         self.max_tokens = max_tokens
+        self.wx_project_id = wx_project_id
+        self.azure_version = azure_version
         self.extra_headers = extra_headers
         litellm.drop_params = True
         litellm.modify_params = True  # for Anthropic
@@ -112,35 +106,41 @@ class LiteLLMBackend:
                 model_config["top_p"] = self.top_p
             llm = ChatOpenAI(**model_config)
         elif self.provider == "watsonx":
-            llm = ChatWatsonx(
-                model_id=self.model_name,
-                url=self.url,
-                project_id=os.environ["WX_PROJECT_ID"],
-                apikey=self.api_key,
-                temperature=self.temperature,
-            )
-        # FIXME: openai client is broken, but we can just use LiteLLM to use openai
-        elif self.provider == "openai":
-            llm = ChatLiteLLM(
-                model=self.model_name,
-                temperature=self.temperature,
-                top_p=self.top_p,
-                api_key=self.api_key,
-            )
+
+            model_config = {
+                "model_id": self.model_name,
+            }
+
+            if self.wx_project_id is not None:
+                model_config["project_id"] = self.wx_project_id
+            if self.temperature is not None:
+                model_config["temperature"] = self.temperature
+            if self.top_p is not None:
+                model_config["top_p"] = self.top_p
+            if self.api_key is not None:
+                model_config["apikey"] = self.api_key
+            if self.url is not None:
+                model_config["url"] = self.url
+            llm = ChatWatsonx(**model_config)
+
         elif self.provider == "litellm":
-            llm = ChatLiteLLM(
-                model=self.model_name,
-                temperature=self.temperature,
-                top_p=self.top_p,
-            )
-        elif self.provider == "compatible":
-            llm = ChatLiteLLM(
-                model=self.model_name,
-                temperature=self.temperature,
-                top_p=self.top_p,
-                api_key=self.api_key,
-                api_base=self.url,
-            )
+
+            model_config = {
+                "model": self.model_name,
+            }
+
+            if self.temperature is not None:
+                model_config["temperature"] = self.temperature
+            if self.top_p is not None:
+                model_config["top_p"] = self.top_p
+            if self.api_key is not None:
+                model_config["api_key"] = self.api_key
+            if self.url is not None:
+                model_config["api_base"] = self.url
+            if self.max_tokens is not None:
+                model_config["max_tokens"] = self.max_tokens
+
+            llm = ChatLiteLLM(**model_config)
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
 

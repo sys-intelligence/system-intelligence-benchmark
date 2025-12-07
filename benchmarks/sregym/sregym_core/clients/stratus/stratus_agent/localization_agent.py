@@ -4,10 +4,10 @@ from pathlib import Path
 
 import yaml
 
-from clients.stratus.llm_backend.init_backend import get_llm_backend_for_tools
 from clients.stratus.stratus_agent.diagnosis_agent import DiagnosisAgent
 from clients.stratus.stratus_utils.get_starting_prompt import get_starting_prompts
 from clients.stratus.stratus_utils.str_to_tool import str_to_tool
+from llm_backend.init_backend import get_llm_backend_for_tools
 
 logger = logging.getLogger("all.stratus.localization")
 logger.propagate = True

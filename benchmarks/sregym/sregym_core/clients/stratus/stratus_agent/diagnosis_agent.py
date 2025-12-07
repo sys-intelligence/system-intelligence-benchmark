@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from pathlib import Path
 
 import yaml
@@ -6,15 +7,14 @@ from langchain_core.callbacks import UsageMetadataCallbackHandler
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.constants import END, START
 
-from clients.stratus.llm_backend.init_backend import get_llm_backend_for_tools
 from clients.stratus.stratus_agent.base_agent import BaseAgent
 from clients.stratus.stratus_agent.mitigation_agent import generate_run_summary
 from clients.stratus.stratus_utils.get_logger import get_logger
 from clients.stratus.stratus_utils.get_starting_prompt import get_starting_prompts
 from clients.stratus.stratus_utils.str_to_tool import str_to_tool
 from clients.stratus.tools.stratus_tool_node import StratusToolNode
+from llm_backend.init_backend import get_llm_backend_for_tools
 
-import logging
 logger = logging.getLogger("all.stratus.diagnosis")
 logger.propagate = True
 logger.setLevel(logging.DEBUG)
@@ -76,7 +76,7 @@ class DiagnosisAgent(BaseAgent):
 
         if len(starting_prompts) == 0:
             raise ValueError("No prompts used to start the conversation!")
-        
+
         all_init_prompts = ""
         for prompt in starting_prompts:
             all_init_prompts += prompt.content + "\n"
@@ -86,7 +86,7 @@ class DiagnosisAgent(BaseAgent):
 
         while True:
             graph_config = {"configurable": {"thread_id": "1"}}
-            
+
             logger.info(f"{'-' * 20} [Loop {self.loop_count}] {'-' * 20}")
             last_state = self.graph.get_state(config=graph_config)
             # logger.info("last state: %s", last_state)
@@ -109,7 +109,6 @@ class DiagnosisAgent(BaseAgent):
                     # "ans": dict(),
                     "rollback_stack": "",
                 }
-                
 
             async for event in self.graph.astream(
                 state,
@@ -118,16 +117,16 @@ class DiagnosisAgent(BaseAgent):
                 stream_mode="values",
             ):
                 if (not graph_events) or event["messages"][-1] != graph_events[-1]["messages"][-1]:
-                    #print(f"Last message: {graph_events[-1]['messages']}")
+                    # print(f"Last message: {graph_events[-1]['messages']}")
                     event["messages"][-1].pretty_print()
                 graph_events.append(event)
             last_state = self.graph.get_state(config=graph_config)
             if last_state.values["submitted"]:
                 logger.info(f"[Loop {self.loop_count}] Agent submitted, breaking loop.")
                 break
-            
+
             self.loop_count += 1
-            
+
             # print(f"================{last_state.values['num_steps']}===============")
 
         return last_state

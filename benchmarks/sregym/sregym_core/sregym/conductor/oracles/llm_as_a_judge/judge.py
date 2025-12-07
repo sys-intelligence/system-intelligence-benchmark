@@ -11,7 +11,7 @@ import yaml
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from clients.stratus.llm_backend.get_llm_backend import LiteLLMBackend
+from llm_backend.init_backend import get_llm_backend_for_tools
 
 load_dotenv()
 
@@ -33,31 +33,11 @@ class LLMJudge:
         temperature: float = 0.0,
         max_tokens: int = 4096,
     ):
-        # Load from environment if not provided
-        self.provider = provider or os.getenv("PROVIDER", "openai")
-        self.model_name = model_name or os.getenv("MODEL_TOOLS", "gpt-4o")
-        self.url = url or os.getenv("URL_TOOLS", "")
-        self.api_key = api_key or os.getenv("API_KEY_TOOLS", "")
-        self.temperature = temperature
-        self.max_tokens = max_tokens
 
         # Initialize LiteLLM backend
-        self.backend = LiteLLMBackend(
-            provider=self.provider,
-            model_name=self.model_name,
-            url=self.url,
-            api_key=self.api_key,
-            api_version=os.getenv("API_VERSION_TOOLS", ""),
-            seed=int(os.getenv("SEED_TOOLS", "42")),
-            top_p=float(os.getenv("TOP_P_TOOLS", "0.95")),
-            temperature=self.temperature,
-            reasoning_effort="",
-            thinking_tools="",
-            thinking_budget_tools=0,
-            max_tokens=self.max_tokens,
-        )
+        self.backend = get_llm_backend_for_tools()
 
-        print(f"Initialized LLMJudge with provider={self.provider}, model={self.model_name}")
+        print(f"Initialized LLMJudge")
 
     def judge(self, solution: str, expectation: str) -> JudgmentResult:
         system_prompt = """You are an expert judge evaluating whether an agent's diagnosis of a system issue matches the expected root cause.

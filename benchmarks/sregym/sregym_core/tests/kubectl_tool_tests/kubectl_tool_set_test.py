@@ -41,7 +41,7 @@ def get_agent(is_mock):
     if is_mock:
         llm = None
     else:
-        from clients.stratus.llm_backend.init_backend import get_llm_backend_for_tools
+        from llm_backend.init_backend import get_llm_backend_for_tools
 
         llm = get_llm_backend_for_tools()
 

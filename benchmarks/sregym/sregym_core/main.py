@@ -213,6 +213,9 @@ def main(args):
     # set up the logger
     init_logger()
 
+    os.environ["MODEL_ID"] = args.model
+    print("Setting MODEL_ID: ", args.model)
+
     # Start dashboard in a separate process
     dashboard_process = None
     if not args.use_external_harness:
@@ -306,6 +309,12 @@ if __name__ == "__main__":
         type=str,
         default=None,
         help="Run only a specific agent by its name (e.g., 'stratus')",
+    )
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="gpt-4o",
+        help="Run only a speicfic model backend (e.g., 'gpt-4o', 'gemini-2.5-pro', 'claude-sonnet-4', 'moonshot')",
     )
     parser.add_argument(
         "--use-external-harness", action="store_true", help="For use in external harnesses, deploy the fault and exit."

@@ -1,7 +1,8 @@
 import asyncio
+import logging
 from pathlib import Path
 from typing import List
-import logging
+
 import yaml
 from langchain_core.callbacks import UsageMetadataCallbackHandler
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -9,11 +10,11 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.constants import END, START
 from langgraph.types import StateSnapshot
 
-from clients.stratus.llm_backend.init_backend import get_llm_backend_for_tools
 from clients.stratus.stratus_agent.base_agent import BaseAgent
 from clients.stratus.stratus_agent.state import State
 from clients.stratus.stratus_utils.str_to_tool import str_to_tool
 from clients.stratus.tools.stratus_tool_node import StratusToolNode
+from llm_backend.init_backend import get_llm_backend_for_tools
 
 logger = logging.getLogger("all.stratus.mitigation")
 logger.propagate = True
@@ -122,7 +123,7 @@ class MitigationAgent(BaseAgent):
             if last_state.values["submitted"]:
                 logger.info(f"[Loop {self.loop_count}] Agent submitted, breaking loop.")
                 break
-            
+
             self.loop_count += 1
 
         return last_state
