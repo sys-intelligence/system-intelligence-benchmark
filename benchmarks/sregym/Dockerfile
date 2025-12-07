@@ -11,4 +11,4 @@ RUN apt-get update && apt-get install -y \
 
 RUN chmod +x install.sh test.sh && ./install.sh
  
-ENTRYPOINT ["./test.sh"]
+# ENTRYPOINT ["./test.sh"]
