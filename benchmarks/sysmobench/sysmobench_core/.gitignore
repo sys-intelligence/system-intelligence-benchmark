@@ -75,13 +75,15 @@ data/repositories/
 data/sys_traces
 run_batch_experiments.sh
 local_env_setup.sh
+batch_logs
 
 data/spec
 data/source
 data/gold_spec
 data/trace_validation
 data/error_classification
-data/convertor
 agents/specula
 tlaplus/
 liveness_failures_collection
+data/human_eval
+agents/agents*

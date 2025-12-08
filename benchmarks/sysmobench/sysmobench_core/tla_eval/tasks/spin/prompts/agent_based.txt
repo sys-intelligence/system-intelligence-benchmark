@@ -10,6 +10,11 @@ I need you to fix errors in a TLA+ specification for a spinlock {system_type} sy
 {current_specification}
 ```
 
+## Current TLC Configuration
+```cfg
+{current_config}
+```
+
 ## Validation Errors Found
 **Error Summary:**
 {error_summary}
@@ -28,7 +33,7 @@ I need you to fix errors in a TLA+ specification for a spinlock {system_type} sy
 ## Correction Instructions
 This is correction attempt {attempt_number} of {max_attempts}.
 
-Based on the validation errors above, please fix the TLA+ specification to ensure it compiles correctly while maintaining the intended spinlock synchronization semantics.
+Based on the validation errors above, please fix BOTH the TLA+ specification AND the TLC configuration if needed while maintaining the intended spinlock synchronization semantics.
 
 Key considerations for spinlock correctness:
 1. Ensure proper modeling of atomic test-and-set operations
@@ -44,8 +49,19 @@ Key considerations for spinlock correctness:
 7. **MANDATORY Spec Definition with Fairness**: The Spec definition MUST include appropriate fairness assumptions (e.g., WF_Vars for unlock operations or overall progress) to ensure liveness properties.
 
 CRITICAL OUTPUT REQUIREMENTS:
-1. The MODULE name must remain exactly "spin" (---- MODULE spin ----)
-2. Return ONLY the corrected TLA+ specification code - no markdown code blocks
-3. Do not include explanations, just the fixed specification
-4. Start your response directly with: ---- MODULE spin ----
-5. End your response with the closing ====
+1. Return your response as pure JSON text with NO markdown formatting
+2. Your response must start with {{ and end with }}
+3. Use this exact structure:
+
+{{
+  "specification": "---- MODULE spin ----\n...\n====",
+  "configuration": "SPECIFICATION Spec\n..."
+}}
+
+4. The MODULE name must remain exactly "spin"
+5. Both fields are required - if config does not need changes, return the original
+6. Properly escape newlines as \n in the JSON strings
+7. Do NOT wrap the JSON in ```json or any other markers
+8. Start your specification directly with: ---- MODULE spin ----
+9. End your specification with the closing ====
+10. Do not include explanations, just the fixed specification and configuration

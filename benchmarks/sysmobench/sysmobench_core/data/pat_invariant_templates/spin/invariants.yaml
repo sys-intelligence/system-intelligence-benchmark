@@ -1,0 +1,72 @@
+# PAT/CSP Invariants for Asterinas Spinlock Systems
+# Based on Alloy invariants, adapted for PAT CSP# syntax
+
+invariants:
+  # Generic Spinlock Invariants
+  - name: "MutualExclusion"
+    type: "safety"
+    natural_language: "At most one thread can hold any lock at any given time"
+    formal_description: "The fundamental safety property: no two threads can hold the same lock simultaneously"
+    csp_example: |
+      // Example for PAT CSP#
+      // Assuming the spec tracks lock holders in variables
+      #define mutex = !(holder[0] != NULL && holder[1] != NULL);
+      #assert System |= [] mutex;
+
+  - name: "LockStatusConsistency"
+    type: "safety"
+    natural_language: "If a thread holds a lock, it must be in Locked status"
+    formal_description: "Lock state consistency: the thread status must accurately reflect lock ownership"
+    csp_example: |
+      // Example for PAT CSP#
+      // For each thread that holds a lock, its status should be LOCKED
+      #define status_consistent = (holder[0] != NULL -> status[0] == LOCKED) && (holder[1] != NULL -> status[1] == LOCKED);
+      #assert System |= [] status_consistent;
+
+  - name: "StatusImpliesLock"
+    type: "safety"
+    natural_language: "If a thread is in Locked status, it must hold some lock"
+    formal_description: "Status consistency: a thread in Locked status must be holding at least one lock"
+    csp_example: |
+      // Example for PAT CSP#
+      // If a thread's status is LOCKED, it must be holding a lock
+      #define status_implies_lock = (status[0] == LOCKED -> holder[0] != NULL) && (status[1] == LOCKED -> holder[1] != NULL);
+      #assert System |= [] status_implies_lock;
+
+  - name: "NoDeadlock"
+    type: "safety"
+    natural_language: "The system never deadlocks"
+    formal_description: "Deadlock freedom: the system can always make progress"
+    csp_example: |
+      // Example for PAT CSP#
+      #assert System deadlockfree;
+
+  # Asterinas-specific Invariants
+  - name: "TryLockNonBlocking"
+    type: "safety"
+    natural_language: "try_lock() operations are non-blocking and return immediately"
+    formal_description: "Asterinas-specific: try_lock() never causes a thread to wait or spin. Threads making try_lock() should transition directly to either success or failure state."
+    csp_example: |
+      // Example for PAT CSP#
+      // This property would need to track call types in the spec
+      // If call_type[tid] == TRY_LOCK and status == TRYING, next state should be LOCKED or IDLE
+      #define trylock_nonblock = call_type[0] == TRY_LOCK -> X(status[0] == LOCKED || status[0] == IDLE);
+      #assert System |= [] trylock_nonblock;
+
+  - name: "BlockingVsNonBlockingSemantics"
+    type: "safety"
+    natural_language: "Only lock() requests can lead to spinning/waiting, try_lock() requests cannot"
+    formal_description: "Asterinas dual-interface semantics: threads in waiting state must have made blocking lock() requests"
+    csp_example: |
+      // Example for PAT CSP#
+      // If a thread is in TRYING state and made a TRY_LOCK call, it should not stay in TRYING
+      #define blocking_semantics = (status[0] == TRYING && call_type[0] == TRY_LOCK) -> X(status[0] != TRYING);
+      #assert System |= [] blocking_semantics;
+
+metadata:
+  total_invariants: 6
+  safety_invariants: 6
+  liveness_invariants: 0
+  generic_invariants: 4  # MutualExclusion, LockStatusConsistency, StatusImpliesLock, NoDeadlock
+  asterinas_specific_invariants: 2  # TryLockNonBlocking, BlockingVsNonBlockingSemantics
+  note: "Liveness properties require fair scheduling assumptions in PAT. Currently focusing on safety properties for bounded verification."

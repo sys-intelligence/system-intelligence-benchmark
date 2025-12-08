@@ -10,6 +10,11 @@ I need you to fix errors in a TLA+ specification for an etcd-based {system_type}
 {current_specification}
 ```
 
+## Current TLC Configuration
+```cfg
+{current_config}
+```
+
 ## Validation Errors Found
 **Error Summary:**
 {error_summary}
@@ -28,7 +33,7 @@ I need you to fix errors in a TLA+ specification for an etcd-based {system_type}
 ## Correction Instructions
 This is correction attempt {attempt_number} of {max_attempts}.
 
-Please provide a corrected TLA+ specification that fixes these errors. Your corrected specification should:
+Based on the validation errors above, please fix BOTH the TLA+ specification AND the TLC configuration if needed. 
 
 1. **Fix all syntax errors**: Ensure proper TLA+ syntax, correct operator usage, and valid module structure
 2. **Resolve semantic errors**: Define missing variables, operators, and ensure logical consistency
@@ -43,10 +48,20 @@ Focus specifically on:
 - Ensuring proper action definitions and state transitions
 - Maintaining consistency with etcd's distributed consensus behavior
 
-**CRITICAL OUTPUT REQUIREMENTS:**
-- Return ONLY pure TLA+ specification code
-- NO markdown code blocks (no ```tla or ```)  
-- NO explanations, comments, or text outside the specification
-- NO formatting markers of any kind
-- The MODULE name must be exactly "etcdraft"
-- Start directly with: ---- MODULE etcdraft ----
+CRITICAL OUTPUT REQUIREMENTS:
+1. Return your response as pure JSON text with NO markdown formatting
+2. Your response must start with {{ and end with }}
+3. Use this exact structure:
+
+{{
+  "specification": "---- MODULE etcdraft ----\n...\n====",
+  "configuration": "SPECIFICATION Spec\n..."
+}}
+
+4. The MODULE name must remain exactly "etcdraft"
+5. Both fields are required - if config does not need changes, return the original
+6. Properly escape newlines as \n in the JSON strings
+7. Do NOT wrap the JSON in ```json or any other markers
+8. Start your specification directly with: ---- MODULE etcdraft ----
+9. End your specification with the closing ====
+10. Do not include explanations, just the fixed specification and configuration

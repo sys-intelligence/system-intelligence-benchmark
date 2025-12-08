@@ -748,7 +748,7 @@ class ActionDecompositionEvaluator(BaseEvaluator):
                     # If this operator was previously added as a variable, mark it for removal
                     if op in added_variables:
                         variables_to_remove.append(op)
-                        print(f"DEBUG: Marking {op} for removal from VARIABLES (it's actually a constant)")
+                        # print(f"DEBUG: Marking {op} for removal from VARIABLES (it's actually a constant)")
             
             # Add the functions to the file and remove incorrect variables if any were found
             if functions_to_add or variables_to_remove:
@@ -772,21 +772,22 @@ class ActionDecompositionEvaluator(BaseEvaluator):
                         break
                 
                 # Find where the specific action starts and insert BEFORE it
-                print(f"DEBUG: Looking for action '{action_name}' starting from line 2")
+                # print(f"DEBUG: Looking for action '{action_name}' starting from line 2")
                 for i in range(2, len(lines)):  # Start from line 2
                     line = lines[i].strip()
-                    print(f"DEBUG: Line {i}: '{line[:50]}...'")
+                    # print(f"DEBUG: Line {i}: '{line[:50]}...'")
                     # Look for the specific action definition by name
                     if line.startswith(f"{action_name}(") or line.startswith(f"{action_name} =="):
                         insert_idx = i  # Insert before the action definition
-                        print(f"DEBUG: Found action '{action_name}' at line {i}: '{line[:50]}...', insert_idx = {insert_idx}")
+                        # print(f"DEBUG: Found action '{action_name}' at line {i}: '{line[:50]}...', insert_idx = {insert_idx}")
                         break
                 else:
-                    print(f"DEBUG: Action '{action_name}' not found, using default position {insert_idx}")
+                    pass
+                    # print(f"DEBUG: Action '{action_name}' not found, using default position {insert_idx}")
                 
                 # Remove variables that are actually functions from VARIABLES declaration
                 if variables_to_remove:
-                    print(f"DEBUG: Removing variables that are actually functions: {variables_to_remove}")
+                    # print(f"DEBUG: Removing variables that are actually functions: {variables_to_remove}")
                     for i, line in enumerate(lines):
                         if line.startswith("VARIABLES"):
                             # Parse existing variables

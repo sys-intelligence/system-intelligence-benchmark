@@ -28,7 +28,7 @@ class TaskLoader:
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
-    def load_task(self, task_name: str, source_file: str = None, traces_folder: str = None,
+    def load_task(self, task_name: str, source_file: str | List[str] | None = None, traces_folder: str = None,
                   spec_language: str = "tla") -> GenerationTask:
         """
         Load a specific task by name, automatically cloning repository if needed.
@@ -56,25 +56,16 @@ class TaskLoader:
         with open(metadata_file, 'r', encoding='utf-8') as f:
             metadata = yaml.safe_load(f)
         
-        # Determine which source file to use
-        if source_file is None:
-            source_file = metadata['default_source_file']
+        # Build list of available source entries (path + optional description)
+        source_entries = self._build_source_entries(metadata)
+
+        # Determine which source file(s) to use (support single path or list)
+        selected_entries = self._select_source_entries(metadata, source_entries, source_file)
 
         traces_folder = traces_folder or metadata.get('traces_folder')
-        
-        # Find source file info
-        source_file_info = None
-        for file_info in metadata['source_files']:
-            if file_info['path'] == source_file:
-                source_file_info = file_info
-                break
-        
-        if source_file_info is None:
-            available_files = [f['path'] for f in metadata['source_files']]
-            raise ValueError(f"Source file '{source_file}' not found. Available: {available_files}")
-        
-        # Clone repository and get source code
-        source_code = self._get_source_code(metadata['repository'], source_file)
+
+        # Clone repository and get source code (concatenate if multiple)
+        source_code = self._get_source_code(metadata['repository'], selected_entries)
 
         # Load traces
         if metadata.get('trace_format', None) is None:
@@ -92,21 +83,90 @@ class TaskLoader:
             spec_language=spec_language,  # Target specification language
             # Add additional metadata
             extra_info={
-                'file_path': source_file,
-                'focus': source_file_info['description'],
+                'file_path': [e['path'] for e in selected_entries] if len(selected_entries) > 1 else selected_entries[0]['path'],
+                'focus': [e.get('description', '') for e in selected_entries] if len(selected_entries) > 1 else selected_entries[0].get('description', ''),
                 'repository_url': metadata['repository']['url'],
                 'trace_format': metadata.get('trace_format'),
                 'trace_sample': metadata.get('trace_sample')
             }
         )
     
-    def _get_source_code(self, repo_info: Dict, file_path: str) -> str:
+    def _build_source_entries(self, metadata: Dict) -> List[Dict]:
+        """
+        Normalize source entries from metadata.
+
+        Supports legacy 'source_files' list and new multi-entry 'default_source_file'.
+        """
+        entries: List[Dict] = []
+
+        # Prefer explicit source_files list if present (legacy format)
+        if metadata.get('source_files'):
+            for file_info in metadata['source_files']:
+                entries.append({
+                    'path': file_info['path'],
+                    'description': file_info.get('description', '')
+                })
+            return entries
+
+        # Otherwise, infer from default_source_file which may be a string or list
+        default_src = metadata.get('default_source_file')
+        if isinstance(default_src, list):
+            for item in default_src:
+                if isinstance(item, dict):
+                    entries.append({
+                        'path': item['path'],
+                        'description': item.get('description', '')
+                    })
+                else:
+                    entries.append({'path': item, 'description': ''})
+        elif isinstance(default_src, str):
+            entries.append({'path': default_src, 'description': ''})
+
+        return entries
+
+    def _select_source_entries(self, metadata: Dict, entries: List[Dict], source_file: str | List[str] | None) -> List[Dict]:
+        """
+        Choose one or more source entries based on caller input and metadata defaults.
+        """
+        if not entries:
+            raise ValueError("No source files defined in task metadata")
+
+        default_src = metadata.get('default_source_file')
+
+        # If caller didn't specify and default is a list, use all defaults
+        if source_file is None and isinstance(default_src, list):
+            return entries
+
+        # Normalize caller input to list of paths
+        if source_file is None:
+            source_paths = [default_src]
+        elif isinstance(source_file, list):
+            source_paths = source_file
+        else:
+            source_paths = [source_file]
+
+        selected = []
+        missing = []
+        for path in source_paths:
+            match = next((e for e in entries if e['path'] == path), None)
+            if match:
+                selected.append(match)
+            else:
+                missing.append(path)
+
+        if missing:
+            available = [e['path'] for e in entries]
+            raise ValueError(f"Source file(s) {missing} not found. Available: {available}")
+
+        return selected
+
+    def _get_source_code(self, repo_info: Dict, file_entries: List[Dict]) -> str:
         """
         Clone repository if needed and extract source code.
         
         Args:
             repo_info: Repository information from task.yaml
-            file_path: Path to source file within repository
+            file_entries: List of file entries with 'path' (and optional 'description')
             
         Returns:
             Source code content
@@ -141,13 +201,26 @@ class TaskLoader:
             except subprocess.CalledProcessError as e:
                 raise RuntimeError(f"Failed to clone repository {repo_url}: {e.stderr}")
         
-        # Read source file
-        source_file_path = repo_cache_dir / file_path
-        if not source_file_path.exists():
-            raise FileNotFoundError(f"Source file not found in repository: {file_path}")
-        
-        with open(source_file_path, 'r', encoding='utf-8') as f:
-            return f.read()
+        # Read and concatenate source files
+        contents = []
+        for entry in file_entries:
+            file_path = entry['path']
+            source_file_path = repo_cache_dir / file_path
+            if not source_file_path.exists():
+                raise FileNotFoundError(f"Source file not found in repository: {file_path}")
+
+            with open(source_file_path, 'r', encoding='utf-8') as f:
+                file_body = f.read()
+
+            desc = entry.get('description', '')
+            header = [
+                f"===== FILE: {file_path} =====",
+                f"DESCRIPTION: {desc}" if desc else ""
+            ]
+            header_text = "\n".join([h for h in header if h]) + "\n"
+            contents.append(header_text + file_body)
+
+        return "\n\n".join(contents)
         
     def _get_traces(self, traces_folder: str, trace_format: str) -> List[List[Tuple[str, str]] | Tuple[str, str]]:
         """

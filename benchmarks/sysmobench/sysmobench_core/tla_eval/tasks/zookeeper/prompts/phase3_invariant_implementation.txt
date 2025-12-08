@@ -1,0 +1,86 @@
+You are a TLA+ expert specializing in distributed systems and leader election protocols. Your task is to implement a set of expert-written invariants for the given ZooKeeper TLA+ specification.
+
+## Target Specification
+
+$tla_specification
+
+## Invariants to Implement
+
+$invariant_templates
+
+## Implementation Requirements
+
+1. **Deep Analysis**: First, thoroughly understand both the invariant template's semantic intent and the specification's modeling approach:
+   - What leader election/safety property does each template aim to verify?
+   - How does the specification represent server states, votes, epochs, and leadership?
+   - What are the semantic equivalents between template concepts and specification implementation?
+
+2. **Semantic Mapping**: For each invariant, identify the conceptual mapping between template and specification:
+   - Template server state concepts → Specification's server state representation
+   - Template vote structure → Specification's vote data structures
+   - Template leadership concepts → Specification's leader election and epoch management
+   - Template node/server sets → Specification's server constants and domains
+
+3. **Creative Adaptation**: Translate the invariant while preserving its core election safety meaning:
+   - **DO NOT** simply replace variable names - understand the underlying distributed systems logic
+   - **DO** redesign the predicate logic to fit the specification's data structure granularity
+   - **DO** use equivalent semantic concepts even if data representations differ
+   - **PRESERVE** the original leader election safety/liveness guarantees without weakening the property
+
+4. **TLA+ Property Type Constraints**:
+
+   **FOR SAFETY PROPERTIES** (type: "safety"):
+   - **MUST** be STATE PREDICATES (describe single states only)
+   - **NEVER** use primed variables (`currentEpoch'`, `state'`)
+   - **NEVER** use temporal operators (`[]`, `<>`, `~>`)
+   - **NEVER** reference actions (like `Notification(s)`, `BecomeLeader(s)`) - only use state variables
+   - **ONLY** use unprimed variables (`currentEpoch[s]`, `state[s]`) and constants
+   - **CORRECT**: `LeaderUniqueness == \A epoch \in Nat : Cardinality({s \in Server : state[s] = LEADING /\ currentEpoch[s] = epoch}) <= 1`
+   - **INCORRECT**: `state[s] = LOOKING => Notification(s)`  (references action Notification)
+
+   **FOR LIVENESS PROPERTIES** (type: "liveness"):
+   - **MUST** be TEMPORAL FORMULAS (describe execution traces)
+   - **MUST** use temporal operators (`<>`, `~>`) to express "eventually" or "leads-to"
+   - **CORRECT**: `EventualLeader == <>(\E s \in Server : state[s] = LEADING)`
+
+5. **Constraint Compliance**:
+   - Use ONLY variables, constants, and operators that exist in the specification
+   - Generate complete, syntactically valid TLA+ invariant definitions
+   - Maintain the exact invariant names from templates
+
+6. **Output format**: Return a JSON object containing an array of complete TLA+ invariant definitions
+
+7. **EXACT naming requirement**: You MUST use the exact invariant names specified in the templates above. Do not create your own names.
+
+**CRITICAL OUTPUT REQUIREMENT - READ THIS CAREFULLY:**
+Your response MUST be ONLY the JSON object - nothing else.
+- Start immediately with the opening brace: `{`
+- End with the closing brace: `}`
+- ONLY the raw JSON object
+
+## Example Output Format
+
+```json
+{
+  "invariants": [
+    "LeaderUniqueness == \\A epoch \\in Nat : Cardinality({n \\in Server : state[n] = LEADING /\\ currentEpoch[n] = epoch}) <= 1",
+    "VoteConsistency == \\A s1, s2 \\in Server : (state[s1] = state[s2] /\\ currentEpoch[s1] = currentEpoch[s2]) => (votedFor[s1] = votedFor[s2] \\/ votedFor[s1] = s1 \\/ votedFor[s2] = s2)"
+  ]
+}
+```
+
+**CRITICAL REQUIREMENTS**:
+- **SEMANTIC PRESERVATION**: Each translated invariant MUST verify the same leader election property as the original template
+- **CREATIVE ADAPTATION**: Do NOT simply omit invariants - find creative ways to express the same property using available specification elements
+- **COMPLETENESS**: Aim to translate ALL invariants by understanding their semantic intent, not just their syntactic form
+- Use ONLY variables, constants, and operators that exist in the provided specification
+- Use EXACTLY the invariant names from the templates (preserve exact names for evaluation consistency)
+- **YOUR ENTIRE RESPONSE MUST BE THE JSON OBJECT ONLY** - Start with `{`, end with `}`, absolutely nothing else
+- Each array element must be a complete TLA+ invariant definition: "InvariantName == <expression>"
+- For complex invariants, you may use multiline format within the JSON string (use actual line breaks)
+- For simple invariants, single line format is preferred
+- **LAST RESORT**: Only omit an invariant if its core concept is fundamentally incompatible with the specification's design
+- **CRITICAL JSON ESCAPING RULES**:
+  - TLA+ operators like `\A`, `\E`, `\in` contain ONE backslash in the final TLA+ code
+  - In JSON strings, use EXACTLY ONE backslash escape: write `"\\A"` to get `\A` in TLA+
+  - **DO NOT double-escape**: `"\\\\A"` is WRONG and will produce `\\A` in TLA+

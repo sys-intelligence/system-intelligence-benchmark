@@ -1,0 +1,73 @@
+You are an expert in formal verification and TLA+ specifications with deep expertise in distributed systems and consensus protocols.
+
+Convert the following ZooKeeper source code to a comprehensive TLA+ specification.
+
+System: ZooKeeper Fast Leader Election protocol
+Focus: {focus}
+
+Source Code from {file_path}:
+```java
+{source_code}
+```
+
+ZooKeeper leader election modeling requirements:
+
+MANDATORY CORE ACTIONS (must include):
+1. 【Election Notification】Notification exchange between servers
+   - Servers broadcast their votes (epoch, leader, zxid)
+   - Servers receive and compare votes
+   - Vote comparison based on: epoch > zxid > server_id
+2. 【State Transitions】Server state changes
+   - LOOKING: actively participating in election
+   - FOLLOWING: accepted another server as leader
+   - LEADING: won the election
+3. 【Vote Tracking】Track received votes and determine quorum
+   - Collect votes from other servers
+   - Check if candidate has quorum (majority)
+4. 【Leader Selection】Determine winner based on vote comparison
+   - Higher epoch wins
+   - If epoch equal, higher zxid wins
+   - If zxid equal, higher server_id wins
+
+CRITICAL SEMANTIC DISTINCTION:
+- **Fast Leader Election**: ZooKeeper's leader election algorithm
+  * Each server proposes itself initially
+  * Servers exchange votes and update based on comparison
+  * Quorum-based decision (majority required)
+  * Eventual convergence to single leader
+
+- **Vote Comparison Logic**:
+  * Compare (epoch, zxid, server_id) lexicographically
+  * Higher values win
+  * Ensures consistent leader selection
+
+MODELING REQUIREMENTS:
+- Model each server's state (LOOKING/FOLLOWING/LEADING)
+- Track current epoch and voted leader for each server
+- Model notification message passing between servers
+- Track vote counts for quorum calculation
+
+EXPLICITLY EXCLUDED (do not model):
+- TCP/IP network details
+- Message serialization format
+- QuorumCnxManager implementation
+- Thread synchronization details
+- Actual data replication (focus on election only)
+
+REQUIRED BEHAVIORAL SCOPE:
+- Model at least: Notification action for vote exchange
+- Show election process from LOOKING to convergence
+- Demonstrate quorum-based leader selection
+- Include epoch advancement scenarios
+
+Generate a complete, compilable TLA+ specification that captures the core Fast Leader Election semantics while respecting the trace validation naming conventions.
+
+CRITICAL OUTPUT REQUIREMENTS:
+1. The MODULE name must be exactly "zookeeper" (---- MODULE zookeeper ----)
+2. Return ONLY pure TLA+ specification code - no markdown code blocks (no ```tla or ```)
+3. Do not include any explanations, comments, or formatting markers
+4. Start your response directly with: ---- MODULE zookeeper ----
+5. End your response with the closing ====
+6. **DO NOT define invariants** (like LeaderUniqueness, etc.) - focus on modeling the system behavior
+7. **MANDATORY Spec Definition**: The Spec definition should include Init and Next, with fairness assumptions
+8. **Next Operator Structure**: The 'Next' operator SHOULD be a disjunction of atomic actions (e.g., Next == \/ \E t \in Threads : AcquireLock(t)...).
