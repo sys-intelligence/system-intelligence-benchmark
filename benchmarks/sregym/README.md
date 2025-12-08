@@ -62,10 +62,10 @@ cd benchmarks/sregym
 ./install.sh
 ```
 
-1. Run the benchmark
+3. Run the benchmark
 ``` shell
 cd benchmarks/sregym
-./run.sh <model_name>
+./run.sh <model_name> <agent_name>
 ```
 > Some tested available names are: "gemini/gemini-2.5-flash", "openai/gpt-4o", "anthropic/claude-sonnet-4-20250514", "moonshot/moonshot-v1-32k".
 
