@@ -54,6 +54,23 @@ REQUIRED BEHAVIORAL SCOPE:
 - Compare-and-exchange retry loop for contention handling
 - Thread can acquire lock multiple times only if it releases between acquisitions
 
+MANDATORY NAMING CONVENTIONS (Trace Validation Interface):
+To ensure the specification can be validated against system traces, you MUST strictly adhere to the following naming conventions:
+
+1. Variables:
+   - The global variable representing the lock's state MUST be named: lockState
+     * Values MUST be exactly: "locked" and "unlocked"
+
+2. Constants:
+   - The constant representing the set of participating threads MUST be named: Threads
+
+3. Actions:
+   - The action for the blocking lock acquisition MUST be named: AcquireLock
+     * Description: A call that leads to lock acquisition (i.e., successfully acquires the lock).
+   - The action for a failed non-blocking lock attempt MUST be named: AcquireFail
+     * Description: A call to try_lock() that results in failure to acquire the lock.
+   - The action for releasing the lock MUST be named: ReleaseLock
+
 Generate a TLA+ specification that accurately models the spinlock's concurrent behavior.
 
 CRITICAL OUTPUT REQUIREMENTS:
@@ -65,3 +82,4 @@ CRITICAL OUTPUT REQUIREMENTS:
 6. **DO NOT define invariants** (like MutualExclusion, Invariant, etc.) - only include TypeOK, Init, actions, Next, Spec, and Vars
 7. **MUST include EXTENDS statement**: The specification must extend at least these modules: TLC, Sequences, SequencesExt, Naturals, FiniteSets, Bags
 8. **MANDATORY Spec Definition with Fairness**: The Spec definition MUST include appropriate fairness assumptions (e.g., WF_vars/SF_vars for action operations) to ensure liveness properties.
+9. **Next Operator Structure**: The 'Next' operator SHOULD be a disjunction of atomic actions (e.g., Next == \/ \E t \in Threads : AcquireLock(t)...).

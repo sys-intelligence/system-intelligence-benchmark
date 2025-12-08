@@ -7,6 +7,8 @@ syntax and semantic errors using iterative LLM feedback.
 
 import logging
 import time
+import json
+from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple
 
 from ..base import TLAGenerationMethod, GenerationTask, GenerationOutput, format_prompt_template
@@ -117,7 +119,7 @@ class AgentBasedMethod(TLAGenerationMethod):
                 error_message=str(e)
             )
     
-    def _generate_correction(self, task, current_spec: str, all_errors: list, model_obj):
+    def _generate_correction(self, task, current_spec: str, all_errors: list, model_obj, config_file_path: str = None):
         """
         Generate correction for specification with errors (for composite evaluator).
         
@@ -126,6 +128,7 @@ class AgentBasedMethod(TLAGenerationMethod):
             current_spec: Current specification with errors
             all_errors: List of all errors to fix
             model_obj: Model object for correction
+            config_file_path: Optional path to current TLC config
         
         Returns:
             GenerationResult with corrected specification
@@ -142,16 +145,29 @@ class AgentBasedMethod(TLAGenerationMethod):
                 compilation_time=0.0
             )
             
+            # Read current config content if provided
+            current_config = ""
+            if config_file_path and Path(config_file_path).exists():
+                try:
+                    current_config = Path(config_file_path).read_text(encoding='utf-8')
+                except Exception as e:
+                    logger.warning(f"Failed to read config file at {config_file_path}: {e}")
+            
             # Use existing correction method
             correction_result = self._attempt_correction(
-                task, current_spec, validation_result, model_obj, 1
+                task, current_spec, current_config, validation_result, model_obj, 1
             )
             
             if correction_result['success']:
                 from ...models.base import GenerationResult
+                metadata = correction_result.get('correction_metadata', {}) or {}
+                if correction_result.get('corrected_config') is not None:
+                    # Preserve corrected config content for downstream use
+                    metadata = metadata.copy()
+                    metadata['corrected_config'] = correction_result['corrected_config']
                 return GenerationResult(
                     generated_text=correction_result['corrected_specification'],
-                    metadata=correction_result.get('correction_metadata', {}),
+                    metadata=metadata,
                     timestamp=time.time(),
                     success=True
                 )
@@ -179,14 +195,14 @@ class AgentBasedMethod(TLAGenerationMethod):
     def _initial_generation(self, task: GenerationTask, model) -> Any:
         """Generate initial TLA+ specification using standard prompt."""
         prompt = self._create_initial_prompt(task)
-        
+
         # Create generation config from model's YAML configuration
         generation_config = GenerationConfig(
             max_tokens=model.config.get('max_tokens'),
             temperature=model.config.get('temperature'),
             top_p=model.config.get('top_p')  # Only if defined in YAML
         )
-        
+
         logger.info(f"Initial generation config from YAML: {model.config}")
         logger.debug(f"Using initial prompt ({len(prompt)} chars)")
         return model.generate_tla_specification(task.source_code, prompt, generation_config)
@@ -263,7 +279,7 @@ class AgentBasedMethod(TLAGenerationMethod):
             
             correction_start = time.time()
             correction_result = self._attempt_correction(
-                task, current_spec, validation_result, model, correction_attempts + 1
+                task, current_spec, "", validation_result, model, correction_attempts + 1
             )
             correction_time = time.time() - correction_start
             total_correction_time += correction_time
@@ -426,13 +442,15 @@ class AgentBasedMethod(TLAGenerationMethod):
             )
     
     def _attempt_correction(self, task: GenerationTask, current_spec: str, 
-                          validation_result: ValidationResult, model, attempt_num: int) -> Dict[str, Any]:
+                          current_config: str, validation_result: ValidationResult, 
+                          model, attempt_num: int) -> Dict[str, Any]:
         """
         Attempt to correct errors in the specification using LLM feedback.
         
         Args:
             task: Original generation task
             current_spec: Current specification with errors
+            current_config: Current TLC configuration content
             validation_result: Validation result containing errors
             model: LLM model for correction
             attempt_num: Current attempt number
@@ -443,7 +461,7 @@ class AgentBasedMethod(TLAGenerationMethod):
         try:
             # Create correction prompt with error feedback
             correction_prompt = self._create_correction_prompt(
-                task, current_spec, validation_result, attempt_num
+                task, current_spec, current_config, validation_result, attempt_num
             )
             
             logger.debug(f"Correction prompt created ({len(correction_prompt)} chars)")
@@ -468,12 +486,36 @@ class AgentBasedMethod(TLAGenerationMethod):
                 return {
                     'success': False,
                     'error': correction_result.error_message,
-                    'corrected_specification': current_spec
+                    'corrected_specification': current_spec,
+                    'corrected_config': current_config
                 }
+            
+            # Attempt to parse JSON response (spec + config)
+            response = correction_result.generated_text.strip()
+            
+            # Extract JSON if wrapped in code fences
+            if "```json" in response:
+                start = response.find("```json") + len("```json")
+                end = response.find("```", start)
+                if end != -1:
+                    response = response[start:end].strip()
+            
+            normalized_response = response
+            if normalized_response.startswith("{{") and normalized_response.endswith("}}"):
+                normalized_response = normalized_response[1:-1].strip()
+            try:
+                parsed = json.loads(normalized_response)
+                corrected_spec = parsed.get('specification', current_spec)
+                corrected_config = parsed.get('configuration', current_config)
+            except Exception:
+                # Fallback: treat whole response as spec text
+                corrected_spec = response
+                corrected_config = current_config
             
             return {
                 'success': True,
-                'corrected_specification': correction_result.generated_text,
+                'corrected_specification': corrected_spec,
+                'corrected_config': corrected_config,
                 'correction_metadata': correction_result.metadata
             }
             
@@ -482,7 +524,8 @@ class AgentBasedMethod(TLAGenerationMethod):
             return {
                 'success': False,
                 'error': str(e),
-                'corrected_specification': current_spec
+                'corrected_specification': current_spec,
+                'corrected_config': current_config
             }
     
     def _create_initial_prompt(self, task: GenerationTask) -> str:
@@ -493,8 +536,8 @@ class AgentBasedMethod(TLAGenerationMethod):
         task_loader = get_task_loader()
         prompt_template = task_loader.get_task_prompt(
             task.task_name,
-            "agent_based",  # Use agent_based prompt for initial generation
-            task.spec_language  # Language-specific prompt
+            "direct_call",
+            task.spec_language
         )
 
         # Prepare format variables
@@ -512,17 +555,19 @@ class AgentBasedMethod(TLAGenerationMethod):
         # Format template with task information (without escaping literal braces)
         return format_prompt_template(prompt_template, format_vars)
     
-    def _create_correction_prompt(self, task: GenerationTask, current_spec: str, 
-                                validation_result: ValidationResult, attempt_num: int) -> str:
+    def _create_correction_prompt(self, task: GenerationTask, current_spec: str,
+                                current_config: str, validation_result: ValidationResult,
+                                attempt_num: int) -> str:
         """
         Create correction prompt with error feedback.
-        
+
         Args:
             task: Original generation task
             current_spec: Current specification with errors
+            current_config: Current TLC configuration
             validation_result: Validation errors
             attempt_num: Current correction attempt number
-            
+
         Returns:
             Formatted correction prompt
         """
@@ -537,26 +582,29 @@ class AgentBasedMethod(TLAGenerationMethod):
                 task.spec_language  # Language-specific
             )
         except Exception:
-            # Fallback to a default correction prompt if task-specific one doesn't exist
-            logger.warning(f"No agent_correction prompt found for task {task.task_name}/{task.spec_language}, using default correction prompt")
-            correction_template = self._get_default_correction_prompt(task.spec_language)
-        
+            logger.warning(f"No agent_correction prompt found for task {task.task_name}/{task.spec_language}, fallback to agent_based prompt")
+            correction_template = task_loader.get_task_prompt(
+                task.task_name,
+                "agent_based",
+                task.spec_language
+            )
+
         # Extract error information
         error_summary = self._extract_error_summary(validation_result)
-        
-        # Prepare format variables - escape any problematic characters
+
+        # Prepare format variables
         def safe_format(text):
-            """Safely format text to avoid string formatting issues."""
+            """Convert text to string, handling None values."""
             if text is None:
                 return "None"
-            # Replace problematic characters that might break string formatting  
-            return str(text).replace('{', '{{').replace('}', '}}')
-        
+            return str(text)
+
         format_vars = {
             'language': safe_format(task.language),
             'description': safe_format(task.description),
             'system_type': safe_format(task.system_type),
             'current_specification': safe_format(current_spec),
+            'current_config': safe_format(current_config),
             'error_summary': safe_format(error_summary),
             'syntax_errors': safe_format('\n'.join(validation_result.syntax_errors) if validation_result.syntax_errors else "None"),
             'semantic_errors': safe_format('\n'.join(validation_result.semantic_errors) if validation_result.semantic_errors else "None"),
@@ -569,9 +617,11 @@ class AgentBasedMethod(TLAGenerationMethod):
         if task.extra_info:
             for key, value in task.extra_info.items():
                 format_vars[key] = safe_format(value)
-        
+
         try:
-            return correction_template.format(**format_vars)
+            # Use format_prompt_template to safely handle braces in code examples
+            from ..base import format_prompt_template
+            return format_prompt_template(correction_template, format_vars)
         except Exception as e:
             logger.error(f"Error formatting correction prompt: {e}")
             logger.debug(f"Format variables: {format_vars}")

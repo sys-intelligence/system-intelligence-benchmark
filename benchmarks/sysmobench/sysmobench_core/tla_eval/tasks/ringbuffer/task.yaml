@@ -1,0 +1,37 @@
+# ringbuffer task configuration
+name: "ringbuffer"
+description: "Asterinas OS lock-free SPSC ring buffer"
+system_type: "concurrent"
+language: "rust"
+
+# Source code repository information
+repository:
+  url: "https://github.com/asterinas/asterinas.git"
+  branch: "main"
+
+# Files to extract from the repository
+source_files:
+  - path: "kernel/src/util/ring_buffer.rs"
+    description: "Lock-free SPSC ring buffer implementation"
+
+# Default file to use if not specified
+default_source_file: "kernel/src/util/ring_buffer.rs"
+
+# TLA+ specification module name
+specModule: "ringbuffer"
+
+# Traces folder location
+traces_folder: "data/sys_traces/ringbuffer"
+trace_format: "asterinas_based"
+
+# Metadata
+metadata:
+  original_project: "asterinas"
+  concurrency_model: "lock_free_spsc"
+
+# Phase 3 specific configuration
+phase3:
+  trace_generation: true
+  patch_required: true
+  patch_file: "data/patches/asterinas_tla_trace.patch"
+  patch_description: "Inject TLA+ trace instrumentation for Asterinas sync primitives"

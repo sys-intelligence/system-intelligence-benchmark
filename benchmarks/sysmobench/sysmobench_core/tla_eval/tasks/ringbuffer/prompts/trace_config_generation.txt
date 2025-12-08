@@ -1,0 +1,109 @@
+Generate a YAML configuration file from the provided TLA+ specification (.tla) and configuration (.cfg) files. Extract information according to the following rules:
+
+## Code Analysis
+Before generating the YAML configuration, you need to analyze the provided code files:
+
+**CRITICAL**: You MUST base your extraction on the actual code content provided below, NOT on the examples. The examples are for format reference only.
+
+### TLA+ Specification Code
+```tla+
+{TLA_SPEC_CODE_PLACEHOLDER}
+```
+
+### TLA+ Configuration Code
+```cfg
+{TLA_CFG_CODE_PLACEHOLDER}
+```
+
+## Task Description
+Parse the TLA+ specification and configuration files to create a structured YAML configuration that captures the specification name, constants, variables, actions, and interactions.
+
+## Extraction Rules
+
+### spec_name
+Extract from the module declaration line: `---- MODULE <ModuleName> ----`
+The spec_name is the ModuleName between "---- MODULE" and "----".
+
+### constants
+Extract from the CONSTANTS section in the .cfg file.
+- name: The constant identifier
+- value: The assigned value, formatted as:
+  - Sets: Wrap in single quotes, e.g., '{s1, s2, s3}' becomes '{"s1", "s2", "s3"}'
+  - Strings: Wrap in single quotes with double quotes inside, e.g., Nil becomes '"Nil"'
+  - Numbers: Wrap in single quotes as string, e.g., 5 becomes '5'
+
+### variables
+Extract from the Init operator definition in the .tla file.
+For each variable assignment in Init:
+- name: The variable name
+- default_value: The initial value expression (preserve TLA+ syntax, escape backslashes)
+
+### actions
+Extract from the Next operator definition. Include only direct action calls (not numbered interactions).
+For each action:
+- name: The action/operator name
+- parameters: List of parameters with:
+  - name: Parameter variable name
+  - source: Where the parameter comes from (e.g., producer, consumer)
+- stmt: The complete statement as it appears in Next (including any conditions)
+
+### interactions
+Extract from the Next operator definition. Include only numbered intermediate actions.
+Just list the names (e.g., Push_1, Pop_1)
+
+## Example
+Given this TLA+ specification:
+
+---- MODULE SimpleSpec ----
+...
+Init ==
+/\ x = 0
+/\ y = [p \in {producer, consumer} |-> 0]
+
+Next ==
+\/ Push
+\/ Pop
+\/ Push_1
+
+And this configuration:
+
+CONSTANTS
+Capacity = 4
+
+Generate this YAML:
+
+```yaml
+spec_name: SimpleSpec
+constants:
+- name: Capacity
+  value: '4'
+variables:
+- name: x
+  default_value: '0'
+- name: y
+  default_value: '[p \\in {producer, consumer} |-> 0]'
+actions:
+- name: Push
+  parameters: []
+  stmt: Push
+- name: Pop
+  parameters: []
+  stmt: Pop
+interactions:
+- name: Push_1
+```
+
+## Important Notes
+1. Return ONLY the YAML content - no explanations, comments, or natural language
+2. Preserve TLA+ syntax exactly in default_value fields (escape backslashes)
+3. For actions with conditions, include the full stmt as it appears in Next
+4. Ignore variables that appear in Init but are not part of the main specification (e.g., pc, info, stack)
+5. Order matters: spec_name, constants, variables, actions, interactions
+
+## Code Placeholder Instructions
+When using this prompt:
+1. Replace `{TLA_SPEC_CODE_PLACEHOLDER}` with the complete TLA+ specification (.tla) file content
+2. Replace `{TLA_CFG_CODE_PLACEHOLDER}` with the complete TLA+ configuration (.cfg) file content
+3. Analyze these code sections to extract the required information according to the rules above
+
+Generate the YAML configuration based on the provided TLA+ files in the placeholders above.

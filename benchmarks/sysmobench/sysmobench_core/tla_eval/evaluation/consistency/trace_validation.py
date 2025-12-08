@@ -47,7 +47,7 @@ class TraceValidationEvaluator(BaseEvaluator):
                  traces_dir: str = "data/sys_traces",
                  timeout: int = 600,
                  model_name: str = None,
-                 max_workers: int = 4,
+                 max_workers: int = 1,
                  with_exist_traces: int = None,
                  with_exist_specTrace: bool = False,
                  create_mapping: bool = False):
@@ -1010,7 +1010,7 @@ def create_trace_validation_evaluator(
     traces_dir: str = "data/sys_traces",
     timeout: int = 600,
     model_name: str = None,
-    max_workers: int = 4,
+    max_workers: int = 1,
     with_exist_traces: int = None,
     with_exist_specTrace: bool = False
 ) -> TraceValidationEvaluator:

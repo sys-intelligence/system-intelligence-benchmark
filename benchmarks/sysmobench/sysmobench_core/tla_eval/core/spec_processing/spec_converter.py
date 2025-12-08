@@ -390,7 +390,9 @@ BaseSpec == Init /\\ [][Next \\/ ComposedNext]_Vars
             "    Default <- DefaultImpl", 
             "    BaseInit <- Init",
             "    UpdateVariables <- UpdateVariablesImpl",
-            "    TraceNext <- TraceNextImpl"
+            "    TraceNext <- TraceNextImpl",
+            "    BaseNext <- Next",
+            "    MaxInternalSteps = 3"
         ])
         
         # Add other standard configuration

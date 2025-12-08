@@ -1,0 +1,127 @@
+# Invariants for ZooKeeper Fast Leader Election
+# Based on ZooKeeper FastLeaderElection.java implementation
+# Focus: Election phase only (no log replication, no broadcast phase)
+
+invariants:
+  # Core Leader Election Safety Invariants
+  - name: "LeaderUniqueness"
+    type: "safety"
+    natural_language: "At most one leader can exist in any given epoch"
+    formal_description: "Multiple servers can be leaders simultaneously only if they are in different epochs. This is the fundamental safety property of leader election."
+    tla_example: |
+      LeaderUniqueness ==
+        \A i, j \in Server :
+          (/\ state[i] = LEADING
+           /\ state[j] = LEADING
+           /\ currentEpoch[i] = currentEpoch[j])
+          => i = j
+
+  - name: "StateValidity"
+    type: "safety"
+    natural_language: "Every server must be in a valid state"
+    formal_description: "Server states must be one of LOOKING, FOLLOWING, or LEADING"
+    tla_example: |
+      StateValidity ==
+        \A s \in Server :
+          state[s] \in {LOOKING, FOLLOWING, LEADING}
+
+  - name: "EpochMonotonicity"
+    type: "safety"
+    natural_language: "Epochs are non-negative and valid"
+    formal_description: "All server epochs must be non-negative. Leaders must have positive epochs."
+    tla_example: |
+      EpochMonotonicity ==
+        \A s \in Server :
+          /\ currentEpoch[s] >= 0
+          /\ (state[s] = LEADING) => currentEpoch[s] > 0
+
+
+  - name: "LeaderVotesForSelf"
+    type: "safety"
+    natural_language: "A leader must have voted for itself"
+    formal_description: "Based on FastLeaderElection: when a server becomes leader, it must have proposed itself"
+    tla_example: |
+      LeaderVotesForSelf ==
+        \A s \in Server :
+          (state[s] = LEADING) => (votedFor[s] = s)
+
+  - name: "FollowerHasLeader"
+    type: "safety"
+    natural_language: "Followers must have accepted a leader"
+    formal_description: "A server in FOLLOWING state must have voted for some leader (not itself unless it's transitioning)"
+    tla_example: |
+      FollowerHasLeader ==
+        \A s \in Server :
+          (state[s] = FOLLOWING) => (votedFor[s] \in Server)
+
+  - name: "VoteRecencyConsistency"
+    type: "safety"
+    natural_language: "Votes are consistent with zxid comparison rules"
+    formal_description: "Servers track lastZxid for vote comparison. lastZxid must be non-negative."
+    tla_example: |
+      VoteRecencyConsistency ==
+        \A s \in Server :
+          lastZxid[s] >= 0
+
+  - name: "QuorumVoteValidity"
+    type: "safety"
+    natural_language: "Vote tracking is consistent"
+    formal_description: "The votes set for each server contains valid servers"
+    tla_example: |
+      QuorumVoteValidity ==
+        \A s \in Server :
+          votes[s] \subseteq Server
+
+  - name: "SelfVoteInclusion"
+    type: "safety"
+    natural_language: "Leaders and candidates include their own vote"
+    formal_description: "When a server becomes a leader, it must have counted its own vote"
+    tla_example: |
+      SelfVoteInclusion ==
+        \A s \in Server :
+          (state[s] = LEADING) => (s \in votes[s])
+
+  # Election Progress Invariant
+  - name: "LeaderHasQuorum"
+    type: "safety"
+    natural_language: "A leader must have received votes from a quorum"
+    formal_description: "Based on FastLeaderElection termPredicate: a server can only become leader if it has a quorum of votes. Assumes Quorum is defined as majority."
+    tla_example: |
+      LeaderHasQuorum ==
+        \A s \in Server :
+          (state[s] = LEADING) => (Cardinality(votes[s]) * 2 > Cardinality(Server))
+
+  # Liveness Properties
+  - name: "EventualLeaderElection"
+    type: "liveness"
+    natural_language: "Eventually a leader will be elected"
+    formal_description: "Under fairness assumptions, the election eventually converges to a leader"
+    tla_example: |
+      EventualLeaderElection ==
+        <>(\E s \in Server : state[s] = LEADING)
+
+  - name: "ElectionConvergence"
+    type: "liveness"
+    natural_language: "Looking servers eventually stop looking"
+    formal_description: "Under fair scheduling, servers in LOOKING state eventually transition to FOLLOWING or LEADING"
+    tla_example: |
+      ElectionConvergence ==
+        \A s \in Server :
+          [](state[s] = LOOKING) ~> (state[s] \in {FOLLOWING, LEADING})
+
+metadata:
+  total_invariants: 11
+  safety_invariants: 9
+  liveness_invariants: 2
+  scope: "election_only"
+  excluded_features:
+    - "log_replication"
+    - "broadcast_phase"
+    - "data_synchronization"
+    - "transaction_commit"
+  state_variables:
+    - "state"
+    - "currentEpoch"
+    - "votedFor"
+    - "lastZxid"
+    - "votes"
