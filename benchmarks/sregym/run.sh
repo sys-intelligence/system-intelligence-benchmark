@@ -2,19 +2,21 @@
 
 set -e  # Exit immediately on error.
 
-if [ $# -ne 1 ]; then
-    echo "Usage: $0 <model_location>"
-    echo "Example: $0 \"gemini/gemini-2.5-flash\""
+if [ $# -lt 1 ] || [ $# -gt 2 ]; then
+    echo "Usage: $0 <model_id> [agent_name]"
+    echo "Example: $0 \"gpt-4o\""
+    echo "Example: $0 \"gpt-4o\" \"stratus\""
     exit 1
 fi
 
-MODEL_NAME="$1"
+MODEL_ID="${1:-gpt-4o}"
+AGENT_NAME="${2:-stratus}"  # Default to "stratus" if not provided
 
 source sregym_core/.venv/bin/activate
 
 echo "==> Start to run SREGym"
 python src/main.py \
-    --agent "stratus" \
-    --model_name "${MODEL_NAME}" 
+    --agent "${AGENT_NAME}" \
+    --model "${MODEL_ID}" 
     
 deactivate

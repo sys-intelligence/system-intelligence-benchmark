@@ -1,10 +1,23 @@
-# SREGym Quick Guide
+<h1>SREGym: A Benchmarking Platform for SRE Agents</h1>
+
+[🔍Overview](#🤖overview) |  [📦Installation](#📦installation) | [🚀Quick Start](#🚀quickstart) | [⚙️Usage](#⚙️usage) | [🤝Contributing](./CONTRIBUTING.md) | [📖Docs](https://sregym.com/docs) | [![Slack](https://img.shields.io/badge/-Slack-4A154B?style=flat-square&logo=slack&logoColor=white)](https://join.slack.com/t/SREGym/shared_invite/zt-3gvqxpkpc-RvCUcyBEMvzvXaQS9KtS_w)
+
+## Overview
+SREGym is an AI-native platform to enable the design, development, and evaluation of AI agents for Site Reliability Engineering (SRE). The core idea is to create live system environments for SRE agents to solve real-world SRE problems. SREGym provides a comprehensive SRE benchmark suite with a wide variety of problems for evaluating SRE agents and also for training next-generation AI agents.
+<br><br>
+
+![SREGym Overview](./sregym_core/assets/SREGymFigure.png)
+
+SREGym is inspired by our prior work on AIOpsLab and ITBench. It is architectured with AI-native usability and extensibility as first-class principles. The SREGym benchmark suites contain 86 different SRE problems. It supports all the problems from AIOpsLab and ITBench, and includes new problems such as OS-level faults, metastable failures, and concurrent failures. See our [problem set](https://sregym.com/problems) for a complete list of problems.
+
 
 In this README.md, I will quickly explain how to run SREGym within the System Intelligence Framework.
 
 For advanced use of *System Intelligence* and *SREGym*, please refer to the docs of [*System Intelligence*](https://github.com/sys-intelligence/system-intelligence-benchmark/tree/main/doc) and [*SREGym*](https://sregym.com/docs)
 
 ## Architecture Explanation
+
+### Abstraction
 
 SREGym has a decoupled design which complies with *System Intelligence* philosophy.
 Here is the correspondence of the components in *System Intelligence* and *SREGym*:
@@ -15,30 +28,41 @@ The `Evaluator` is the evaluation oracles in *SREGym*, which is decoupled from t
 
 The*SREGym*'s `Conductor` serves as the `Environment` in *System Intelligence*.
 
+### Task Details
+
+- **Environment Setup**: SREGym Conductor will inject faults into the environment and lead to failures.
+- **Diagnosis**: The agent will be asked to diagnose the root cause of the failure.
+- **Mitigation**: The agent will be asked to mitigate the failure.
+- **Evaluation**: The RCA result will be evaluated by the LLM as a judge oracle, and the mitigation result will be evaluated by specifically-designed mitigation oracles.
+
+
 ## Run SREGym
 
-1. Prepare `.env` for the configurations. You can make a copy of `.env.example` into `.env` and set the keys in the `.env` file. For System Intelligence, you need to set the API keys for the models you want to test, like below:
+1. Prepare `sregym_core/.env` for the configurations. You can make a copy of `sregym_core/.env.example` into `sregym_core/.env` and set the keys in the `.env` file. For System Intelligence, you need to set the API keys for all the models you want to test, like below:
 
 ``` shell
-PROVIDER_TOOLS="litellm"
-PROVIDER="litellm"
-
 GEMINI_API_KEY="XXXXXX"
 OPENAI_API_KEY="XXXXXX"
 ANTHROPIC_API_KEY="XXXXXX"
 MOONSHOT_API_KEY="XXXXXX"
+AZURE_API_KEY="XXXXXX"
+AZURE_API_BASE="XXXXXX"
+
 ```
-> You do not need to set the `MODEL_TOOLS` in the `.env` file. It will be set automatically by the System Intelligence Framework. It is indented for individual run of SREGym.
+> If you want more pre-defined model configurations, please refer to the `sregym_core/llm_backend/configs.yaml` file and add your own configurations there. Then you can select the backend with cli argument `--model <model_id>`.
 
-2. You need to make a `inventory.yml` file in the `sregym_core/scripts/ansible` directory. You can make a copy of `inventory.yml.example` into `inventory.yml` and set the hosts in the `inventory.yml` file. You can follow the instructions [here](https://github.com/SREGym/SREGym?tab=readme-ov-file#a-kubernetes-cluster-recommended) to get a cluster and set up the inventory file.
+> For MS Azure and AWS Bedrock, you may need more configurations.
 
-3. Install the dependencies
+
+1. You need to make a `inventory.yml` file in the `sregym_core/scripts/ansible` directory. You can make a copy of `inventory.yml.example` into `inventory.yml` and set the hosts in the `inventory.yml` file. You can follow the instructions [here](https://github.com/SREGym/SREGym?tab=readme-ov-file#a-kubernetes-cluster-recommended) to get a cluster and set up the inventory file.
+
+2. Install the dependencies
 ``` shell
 cd benchmarks/sregym
 ./install.sh
 ```
 
-4. Run the benchmark
+1. Run the benchmark
 ``` shell
 cd benchmarks/sregym
 ./run.sh <model_name>
@@ -60,8 +84,12 @@ To orchestrate SysMoBench alongside other benchmarks:
 
 ```bash
 cd cli
-./run_all_local.sh <model_name>
+./run_all_local.sh <model_name> <agent_name>
 ```
+
+## How to Extend the Benchmark
+
+Please refer to the [Adding New Components](https://sregym.com/docs/contributing#adding-new-components) guide in the SREGym documentation.
 
 ## Contribution
 
