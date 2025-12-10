@@ -1,0 +1,34 @@
+{
+    "deploy": {
+        "method": "YAML",
+        "file": "data/knative-operator-eventing/operator-1.6.0.yaml",
+        "init": null
+    },
+    "crd_name": "knativeeventings.operator.knative.dev",
+    "custom_fields": "data.knative-operator-eventing.prune",
+    "blackbox_custom_fields": "data.knative-operator-eventing.prune_blackbox",
+    "k8s_fields": "data.knative-operator-eventing.k8s_mapping",
+    "example_dir": "data/knative-operator-eventing/examples",
+    "seed_custom_resource": "data/knative-operator-eventing/cr.yaml",
+    "analysis": {
+        "github_link": "https://github.com/knative/operator",
+        "commit": "c7cf07a30bbd302ca998937a0d7b13ecd5cc4c8f",
+        "entrypoint": "cmd/operator",
+        "type": "KnativeEventing",
+        "package": "knative.dev/operator/pkg/apis/operator/v1beta1"
+    },
+    "diff_ignore_fields": [
+        "\\['secret'\\]\\['eventing\\-webhook\\-certs'\\]\\['data'\\]\\['ca\\-cert\\.pem'\\]",
+        "\\['secret'\\]\\['eventing\\-webhook\\-certs'\\]\\['data'\\]\\['server\\-cert\\.pem'\\]",
+        "\\['secret'\\]\\['eventing\\-webhook\\-certs'\\]\\['data'\\]\\['server\\-key\\.pem'\\]",
+        "\\['secret'\\]\\['inmemorychannel\\-webhook\\-certs'\\]\\['data'\\]\\['ca\\-cert\\.pem'\\]",
+        "\\['secret'\\]\\['inmemorychannel\\-webhook\\-certs'\\]\\['data'\\]\\['server\\-cert\\.pem'\\]",
+        "\\['secret'\\]\\['inmemorychannel\\-webhook\\-certs'\\]\\['data'\\]\\['server\\-key\\.pem'\\]",
+        "\\['config_map'\\]\\['config\\-logging'\\]\\['data'\\]\\['_example'\\]",
+        "\\['config_map'\\]\\['config\\-logging'\\]\\['metadata'\\]\\['labels'\\]\\['app\\.kubernetes\\.io\\\/part\\-of'\\]",
+        "\\['config_map'\\]\\['config\\-logging'\\]\\['metadata'\\]\\['labels'\\]\\['app\\.kubernetes\\.io\\\/part\\-of'\\]",
+        "\\['config_map'\\]\\['config\\-logging'\\]\\['metadata'\\]\\['labels'\\]\\['operator\\.knative\\.dev\\\/release'\\]",
+        "\\['config_map'\\]\\['config\\-observability'\\]\\['metadata'\\]\\['labels'\\]\\['app\\.kubernetes\\.io\\\/part\\-of'\\]",
+        "\\['config_map'\\]\\['config\\-observability'\\]\\['metadata'\\]\\['labels'\\]\\['operator\\.knative\\.dev\\\/release'\\]"
+    ]
+}

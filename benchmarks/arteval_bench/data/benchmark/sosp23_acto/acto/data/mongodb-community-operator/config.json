@@ -1,0 +1,23 @@
+{
+    "deploy": {
+        "method": "YAML",
+        "file": "data/mongodb-community-operator/operator.yaml",  
+        "init": null
+    },
+    "crd_name": null, 
+    "custom_fields": "data.mongodb-community-operator.prune",
+    "blackbox_custom_fields": "data.mongodb-community-operator.prune_blackbox",
+    "k8s_fields": "data.mongodb-community-operator.k8s_mapping",
+    "seed_custom_resource": "data/mongodb-community-operator/cr.yaml",
+    "example_dir": "data/mongodb-community-operator/config/samples", 
+    "analysis": {
+        "github_link": "https://github.com/mongodb/mongodb-kubernetes-operator.git",
+        "commit": "5c78a242de9a6f71093def52a23bc829fa312ae1",
+        "entrypoint": "cmd/manager",
+        "type": "MongoDBCommunity",
+        "package": "github.com/mongodb/mongodb-kubernetes-operator/api/v1"
+    },
+    "diff_ignore_fields": [
+        "\\['metadata'\\]\\['annotations'\\]\\['agent\\.mongodb\\.com\\\/version'\\]"
+    ]
+}

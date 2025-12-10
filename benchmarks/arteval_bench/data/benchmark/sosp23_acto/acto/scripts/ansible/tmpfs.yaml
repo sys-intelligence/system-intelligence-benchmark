@@ -1,0 +1,44 @@
+---
+- name: Mount file systems
+  hosts: all
+  become: true
+  vars_files:
+    - data.yaml
+
+  tasks:
+    - name: Mount tmpfs on docker path /var/lib/docker
+      ansible.posix.mount:
+        fstype: tmpfs
+        path: /var/lib/docker
+        src: tmpfs
+        state: mounted
+        opts: "size={{ TMPFS_SIZE }}"
+
+    - name: Format the spare partition
+      community.general.filesystem:
+        fstype: ext4
+        dev: /dev/sda4
+
+    - name: Get the home directory
+      become: false
+      command: echo $HOME
+      register: home
+
+    - name: create work dir
+      become: false
+      ansible.builtin.file:
+        path: "{{ home.stdout }}/workdir"
+        state: directory
+
+    - name: Mount the spare partition on acto dir
+      ansible.posix.mount:
+        path: "{{ home.stdout }}/workdir"
+        fstype: ext4
+        src: /dev/sda4
+        state: mounted
+
+    - name: Change ownership of acto dir
+      ansible.builtin.file:
+        path: "{{ home.stdout }}/workdir"
+        mode: "u=rwx,g=rwx,o=rwx"
+        state: directory

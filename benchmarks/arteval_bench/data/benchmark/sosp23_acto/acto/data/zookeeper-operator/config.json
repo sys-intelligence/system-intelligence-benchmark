@@ -1,0 +1,26 @@
+{
+    "deploy": {
+        "method": "YAML",
+        "file": "data/zookeeper-operator/bundle.yaml",
+        "init": null
+    },
+    "crd_name": "zookeeperclusters.zookeeper.pravega.io",
+    "custom_fields": "data.zookeeper-operator.prune",
+    "custom_oracle": "data.zookeeper-operator.oracle",
+    "blackbox_custom_fields": "data.zookeeper-operator.prune_blackbox",
+    "k8s_fields": "data.zookeeper-operator.k8s_mapping",
+    "seed_custom_resource": "data/zookeeper-operator/cr.yaml",
+    "example_dir": "data/zookeeper-operator/examples",
+    "analysis": {
+        "github_link": "https://github.com/pravega/zookeeper-operator.git",
+        "commit": "6ba5f630e2c6f2885fec5e67ae38317491697081",
+        "entrypoint": "cmd/manager",
+        "type": "ZookeeperCluster",
+        "package": "github.com/pravega/zookeeper-operator/pkg/apis/zookeeper/v1beta1"
+    },
+    "wait_time": 45,
+    "diff_ignore_fields": [
+        "\\['config_map'\\]\\['zookeeper\\-operator\\-lock'\\]\\['metadata'\\]\\['owner_references'\\]\\[.*\\]\\['name'\\]",
+        "\\['service'\\]\\['test\\-cluster\\-admin\\-server'\\]\\['spec'\\]\\['ports'\\]\\[.*\\]\\['node_port'\\]"
+    ]
+}
