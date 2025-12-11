@@ -1,0 +1,7 @@
+{
+  "instance_id": "test__simple__echo",
+  "course_id": "test_course",
+  "docker_image": "xuafeng/swe-go-python:latest",
+  "timeout_minutes": 5,
+  "tags": ["simple", "test"]
+}
