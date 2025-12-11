@@ -1,0 +1,16 @@
+{
+  "courses": [
+    {
+      "course_id": "test_course",
+      "name": "Test Course",
+      "institution": "Benchmark University",
+      "year": 2024
+    },
+    {
+      "course_id": "mit_6_5840_2024",
+      "name": "6.5840: Distributed Systems",
+      "institution": "MIT",
+      "year": 2024
+    }
+  ]
+}
