@@ -1,0 +1,14 @@
+{
+  "instance_id": "mit_6_5840_2024_kvraft_4a",
+  "course_id": "mit_6_5840_2024",
+  "docker_image": "xuafeng/swe-go-python:latest",
+  "timeout_minutes": 30,
+  "tags": [
+    "distributed-systems",
+    "kvraft",
+    "raft",
+    "fault-tolerance",
+    "go"
+  ],
+  "repo_url": "git://g.csail.mit.edu/6.5840-golabs-2024"
+}
