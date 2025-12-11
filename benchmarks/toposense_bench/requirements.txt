@@ -1,0 +1,11 @@
+# Hugging Face Ecosystem
+datasets>=2.14.0
+huggingface_hub>=0.16.0
+
+# Data Processing & Utilities
+pandas>=1.5.0
+tqdm
+loguru
+
+# Configuration parsing (for compatibility with older Python versions)
+tomli>=2.0.1; python_version < "3.11"
