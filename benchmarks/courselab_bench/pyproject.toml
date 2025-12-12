@@ -9,7 +9,7 @@ description = "A benchmark for evaluating AI agents on systems programming labs"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "System Intelligence Benchmark Team" }]
+authors = [{ name = "Tarek Elsayed", email = "tareknaser360@gmail.com" }]
 
 dependencies = [
     "pydantic>=2.0",
