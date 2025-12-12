@@ -112,8 +112,9 @@ See `data/test_course/test__simple__echo/` for a minimal example.
 
 ## Adding New Tasks
 
-1. Create a new folder: `data/{course_id}/{task_id}/`
-2. Add the 4 required files: `config.json`, `task.md`, `preprocess.sh`, `evaluate.sh`
-3. Make scripts executable: `chmod +x data/{course_id}/{task_id}/*.sh`
-4. Run `python prepare_dataset.py` to regenerate `tasks.jsonl`
-5. Run the benchmark
+1. If you are adding tasks for a new course, first add a new entry to [`/data/courses.json`](./data/courses.json) with the course metadata
+2. Create a new folder: `data/{course_id}/{task_id}/` (where `{course_id}` matches the entry in `courses.json`)
+3. Add the 4 required files: `config.json`, `task.md`, `preprocess.sh`, `evaluate.sh` for each task
+4. Make scripts executable
+5. Run `python prepare_dataset.py` to regenerate `tasks.jsonl`
+6. Run the benchmark
