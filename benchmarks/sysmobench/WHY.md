@@ -11,7 +11,7 @@ Formal verification provides the strongest guarantees of system correctness, yet
 3. **Generate Executable Specifications**: Produce syntactically correct TLA+ code that passes compilation (SANY), runs successfully (TLC), and satisfies invariants
 4. **Validate Against Real Behavior**: Ensure generated specifications conform to actual system execution traces and maintain specified safety/liveness properties
 
-The benchmark includes nine diverse systems spanning concurrency primitives (Asterinas spinlock/mutex/rwmutex), consensus protocols (Etcd Raft, Redis Raft, Xline CURP), and distributed services (PGo dqueue/locksvc/raftkvs). Success requires agents to handle systems ranging from 175 to 4,064 lines of source code and produce TLA+ specifications from 75 to 508 lines.
+The benchmark includes eleven diverse systems spanning concurrency primitives (Asterinas spinlock/mutex/rwmutex/ringbuffer), consensus protocols (Etcd Raft, Redis Raft, Xline CURP, ZooKeeper), and distributed services (PGo dqueue/locksvc/raftkvs). Success requires agents to handle systems ranging from 175 to 5,360 lines of source code and produce TLA+ specifications from 75 to 508 lines.
 
 ## How This Fits Into System Intelligence
 
