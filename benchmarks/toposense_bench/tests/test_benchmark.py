@@ -16,7 +16,7 @@ class TestTopoSenseBench(unittest.TestCase):
             # Load the dataset in streaming mode to avoid downloading the entire file.
             # Note: Using 'train' split as per default Hugging Face JSONL behavior.
             dataset = load_dataset(
-                "IoT-Brain-Project/TopoSense-Bench",
+                "IoT-Brain/TopoSense-Bench",
                 "queries",
                 split="train",
                 streaming=True

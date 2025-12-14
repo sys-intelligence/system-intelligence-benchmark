@@ -37,6 +37,7 @@ Please return a JSON object:
     "answer": "sensor_name_here",
     "explanation": "Brief reasoning based on map tags"
 }
+```
 Output ONLY the JSON code block.
 """
 def compute_summary(results_df):

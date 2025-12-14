@@ -6,7 +6,7 @@ Originating from the **ACM MobiCom '26** paper *"IoT-Brain: Grounding LLMs for S
 
 ## 📊 Overview
 
-- **Source**: Hosted on [Hugging Face](https://huggingface.co/datasets/IoT-Brain-Project/TopoSense-Bench) (Seamlessly integrated via the `datasets` library).
+- **Source**: Hosted on [Hugging Face](https://huggingface.co/datasets/IoT-Brain/TopoSense-Bench) (Seamlessly integrated via the `datasets` library).
 - **Scale**:
   - **5,250** Natural Language Queries.
   - **2,510** Sensors (Cameras).
