@@ -96,6 +96,7 @@ Markdown file containing the problem statement given to the agent.
 Shell script that runs before the agent starts. Use this to:
 
 - Set up the environment
+- If the lab depends on previous labs, copy reference implementations to prevent distractions
 - Create checksums of files that shouldn't be modified
 - Initialize test data
 
