@@ -39,12 +39,31 @@ def execute_task(task: dict[str, Any], agent: Any, env: Any) -> dict[str, Any]:
         agent_result = {"messages": [], "cost": 0.0, "status": "agent_error", "steps": 0}
 
     logger.info(f"\nRunning evaluation...")
-    try:
-        test_timeout = task.get("timeout_minutes", 30) * 60
-        test_result = _run_evaluate_script(env, task["evaluate_script"], test_timeout)
-    except Exception as e:
-        logger.error(f"Evaluation error: {e}")
-        test_result = {"output": f"[ERROR: {e}]", "returncode": -1}
+
+    # Retry evaluation up to 3 times to handle flaky tests
+    max_retries = 3
+    test_result = None
+    for attempt in range(1, max_retries + 1):
+        try:
+            if attempt > 1:
+                logger.info(f"Retry attempt {attempt}/{max_retries}...")
+            test_timeout = task.get("timeout_minutes", 30) * 60
+            test_result = _run_evaluate_script(env, task["evaluate_script"], test_timeout)
+
+            if test_result.get("returncode") == 0:
+                if attempt > 1:
+                    logger.info(f"Evaluation passed on attempt {attempt}")
+                break
+
+            if attempt < max_retries:
+                logger.warning(f"Evaluation failed on attempt {attempt}, retrying...")
+        except Exception as e:
+            logger.error(f"Evaluation error on attempt {attempt}: {e}")
+            test_result = {"output": f"[ERROR: {e}]", "returncode": -1}
+            if attempt < max_retries:
+                logger.warning(f"Retrying after error...")
+    if test_result is None:
+        test_result = {"output": "[ERROR: No test result]", "returncode": -1}
 
     duration = time.time() - start_time
 

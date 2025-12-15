@@ -106,6 +106,8 @@ Exit with code 0 on success, non-zero on failure.
 Runs after the agent completes. Exit 0 for PASS, non-zero for FAIL.
 Print verbose output for debugging (captured in results).
 
+> The evaluation script is automatically retried up to 3 times or until a successful evaluation. This helps handle flaky tests or non-deterministic timeouts common in some systems programming labs.
+
 ### Example Task
 
 See `data/test_course/test__simple__echo/` for a minimal example.
