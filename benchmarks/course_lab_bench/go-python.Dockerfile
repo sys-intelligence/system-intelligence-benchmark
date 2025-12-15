@@ -25,11 +25,13 @@ RUN apt-get update && apt-get install -y wget tar git build-essential \
 
 ENV PATH="/usr/local/go/bin:${PATH}"
 
-RUN python --version && go version
-
 SHELL ["/bin/bash", "-c"]
 # This is where pipx installs things
-ENV PATH="$PATH:/root/.local/bin/" 
+ENV PATH="$PATH:/root/.local/bin/"
+
+# Write PATH to profile files so it's available in login shells (bash -lc)
+RUN echo 'export PATH="/usr/local/go/bin:/root/.local/bin:$PATH"' >> /etc/profile && \
+    echo 'export PATH="/usr/local/go/bin:/root/.local/bin:$PATH"' >> /root/.bashrc
 
 RUN python --version && go version
 
