@@ -1,15 +1,16 @@
 #!/bin/bash
 set -e
 
-echo "=== Preprocessing KVRaft Lab 4A ==="
+echo '=== Preprocessing 4A Kvraft ==='
 
 cd /workspace
 
-echo "KVRaft depends on Raft implementation from Lab 3"
-echo "Copying reference Raft implementation..."
+echo 'Copying reference implementations from previous labs...'
 
-echo '  Copying raft.go'
-cat > src/raft/raft.go << 'RAFT_EOF'
+echo 'Copying raft implementation...'
+mkdir -p src/raft
+
+cat > src/raft/raft.go << 'FILE_EOF_raft_raft_go'
 package raft
 
 //
@@ -427,10 +428,9 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	return rf
 }
 
-RAFT_EOF
+FILE_EOF_raft_raft_go
 
-echo '  Copying election.go'
-cat > src/raft/election.go << 'RAFT_EOF'
+cat > src/raft/election.go << 'FILE_EOF_raft_election_go'
 package raft
 
 import (
@@ -555,10 +555,9 @@ func (rf *Raft) isElectionTimeout() bool {
 	return time.Now().After(rf.electionTimeStamp.Add(rf.electionTimeout))
 }
 
-RAFT_EOF
+FILE_EOF_raft_election_go
 
-echo '  Copying append_entries.go'
-cat > src/raft/append_entries.go << 'RAFT_EOF'
+cat > src/raft/append_entries.go << 'FILE_EOF_raft_append_entries_go'
 package raft
 
 // Source: https://pdos.csail.mit.edu/6.824/papers/raft-extended.pdf, Figure 2
@@ -774,10 +773,9 @@ func (rf *Raft) broadcaster(peer int) {
 	}
 }
 
-RAFT_EOF
+FILE_EOF_raft_append_entries_go
 
-echo '  Copying install_snapshot.go'
-cat > src/raft/install_snapshot.go << 'RAFT_EOF'
+cat > src/raft/install_snapshot.go << 'FILE_EOF_raft_install_snapshot_go'
 package raft
 
 type InstallSnapshotArgs struct {
@@ -871,10 +869,9 @@ func (rf *Raft) sendInstallSnapshot(server int, args *InstallSnapshotArgs) {
 	rf.persister.Save(rf.encodeState(), args.Data)
 }
 
-RAFT_EOF
+FILE_EOF_raft_install_snapshot_go
 
-echo '  Copying util.go'
-cat > src/raft/util.go << 'RAFT_EOF'
+cat > src/raft/util.go << 'FILE_EOF_raft_util_go'
 package raft
 
 import (
@@ -892,10 +889,684 @@ func DPrintf(format string, a ...interface{}) {
 	log.Printf(format, a...)
 }
 
-RAFT_EOF
+FILE_EOF_raft_util_go
+
+echo 'Copying kvsrv implementation...'
+mkdir -p src/kvsrv
+
+cat > src/kvsrv/client.go << 'FILE_EOF_kvsrv_client_go'
+package kvsrv
+
+import (
+	"crypto/rand"
+	"math/big"
+
+	"6.5840/labrpc"
+)
+
+type Clerk struct {
+	server   *labrpc.ClientEnd
+	clientId int64
+	seqNum   int
+}
+
+func nrand() int64 {
+	max := big.NewInt(int64(1) << 62)
+	bigx, _ := rand.Int(rand.Reader, max)
+	x := bigx.Int64()
+	return x
+}
+
+func MakeClerk(server *labrpc.ClientEnd) *Clerk {
+	ck := new(Clerk)
+	ck.server = server
+	ck.clientId = nrand()
+	ck.seqNum = 0
+	return ck
+}
+
+// fetch the current value for a key.
+// returns "" if the key does not exist.
+// keeps trying forever in the face of all other errors.
+//
+// you can send an RPC with code like this:
+// ok := ck.server.Call("KVServer.Get", &args, &reply)
+//
+// the types of args and reply (including whether they are pointers)
+// must match the declared types of the RPC handler function's
+// arguments. and reply must be passed as a pointer.
+func (ck *Clerk) Get(key string) string {
+	ck.seqNum++
+	args := GetArgs{
+		Key:      key,
+		ClientId: ck.clientId,
+		SeqNum:   ck.seqNum,
+	}
+	reply := GetReply{}
+	for !ck.server.Call("KVServer.Get", &args, &reply) {
+	}
+	return reply.Value
+}
+
+// shared by Put and Append.
+//
+// you can send an RPC with code like this:
+// ok := ck.server.Call("KVServer."+op, &args, &reply)
+//
+// the types of args and reply (including whether they are pointers)
+// must match the declared types of the RPC handler function's
+// arguments. and reply must be passed as a pointer.
+func (ck *Clerk) PutAppend(key string, value string, op string) string {
+	ck.seqNum++
+	args := PutAppendArgs{
+		Key:      key,
+		Value:    value,
+		ClientId: ck.clientId,
+		SeqNum:   ck.seqNum,
+	}
+	reply := PutAppendReply{}
+	for !ck.server.Call("KVServer."+op, &args, &reply) {
+	}
+	return reply.Value
+}
+
+func (ck *Clerk) Put(key string, value string) {
+	ck.PutAppend(key, value, "Put")
+}
+
+// Append value to key's value and return that value
+func (ck *Clerk) Append(key string, value string) string {
+	return ck.PutAppend(key, value, "Append")
+}
+
+FILE_EOF_kvsrv_client_go
+
+cat > src/kvsrv/common.go << 'FILE_EOF_kvsrv_common_go'
+package kvsrv
+
+type PutAppendArgs struct {
+	Key      string
+	Value    string
+	ClientId int64
+	SeqNum   int
+}
+
+type PutAppendReply struct {
+	Value string
+}
+
+type GetArgs struct {
+	Key      string
+	ClientId int64
+	SeqNum   int
+}
+
+type GetReply struct {
+	Value string
+}
+
+FILE_EOF_kvsrv_common_go
+
+cat > src/kvsrv/server.go << 'FILE_EOF_kvsrv_server_go'
+package kvsrv
+
+import (
+	"log"
+	"sync"
+)
+
+const Debug = false
+
+func DPrintf(format string, a ...interface{}) (n int, err error) {
+	if Debug {
+		log.Printf(format, a...)
+	}
+	return
+}
+
+type Cache struct {
+	seq   int
+	value string
+}
+
+type KVServer struct {
+	mu    sync.Mutex
+	data  map[string]string
+	cache map[int64]*Cache // client id -> seq ->value
+}
+
+func (kv *KVServer) Get(args *GetArgs, reply *GetReply) {
+	kv.mu.Lock()
+	defer kv.mu.Unlock()
+	clientId, seqNum := args.ClientId, args.SeqNum
+	key := args.Key
+	reply.Value = ""
+	// Either the client is new or the seqNum is greater than the cache seqNum.
+	// In both cases, we can return the value directly.
+	if ca, ok := kv.cache[clientId]; !ok || ca.seq <= seqNum {
+		reply.Value = kv.data[key]
+		return
+	}
+}
+
+func (kv *KVServer) Put(args *PutAppendArgs, reply *PutAppendReply) {
+	kv.mu.Lock()
+	defer kv.mu.Unlock()
+	clientId, seqNum := args.ClientId, args.SeqNum
+	k, v := args.Key, args.Value
+	reply.Value = ""
+	if ca, ok := kv.cache[clientId]; ok && ca.seq >= seqNum {
+		return
+	} else if !ok {
+		kv.cache[clientId] = new(Cache)
+	}
+	kv.data[k] = v
+	kv.cache[clientId].seq = seqNum
+	kv.cache[clientId].value = reply.Value
+}
+
+func (kv *KVServer) Append(args *PutAppendArgs, reply *PutAppendReply) {
+	kv.mu.Lock()
+	defer kv.mu.Unlock()
+	clientId, seqNum := args.ClientId, args.SeqNum
+	k, v := args.Key, args.Value
+	reply.Value = ""
+	// For ca.seq == seqNum, it means that the value has been appended.
+	// However, the response might be lost, so we return the cache value.
+	// For ca.seq > seqNum, it doesnt matter what the value is, just return.
+	if ca, ok := kv.cache[clientId]; ok && ca.seq >= seqNum {
+		reply.Value = ca.value
+		return
+	} else if !ok {
+		kv.cache[clientId] = new(Cache)
+	}
+	reply.Value = kv.data[k]
+	kv.cache[clientId].seq = seqNum
+	kv.cache[clientId].value = kv.data[k]
+	kv.data[k] += v
+}
+
+func StartKVServer() *KVServer {
+	kv := new(KVServer)
+	kv.data = make(map[string]string)
+	kv.cache = make(map[int64]*Cache)
+	return kv
+}
+
+FILE_EOF_kvsrv_server_go
+
+echo 'Copying mr implementation...'
+mkdir -p src/mr
+
+cat > src/mr/coordinator.go << 'FILE_EOF_mr_coordinator_go'
+package mr
+
+import (
+	"log"
+	"math"
+	"net"
+	"net/http"
+	"net/rpc"
+	"os"
+	"sync"
+	"time"
+)
+
+const SUCCESS = math.MaxInt32
+
+type Coordinator struct {
+	// Your definitions here.
+	tasks   chan Work // a taskqueue
+	mu      sync.Mutex
+	terms   []int
+	wg      sync.WaitGroup
+	nMap    int
+	nReduce int
+	done    bool
+}
+
+func (c *Coordinator) CallGetWork(args *WorkArgs, reply *WorkReply) error {
+	if len(c.tasks) == 0 {
+		reply.HasWork = false
+		return nil
+	}
+	reply.Work = <-c.tasks
+	c.mu.Lock()
+	reply.Term = c.terms[reply.Work.FileIndex]
+	c.mu.Unlock()
+	reply.HasWork = true
+
+	go func() {
+		time.Sleep(10 * time.Second)
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		if c.terms[reply.Work.FileIndex] == SUCCESS {
+			return
+		}
+		c.terms[reply.Work.FileIndex]++
+		c.tasks <- reply.Work
+	}()
+
+	return nil
+}
+
+func (c *Coordinator) CallReport(args *ReportArgs, reply *ReportReply) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.terms[args.Work.FileIndex] != args.Term {
+		reply.Success = false
+		return nil
+	}
+	c.terms[args.Work.FileIndex] = SUCCESS
+	c.wg.Done()
+	reply.Success = true
+	return nil
+}
+
+// start a thread that listens for RPCs from worker.go
+func (c *Coordinator) server() {
+	rpc.Register(c)
+	rpc.HandleHTTP()
+	//l, e := net.Listen("tcp", ":1234")
+	sockname := coordinatorSock()
+	os.Remove(sockname)
+	l, e := net.Listen("unix", sockname)
+	if e != nil {
+		log.Fatal("listen error:", e)
+	}
+	go http.Serve(l, nil)
+}
+
+// main/mrcoordinator.go calls Done() periodically to find out
+// if the entire job has finished.
+func (c *Coordinator) Done() bool {
+	return c.done
+}
+
+func StartReduceWork(c *Coordinator) {
+	c.wg.Wait()
+	c.terms = make([]int, c.nReduce)
+	for i := 0; i < c.nReduce; i++ {
+		c.tasks <- Work{
+			WorkType:  REDUCE,
+			FileIndex: i,
+			NReduce:   c.nReduce,
+			NMapWork:  c.nMap,
+		}
+		c.wg.Add(1)
+	}
+	go WorkDone(c)
+}
+
+func WorkDone(c *Coordinator) {
+	c.wg.Wait()
+	c.done = true
+}
+
+// create a Coordinator.
+// main/mrcoordinator.go calls this function.
+// nReduce is the number of reduce tasks to use.
+func MakeCoordinator(files []string, nReduce int) *Coordinator {
+
+	var buflen int
+	if len(files) > nReduce {
+		buflen = len(files)
+	} else {
+		buflen = nReduce
+	}
+
+	c := Coordinator{
+		nMap:    len(files),
+		nReduce: nReduce,
+		wg:      sync.WaitGroup{},
+		tasks:   make(chan Work, buflen),
+		terms:   make([]int, len(files)),
+		done:    false,
+	}
+
+	for idx, file := range files {
+		c.tasks <- Work{
+			WorkType:  MAP,
+			Filename:  file,
+			FileIndex: idx,
+			NReduce:   c.nReduce,
+			NMapWork:  c.nMap,
+		}
+		c.wg.Add(1)
+	}
+	go StartReduceWork(&c)
+	c.server()
+
+	return &c
+}
+
+FILE_EOF_mr_coordinator_go
+
+cat > src/mr/rpc.go << 'FILE_EOF_mr_rpc_go'
+package mr
+
+//
+// RPC definitions.
+//
+// remember to capitalize all names.
+//
+
+import (
+	"os"
+	"strconv"
+)
+
+//
+// example to show how to declare the arguments
+// and reply for an RPC.
+//
+
+type ExampleArgs struct {
+	X int
+}
+
+type ExampleReply struct {
+	Y int
+}
+
+/*-Define Work-*/
+
+type WorkStatus int
+
+const (
+	IDLE WorkStatus = iota
+	START
+	FINISH
+)
+
+type WorkType int
+
+const (
+	MAP WorkType = iota
+	REDUCE
+)
+
+type Work struct {
+	WorkType  WorkType // MAP or REDUCE
+	Filename  string
+	FileIndex int // This is a convention for mr-X index
+	NMapWork  int // how many map files
+	NReduce   int // how many reduce files
+}
+
+type WorkArgs struct {
+	WorkerID int
+}
+
+type WorkReply struct {
+	HasWork bool
+	Work    Work
+	Term    int
+}
+
+/*-Define Report-*/
+// Report work finish only if success
+type ReportArgs struct {
+	Work Work
+	Term int
+}
+
+type ReportReply struct {
+	Success bool
+}
+
+// Cook up a unique-ish UNIX-domain socket name
+// in /var/tmp, for the coordinator.
+// Can't use the current directory since
+// Athena AFS doesn't support UNIX-domain sockets.
+func coordinatorSock() string {
+	s := "/var/tmp/5840-mr-"
+	s += strconv.Itoa(os.Getuid())
+	return s
+}
+
+FILE_EOF_mr_rpc_go
+
+cat > src/mr/worker.go << 'FILE_EOF_mr_worker_go'
+package mr
+
+import (
+	"encoding/json"
+	"fmt"
+	"hash/fnv"
+	"io/ioutil"
+	"log"
+	"net/rpc"
+	"os"
+	"sort"
+	"time"
+)
+
+// for sorting by key.
+type ByKey []KeyValue
+
+// for sorting by key.
+func (a ByKey) Len() int           { return len(a) }
+func (a ByKey) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByKey) Less(i, j int) bool { return a[i].Key < a[j].Key }
+
+// Map functions return a slice of KeyValue.
+type KeyValue struct {
+	Key   string
+	Value string
+}
+
+// use ihash(key) % NReduce to choose the reduce
+// task number for each KeyValue emitted by Map.
+func ihash(key string) int {
+	h := fnv.New32a()
+	h.Write([]byte(key))
+	return int(h.Sum32() & 0x7fffffff)
+}
+
+// main/mrworker.go calls this function.
+func Worker(mapf func(string, string) []KeyValue,
+	reducef func(string, []string) string) {
+
+	// Your worker implementation here.
+	for {
+		r := CallGetWok()
+		if !r.HasWork {
+			time.Sleep(3 * time.Second)
+			continue
+		}
+
+		switch r.Work.WorkType {
+		case MAP:
+			DoMapWork(r.Work, mapf, r.Term)
+		case REDUCE:
+			DoReduceWork(r.Work, reducef, r.Term)
+		}
+	}
+}
+
+func DoReduceWork(work Work, reducef func(string, []string) string, term int) {
+	fileIndex := work.FileIndex
+	intermediate := []KeyValue{}
+
+	for i := 0; i < work.NMapWork; i++ {
+		filename := fmt.Sprintf("mr-%d-%d", i, fileIndex)
+		file, err := os.Open(filename)
+
+		if err != nil {
+			log.Fatalf("cannot open %v", filename)
+		}
+
+		dec := json.NewDecoder(file)
+
+		for {
+			var kv KeyValue
+			if err := dec.Decode(&kv); err != nil {
+				break
+			}
+			intermediate = append(intermediate, kv)
+		}
+		file.Close()
+	}
+
+	sort.Sort(ByKey(intermediate))
+
+	oname := fmt.Sprintf("mr-out-%d", fileIndex)
+	ofile, _ := ioutil.TempFile(".", oname)
+
+	//
+	// call Reduce on each distinct key in intermediate[],
+	// and print the result to mr-out-0.
+	//
+	i := 0
+	for i < len(intermediate) {
+		j := i + 1
+		for j < len(intermediate) && intermediate[j].Key == intermediate[i].Key {
+			j++
+		}
+		values := []string{}
+		for k := i; k < j; k++ {
+			values = append(values, intermediate[k].Value)
+		}
+		output := reducef(intermediate[i].Key, values)
+
+		// this is the correct format for each line of Reduce output.
+		fmt.Fprintf(ofile, "%v %v\n", intermediate[i].Key, output)
+
+		i = j
+	}
+
+	os.Rename(ofile.Name(), oname)
+
+	CallReport(work, term)
+}
+
+func DoMapWork(work Work, mapf func(string, string) []KeyValue, term int) {
+	filename := work.Filename
+
+	file, err := os.Open(filename)
+	if err != nil {
+		log.Fatalf("cannot open %v", filename)
+	}
+
+	content, err := ioutil.ReadAll(file)
+
+	if err != nil {
+		log.Fatalf("cannot read %v", filename)
+	}
+
+	file.Close()
+
+	kva := mapf(work.Filename, string(content))
+
+	//make a
+	for i := 0; i < work.NReduce; i++ {
+		imtFilename := fmt.Sprintf("mr-%d-%d", work.FileIndex, i)
+
+		imtFile, err := ioutil.TempFile(".", imtFilename)
+
+		enc := json.NewEncoder(imtFile)
+
+		if err != nil {
+			log.Fatalf("cannot create %v", imtFilename)
+		}
+
+		for _, kv := range kva {
+			hash := ihash(kv.Key) % work.NReduce
+			if hash == i {
+				err := enc.Encode(&kv)
+				if err != nil {
+					log.Fatalf("cannot encode %v", kv)
+				}
+			}
+		}
+
+		imtFile.Close()
+
+		os.Rename(imtFile.Name(), imtFilename)
+	}
+
+	CallReport(work, term)
+}
+
+func CallReport(w Work, term int) {
+	args := ReportArgs{
+		Work: w,
+		Term: term,
+	}
+	reply := ReportReply{}
+	ok := call("Coordinator.CallReport", &args, &reply)
+
+	if !ok {
+		fmt.Printf("call failed!\n")
+	}
+}
+
+func CallGetWok() WorkReply {
+	args := WorkArgs{}
+	reply := WorkReply{}
+	ok := call("Coordinator.CallGetWork", &args, &reply)
+
+	if !ok {
+		fmt.Printf("call failed!\n")
+	}
+
+	return reply
+}
+
+// example function to show how to make an RPC call to the coordinator.
+//
+// the RPC argument and reply types are defined in rpc.go.
+func CallExample() {
+
+	// declare an argument structure.
+	args := ExampleArgs{}
+
+	// fill in the argument(s).
+	args.X = 99
+
+	// declare a reply structure.
+	reply := ExampleReply{}
+
+	// send the RPC request, wait for the reply.
+	// the "Coordinator.Example" tells the
+	// receiving server that we'd like to call
+	// the Example() method of struct Coordinator.
+	ok := call("Coordinator.Example", &args, &reply)
+	if ok {
+		// reply.Y should be 100.
+		fmt.Printf("reply.Y %v\n", reply.Y)
+	} else {
+		fmt.Printf("call failed!\n")
+	}
+}
+
+// send an RPC request to the coordinator, wait for the response.
+// usually returns true.
+// returns false if something goes wrong.
+func call(rpcname string, args interface{}, reply interface{}) bool {
+	// c, err := rpc.DialHTTP("tcp", "127.0.0.1"+":1234")
+	sockname := coordinatorSock()
+	c, err := rpc.DialHTTP("unix", sockname)
+	if err != nil {
+		log.Fatal("dialing:", err)
+	}
+	defer c.Close()
+
+	err = c.Call(rpcname, args, reply)
+	if err == nil {
+		return true
+	}
+
+	fmt.Println(err)
+	return false
+}
+
+FILE_EOF_mr_worker_go
 
 
-echo "Creating checksums for protected files"
+echo 'Creating checksums for protected files...'
 PROTECTED_FILES=(
     "src/kvraft/config.go"
     "src/kvraft/test_test.go"
@@ -904,12 +1575,16 @@ PROTECTED_FILES=(
 mkdir -p /tmp/checksums
 for file in "${PROTECTED_FILES[@]}"; do
     if [ -f "$file" ]; then
-        sha256sum "$file" > "/tmp/checksums/$(basename $file).sha256"
+        sha256sum "$file" > "/tmp/checksums/$(basename $file).$(dirname $file | tr '/' '_').sha256"
         echo "  $file"
     fi
 done
 
+echo ''
+echo 'Preprocessing complete'
+echo 'Agent should focus on implementing:'
+echo '  - src/kvraft/client.go'
+echo '  - src/kvraft/common.go'
+echo '  - src/kvraft/server.go'
 
-
-echo "Preprocessing complete"
 exit 0
