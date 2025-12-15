@@ -159,7 +159,12 @@ command here
 ```
 - After each command, wait for the output before proceeding
 - When you have completed the task, run: echo "TASK_COMPLETE"
-- Be concise and focused on solving the task"""
+- Be concise and focused on solving the task
+
+Important: Focus on the Current Lab
+- You are working on a specific lab assignment from a course sequence
+- Avoid getting distracted by code from earlier labs in the course sequence
+- The task description clearly states which files you should modify"""
 
     def _task_prompt(self, task: dict[str, Any]) -> str:
         return f"""# Task: {task['instance_id']}
