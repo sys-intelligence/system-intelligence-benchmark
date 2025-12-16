@@ -170,31 +170,6 @@ all_bugs = {
                 consequences=[BugConsequence.OPERATION_OUTAGE]
             ),
     },
-    'knative-operator-serving': {
-        'knop-1137':
-            BugConfig(
-                category=BugCateogry.OPERATOR_ERROR,
-                dir='test/knop-1137',
-                runtime_error=True,
-                consequences=[BugConsequence.OPERATION_OUTAGE]
-            ),
-        'knop-1157':
-            BugConfig(
-                category=BugCateogry.OPERATOR_ERROR,
-                dir='test/knop-1157',
-                difftest=True,
-                consequences=[BugConsequence.MISCONFIGURATION]
-            ),
-    },
-    'knative-operator-eventing': {
-        'knop-1158':
-            BugConfig(
-                category=BugCateogry.UNDESIRED_STATE,
-                dir='test/knop-1158',
-                runtime_error=True,
-                consequences=[BugConsequence.SYSTEM_FAILURE, BugConsequence.RELIABILITY_ISSUE]
-            ),
-    },
     'mongodb-community-operator': {
         'mgopone-1024':
             BugConfig(
@@ -363,96 +338,6 @@ all_bugs = {
                 dir='test/rbop-992',
                 difftest=True,
                 consequences=[BugConsequence.RESOURCE_ISSUE]
-            ),
-    },
-    'redis-operator': {
-        'rdopone-400':
-            BugConfig(
-                category=BugCateogry.UNDESIRED_STATE,
-                dir='test/rdopone-400',
-                difftest=True,
-                declaration=True,
-                consequences=[BugConsequence.MISCONFIGURATION]
-            ),
-        'rdopone-407':
-            BugConfig(
-                category=BugCateogry.UNDESIRED_STATE,
-                dir='test/rdopone-407',
-                declaration=True,
-                consequences=[BugConsequence.RESOURCE_ISSUE]
-            ),
-        'rdopone-552':
-            BugConfig(
-                category=BugCateogry.RECOVERY_FAILURE,
-                dir='test/rdopone-552',
-                recovery=True,
-                consequences=[BugConsequence.RELIABILITY_ISSUE]
-            ),
-    },
-    'redis-ot-container-kit-operator': {
-        'rdoptwo-280':
-            BugConfig(
-                category=BugCateogry.UNDESIRED_STATE,
-                dir='test/rdoptwo-280',
-                declaration=True,
-                difftest=True,
-                consequences=[BugConsequence.RESOURCE_ISSUE]
-            ),
-        'rdoptwo-283':
-            BugConfig(
-                category=BugCateogry.OPERATOR_ERROR,
-                dir='test/rdoptwo-283',
-                runtime_error=True,
-                consequences=[BugConsequence.OPERATION_OUTAGE]
-            ),
-        'rdoptwo-286':
-            BugConfig(
-                category=BugCateogry.OPERATOR_ERROR,
-                dir='test/rdoptwo-286',
-                runtime_error=True,
-                consequences=[BugConsequence.OPERATION_OUTAGE]
-            ),
-        'rdoptwo-287':
-            BugConfig(
-                category=BugCateogry.UNDESIRED_STATE,
-                dir='test/rdoptwo-287',
-                declaration=True,
-                consequences=[BugConsequence.RELIABILITY_ISSUE]
-            ),
-        'rdoptwo-290':
-            BugConfig(
-                category=BugCateogry.UNDESIRED_STATE,
-                dir='test/rdoptwo-290',
-                declaration=True,
-                consequences=[BugConsequence.RESOURCE_ISSUE]
-            ),
-        'rdoptwo-292':
-            BugConfig(
-                category=BugCateogry.OPERATOR_ERROR,
-                dir='test/rdoptwo-291',
-                runtime_error=True,
-                consequences=[BugConsequence.OPERATION_OUTAGE]
-            ),
-        'rdoptwo-297':
-            BugConfig(
-                category=BugCateogry.SYSTEM_ERROR,
-                dir='test/rdoptwo-297',
-                runtime_error=True,
-                consequences=[BugConsequence.SYSTEM_FAILURE, BugConsequence.RELIABILITY_ISSUE]
-            ),
-        'rdoptwo-474':
-            BugConfig(
-                category=BugCateogry.UNDESIRED_STATE,
-                dir='test/rdoptwo-474',
-                difftest=True,
-                consequences=[BugConsequence.MISCONFIGURATION]
-            ),
-        'rdoptwo-480':
-            BugConfig(
-                category=BugCateogry.RECOVERY_FAILURE,
-                dir='test/rdoptwo-480',
-                recovery=True,
-                consequences=[BugConsequence.OPERATION_OUTAGE]
             ),
     },
     'tidb-operator': {
