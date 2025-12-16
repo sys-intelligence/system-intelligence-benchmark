@@ -2,7 +2,21 @@
 from pathlib import Path
 
 HOME = Path.home() / "sosp23_acto"
-REPO_DIRS = f"{HOME}/acto"
+REPO_DIR = f"{HOME}/acto"
+
+RESULTS_PATH_TABLES = {
+    "table5": f"{REPO_DIR}/table5.txt", 
+    "table6": f"{REPO_DIR}/table6.txt",
+    "table7": f"{REPO_DIR}/table7.txt",
+    "table8": f"{REPO_DIR}/table8.txt"
+  }
+REFERENCE_PATH_TABLES = {
+    "table5": f"{HOME}/_agent_eval/refs/table5.ref.json", 
+    "table6": f"{HOME}/_agent_eval/refs/table6.ref.json",
+    "table7": f"{HOME}/_agent_eval/refs/table7.ref.json",
+    "table8": f"{HOME}/_agent_eval/refs/table8.ref.json"
+  }
+
 SIMILARITY_RATIO = 0.75
 
 

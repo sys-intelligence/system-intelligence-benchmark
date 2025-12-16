@@ -3,7 +3,7 @@ import re
 import shutil
 import subprocess
 from dataclasses import dataclass
-from typing import Iterable, Optional, Tuple
+from typing import Iterable, List, Optional, Tuple
 from pathlib import Path
 
 from utils import HOME, REPO_DIR
@@ -22,7 +22,7 @@ class Dependency:
   compare: Optional[str] = None
 
 
-DEPENDENCIES: list[Dependency] = [
+DEPENDENCIES: List[Dependency] = [
 
   # Basic tooling
   Dependency(
@@ -127,7 +127,7 @@ class OracleEnvSetup:
     Check that Python virtual environment is succesfully created 
     and that Go-related paths are set properly.
     """
-    problems: list[str] = []
+    problems: List[str] = []
 
     # Check repositories exist
     if not Path(self.expected_root_dir).exists():
@@ -182,7 +182,7 @@ class OracleEnvSetup:
     return f"{dep.name} check misconfigured"
 
   def prereqs_check(self):
-    problems: list[str] = []
+    problems: List[str] = []
     for dep in DEPENDENCIES:
       msg = self.check_dependency(dep)
       if msg:

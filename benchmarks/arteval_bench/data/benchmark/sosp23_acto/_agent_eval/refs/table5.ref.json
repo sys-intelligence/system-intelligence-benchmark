@@ -1,0 +1,99 @@
+{
+  "operators": [
+    {
+      "operator": "CassOp",
+      "undesired_state": 2,
+      "system_error": 0,
+      "operator_error": 0,
+      "recovery_failure": 2,
+      "total": 4
+    },
+    {
+      "operator": "CockroachOp",
+      "undesired_state": 3,
+      "system_error": 0,
+      "operator_error": 2,
+      "recovery_failure": 0,
+      "total": 5
+    },
+    {
+      "operator": "KnativeOp",
+      "undesired_state": 1,
+      "system_error": 0,
+      "operator_error": 2,
+      "recovery_failure": 0,
+      "total": 3
+    },
+    {
+      "operator": "OCK-RedisOp",
+      "undesired_state": 4,
+      "system_error": 1,
+      "operator_error": 3,
+      "recovery_failure": 1,
+      "total": 9
+    },
+    {
+      "operator": "OFC-MongoDBOp",
+      "undesired_state": 3,
+      "system_error": 1,
+      "operator_error": 2,
+      "recovery_failure": 2,
+      "total": 8
+    },
+    {
+      "operator": "PCN-MongoDBOp",
+      "undesired_state": 4,
+      "system_error": 0,
+      "operator_error": 0,
+      "recovery_failure": 1,
+      "total": 5
+    },
+    {
+      "operator": "RabbitMQOp",
+      "undesired_state": 3,
+      "system_error": 0,
+      "operator_error": 0,
+      "recovery_failure": 0,
+      "total": 3
+    },
+    {
+      "operator": "SAH-RedisOp",
+      "undesired_state": 2,
+      "system_error": 0,
+      "operator_error": 0,
+      "recovery_failure": 1,
+      "total": 3
+    },
+    {
+      "operator": "TiDBOp",
+      "undesired_state": 2,
+      "system_error": 1,
+      "operator_error": 0,
+      "recovery_failure": 1,
+      "total": 4
+    },
+    {
+      "operator": "XtraDBOp",
+      "undesired_state": 4,
+      "system_error": 0,
+      "operator_error": 1,
+      "recovery_failure": 1,
+      "total": 6
+    },
+    {
+      "operator": "ZookeeperOp",
+      "undesired_state": 4,
+      "system_error": 1,
+      "operator_error": 0,
+      "recovery_failure": 1,
+      "total": 6
+    }
+  ],
+  "totals": {
+    "undesired_state": 32,
+    "system_error": 4,
+    "operator_error": 10,
+    "recovery_failure": 10,
+    "total_all": 56
+  }
+}

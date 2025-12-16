@@ -1,7 +1,7 @@
 import os
 import subprocess
 from dataclasses import dataclass
-from typing import Iterable, Optional, Tuple
+from typing import Iterable, List, Optional, Tuple
 from pathlib import Path
 
 from utils import REPO_DIR
@@ -12,10 +12,10 @@ from utils import logger
 class BuildTarget:
   name: str
   repo_key: str
-  cmd: list[str]
+  cmd: List[str]
 
 
-BUILD_TARGETS: list[BuildTarget] = [
+BUILD_TARGETS: List[BuildTarget] = [
   BuildTarget(
     name="acto",
     repo_key="acto",
@@ -67,7 +67,7 @@ class OracleArtifactBuild:
     """
     Run builds for all configured targets and collect failures.
     """
-    problems: list[str] = []
+    problems: List[str] = []
     for target in BUILD_TARGETS:
       msg = self.build_target(target)
       if msg:
