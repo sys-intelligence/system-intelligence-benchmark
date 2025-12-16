@@ -1,0 +1,24 @@
+---
+- name: Install python packages
+  hosts: all
+  become: true
+  vars_files:
+    - data.yaml
+
+  tasks:
+    - name: Install pip3
+      apt:
+        name: python3-pip
+        state: present
+        update_cache: yes
+
+    - name: Get the home directory
+      become: false
+      command: echo $HOME
+      register: home
+
+    - name: Install python packages using pip
+      pip:
+        # Implication: this script should happen after acto.yml
+        requirements: "{{ home.stdout }}/workdir/acto/requirements.txt"
+        state: present

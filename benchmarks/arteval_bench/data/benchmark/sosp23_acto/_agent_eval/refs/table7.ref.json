@@ -1,0 +1,24 @@
+{
+  "test_oracles": [
+    {
+      "test_oracle": "Consistency oracle",
+      "bugs": 23,
+      "percentage": 41.07
+    },
+    {
+      "test_oracle": "Differential oracle for normal state transition",
+      "bugs": 25,
+      "percentage": 44.64
+    },
+    {
+      "test_oracle": "Differential oracle for rollback state transition",
+      "bugs": 10,
+      "percentage": 17.86
+    },
+    {
+      "test_oracle": "Regular error check (e.g., exceptions, error codes)",
+      "bugs": 14,
+      "percentage": 25.00
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+
+    "deploy": {
+        "method": "YAML",
+        "file": "data/percona-server-mongodb-operator/bundle.yaml",
+        "init": null
+    },
+    "crd_name": "perconaservermongodbs.psmdb.percona.com",
+    "custom_fields": "data.percona-server-mongodb-operator.prune",
+    "blackbox_custom_fields": "data.percona-server-mongodb-operator.prune_blackbox",
+    "k8s_fields": "data.percona-server-mongodb-operator.k8s_mapping",
+    "seed_custom_resource": "data/percona-server-mongodb-operator/cr.yaml",
+    "example_dir": "data/percona-server-mongodb-operator/examples", 
+    "analysis": {
+        "github_link": "https://github.com/percona/percona-server-mongodb-operator.git",
+        "commit": "54950f7e56cde893c4b36a061c6335598b84873d",
+        "entrypoint": "cmd/manager",
+        "type": "PerconaServerMongoDB",
+        "package": "github.com/percona/percona-server-mongodb-operator/pkg/apis/psmdb/v1"
+    },
+    "num_nodes": 5,
+    "diff_ignore_fields": [
+        "\\['secret'\\]\\['default\\-token\\-.*'\\]",
+        "\\['secret'\\]\\['percona\\-server\\-mongodb\\-operator\\-token-.*'\\]",
+        "\\['secret'\\]\\[.*\\]\\['data'\\]",
+        "\\['metadata'\\]\\['annotations'\\]\\['percona\\.com\\\/ssl\\-hash'\\]",
+        "\\['metadata'\\]\\['annotations'\\]\\['percona\\.com\\\/ssl\\-internal\\-hash'\\]",
+        "\\['metadata'\\]\\['annotations'\\]\\['percona\\.com\\\/last\\-config\\-hash'\\]"
+    ]
+}

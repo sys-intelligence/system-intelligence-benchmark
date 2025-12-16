@@ -1,0 +1,48 @@
+{
+  "operators": [
+    {
+      "operator": "CassOp",
+      "operations": 568 
+    },
+    {
+      "operator": "CockroachOp",
+      "operations": 371
+    },
+    {
+      "operator": "KnativeOp",
+      "operations": 774
+    },
+    {
+      "operator": "OCK-RedisOp",
+      "operations": 597
+    },
+    {
+      "operator": "OFC-MongoDBOp",
+      "operations": 434
+    },
+    {
+      "operator": "PCN-MongoDBOp",
+      "operations": 1749
+    },
+    {
+      "operator": "RabbitMQOp",
+      "operations": 394
+    },
+    {
+      "operator": "SAH-RedisOp",
+      "operations": 718
+    },
+    {
+      "operator": "TiDBOp",
+      "operations": 824
+    },
+    {
+      "operator": "XtraDBOp",
+      "operations": 1950
+    },
+    {
+      "operator": "ZookeeperOp",
+      "operations": 740
+    }
+  ]
+}

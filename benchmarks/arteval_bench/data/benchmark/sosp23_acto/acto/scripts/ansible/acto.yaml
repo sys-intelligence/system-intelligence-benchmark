@@ -1,0 +1,19 @@
+---
+- name: Install Acto
+  hosts: all
+
+  tasks:
+
+    - name: create Acto dir
+      become: false
+      ansible.builtin.file:
+        path: "{{ home.stdout }}/workdir/acto"
+        state: directory
+
+    - name: clone Acto repo
+      become: false
+      ansible.builtin.git:
+        dest: "{{ home.stdout }}/workdir/acto"
+        repo: https://github.com/xlab-uiuc/acto.git
+        version: sosp-ae
+        recursive: yes
