@@ -3,6 +3,10 @@ from pathlib import Path
 
 HOME = Path.home() / "osdi24_anvil"
 REPO_DIRS = {"acto": f"{HOME}/acto", "anvil": f"{HOME}/anvil"}
+
+REFERENCE_PATH = f"{HOME}/_agent_eval/refs/anvil-table-3.ref.json" 
+RESULTS_PATH = f"{REPO_DIRS["acto"]}/anvil-table-3.txt"
+
 SIMILARITY_RATIO = 0.75
 
 

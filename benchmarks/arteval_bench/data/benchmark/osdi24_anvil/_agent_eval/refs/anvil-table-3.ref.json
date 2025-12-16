@@ -1,0 +1,23 @@
+[
+  {
+    "controller": "Zookeeper",
+    "verified_anvil_mean": 439.0,
+    "verified_anvil_max": 696.0,
+    "reference_unverified_mean": 212.0,
+    "reference_unverified_max": 413.0
+  },
+  {
+    "controller": "RabbitMQ",
+    "verified_anvil_mean": 439.0,
+    "verified_anvil_max": 725.0,
+    "reference_unverified_mean": 690.0,
+    "reference_unverified_max": 1531.0
+  },
+  {
+    "controller": "FluentBit",
+    "verified_anvil_mean": 195.0,
+    "verified_anvil_max": 303.0,
+    "reference_unverified_mean": 221.0,
+    "reference_unverified_max": 464.0
+  }
+]

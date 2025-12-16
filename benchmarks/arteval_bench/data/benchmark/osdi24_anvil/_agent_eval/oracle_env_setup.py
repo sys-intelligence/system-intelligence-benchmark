@@ -71,14 +71,9 @@ DEPENDENCIES: list[Dependency] = [
 class OracleEnvSetup:
 
   def __init__(self) -> None:
-    # Root of the cloned repositories
     self.expected_root_dirs = REPO_DIRS.values()
-
-    # Go paths that should be present in PATH
     self.go_root = HOME / "go"
     self.go_bin = self.go_root / "bin"
-
-    # Python virtual environment inside the repo
     self.venv_dir = HOME / ".venv"
 
   def run_shell_command(self, cmd: Iterable[str]) -> Tuple[int, str, str]:
