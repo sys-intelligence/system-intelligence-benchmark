@@ -3,5 +3,14 @@
   "course_id": "test_course",
   "docker_image": "xuafeng/swe-go-python:latest",
   "timeout_minutes": 5,
-  "tags": ["simple", "test"]
+  "tags": [
+    "simple",
+    "test"
+  ],
+  "output_files": [
+    {
+      "src": "/workspace/result.txt",
+      "dest": "result.txt"
+    }
+  ]
 }
