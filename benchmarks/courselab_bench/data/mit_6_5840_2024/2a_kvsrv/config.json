@@ -9,5 +9,19 @@
     "rpc",
     "go"
   ],
-  "repo_url": "git://g.csail.mit.edu/6.5840-golabs-2024"
+  "repo_url": "git://g.csail.mit.edu/6.5840-golabs-2024",
+  "output_files": [
+    {
+      "src": "/workspace/src/kvsrv/client.go",
+      "dest": "src/kvsrv/client.go"
+    },
+    {
+      "src": "/workspace/src/kvsrv/common.go",
+      "dest": "src/kvsrv/common.go"
+    },
+    {
+      "src": "/workspace/src/kvsrv/server.go",
+      "dest": "src/kvsrv/server.go"
+    }
+  ]
 }
