@@ -10,5 +10,69 @@
     "fault-tolerance",
     "go"
   ],
-  "repo_url": "git://g.csail.mit.edu/6.5840-golabs-2024"
+  "repo_url": "git://g.csail.mit.edu/6.5840-golabs-2024",
+  "starter_files": [
+    {
+      "src": "raft/persister.go",
+      "dest": "/workspace/src/raft/persister.go"
+    },
+    {
+      "src": "raft/election.go",
+      "dest": "/workspace/src/raft/election.go"
+    },
+    {
+      "src": "raft/append_entries.go",
+      "dest": "/workspace/src/raft/append_entries.go"
+    },
+    {
+      "src": "raft/util.go",
+      "dest": "/workspace/src/raft/util.go"
+    },
+    {
+      "src": "raft/install_snapshot.go",
+      "dest": "/workspace/src/raft/install_snapshot.go"
+    },
+    {
+      "src": "raft/raft.go",
+      "dest": "/workspace/src/raft/raft.go"
+    },
+    {
+      "src": "kvsrv/server.go",
+      "dest": "/workspace/src/kvsrv/server.go"
+    },
+    {
+      "src": "kvsrv/client.go",
+      "dest": "/workspace/src/kvsrv/client.go"
+    },
+    {
+      "src": "kvsrv/common.go",
+      "dest": "/workspace/src/kvsrv/common.go"
+    },
+    {
+      "src": "mr/coordinator.go",
+      "dest": "/workspace/src/mr/coordinator.go"
+    },
+    {
+      "src": "mr/worker.go",
+      "dest": "/workspace/src/mr/worker.go"
+    },
+    {
+      "src": "mr/rpc.go",
+      "dest": "/workspace/src/mr/rpc.go"
+    }
+  ],
+  "output_files": [
+    {
+      "src": "/workspace/src/kvraft/client.go",
+      "dest": "src/kvraft/client.go"
+    },
+    {
+      "src": "/workspace/src/kvraft/common.go",
+      "dest": "src/kvraft/common.go"
+    },
+    {
+      "src": "/workspace/src/kvraft/server.go",
+      "dest": "src/kvraft/server.go"
+    }
+  ]
 }

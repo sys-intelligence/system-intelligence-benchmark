@@ -9,5 +9,27 @@
     "consensus",
     "go"
   ],
-  "repo_url": "git://g.csail.mit.edu/6.5840-golabs-2024"
+  "repo_url": "git://g.csail.mit.edu/6.5840-golabs-2024",
+  "output_files": [
+    {
+      "src": "/workspace/src/raft/append_entries.go",
+      "dest": "src/raft/append_entries.go"
+    },
+    {
+      "src": "/workspace/src/raft/election.go",
+      "dest": "src/raft/election.go"
+    },
+    {
+      "src": "/workspace/src/raft/install_snapshot.go",
+      "dest": "src/raft/install_snapshot.go"
+    },
+    {
+      "src": "/workspace/src/raft/raft.go",
+      "dest": "src/raft/raft.go"
+    },
+    {
+      "src": "/workspace/src/raft/util.go",
+      "dest": "src/raft/util.go"
+    }
+  ]
 }

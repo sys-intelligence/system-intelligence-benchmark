@@ -60,10 +60,15 @@ def main():
     for idx, task in enumerate(tasks, 1):
         logger.info(f"\n[{idx}/{len(tasks)}] {task['instance_id']}")
 
+        task_folder = task.get("task_folder")
+        if task_folder:
+            task_folder = Path(task_folder)
+
         env = DockerEnvironment(
             image=task["docker_image"],
             timeout=task.get("timeout_minutes", 30) * 60,
             work_dir="/workspace",
+            task_folder=task_folder,
         )
         model = LiteLLMModel(model_name=args.model, temperature=0.0, max_tokens=4096)
         agent = REACTAgent(
@@ -71,7 +76,7 @@ def main():
         )
 
         try:
-            result = execute_task(task, agent, env)
+            result = execute_task(task, agent, env, output_dir=output_dir)
             result["course_id"] = task["course_id"]
             result["passed"] = evaluate_task(result)
 
