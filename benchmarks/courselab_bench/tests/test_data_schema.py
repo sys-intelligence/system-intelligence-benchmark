@@ -140,6 +140,20 @@ class TestTaskStructure:
                 files = list(starter_dir.rglob("*"))
                 assert len(files) > 0, f"{task_folder.name}: starter directory is empty"
 
+    def test_starter_files_exist(self):
+        task_folders = get_task_folders(DATA_DIR)
+        for task_folder in task_folders:
+            config_path = task_folder / "config.json"
+            with config_path.open("r") as f:
+                config = json.load(f)
+
+            if "starter_files" in config:
+                for item in config["starter_files"]:
+                    src_file = task_folder / "starter_files" / item["src"]
+                    assert (
+                        src_file.exists()
+                    ), f"{task_folder.name}: starter file not found: {item['src']}"
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
