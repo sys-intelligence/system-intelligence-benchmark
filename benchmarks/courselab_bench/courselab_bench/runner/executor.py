@@ -1,6 +1,7 @@
 import time
 from datetime import datetime
 from typing import Any
+from pathlib import Path
 from loguru import logger
 
 
@@ -12,7 +13,9 @@ def _run_evaluate_script(env: Any, evaluate_script: str, timeout: int) -> dict[s
     return result
 
 
-def execute_task(task: dict[str, Any], agent: Any, env: Any) -> dict[str, Any]:
+def execute_task(
+    task: dict[str, Any], agent: Any, env: Any, output_dir: Path | None = None
+) -> dict[str, Any]:
     instance_id = task["instance_id"]
     start_time = time.time()
 
@@ -64,6 +67,15 @@ def execute_task(task: dict[str, Any], agent: Any, env: Any) -> dict[str, Any]:
                 logger.warning(f"Retrying after error...")
     if test_result is None:
         test_result = {"output": "[ERROR: No test result]", "returncode": -1}
+
+    output_files = task.get("output_files")
+    if output_files and output_dir:
+        try:
+            files_output_dir = output_dir / "files" / instance_id
+            logger.info(f"Copying output files to {files_output_dir}")
+            env.copy_output_files(output_files, files_output_dir)
+        except Exception as e:
+            logger.error(f"Failed to copy output files: {e}")
 
     duration = time.time() - start_time
 

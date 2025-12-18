@@ -69,7 +69,9 @@ data/
         ├── config.json           # Task metadata
         ├── task.md               # Problem statement
         ├── preprocess.sh         # Setup script (runs before agent)
-        └── evaluate.sh           # Evaluation script (determines pass/fail)
+        ├── evaluate.sh           # Evaluation script (determines pass/fail)
+        └── starter_files/        # Optional: files to copy to container
+            └── ...
 ```
 
 ### config.json
@@ -86,6 +88,8 @@ Optional fields:
 - `tags`: List of topic tags
 - `repo_url`: Git repository to clone
 - `base_commit`: Git commit to checkout
+- `starter_files`: List of files to copy from `starter_files/` directory to container (`src` is relative to `starter_files/`, `dest` is absolute path in container)
+- `output_files`: List of files to copy from container to output directory after agent completes (`src` is absolute path in container, `dest` is relative to output directory)
 
 ### task.md
 
@@ -96,9 +100,7 @@ Markdown file containing the problem statement given to the agent.
 Shell script that runs before the agent starts. Use this to:
 
 - Set up the environment
-- If the lab depends on previous labs, copy reference implementations to prevent distractions
 - Create checksums of files that shouldn't be modified
-- Initialize test data
 
 Exit with code 0 on success, non-zero on failure.
 
@@ -111,13 +113,15 @@ Print verbose output for debugging (captured in results).
 
 ### Example Task
 
-See `data/test_course/test__simple__echo/` for a minimal example.
+See `data/test_course/test__simple__echo/` for a minimal example, or `data/mit_6_5840_2024/4a_kvraft/` for an example using `starter_files` and `output_files`.
 
 ## Adding New Tasks
 
 1. If you are adding tasks for a new course, first add a new entry to [`/data/courses.json`](./data/courses.json) with the course metadata
 2. Create a new folder: `data/{course_id}/{task_id}/` (where `{course_id}` matches the entry in `courses.json`)
 3. Add the 4 required files: `config.json`, `task.md`, `preprocess.sh`, `evaluate.sh` for each task
-4. Make scripts executable
-5. Run `python prepare_dataset.py` to regenerate `tasks.jsonl`
-6. Run the benchmark
+4. (Optional) Create a `starter_files/` directory and add files that should be copied to the container
+5. (Optional) Configure `starter_files` and `output_files` in `config.json`
+6. Make scripts executable
+7. Run `python prepare_dataset.py` to regenerate `tasks.jsonl`
+8. Run the benchmark

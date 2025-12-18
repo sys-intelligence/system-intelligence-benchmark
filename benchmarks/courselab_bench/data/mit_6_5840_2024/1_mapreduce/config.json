@@ -9,5 +9,19 @@
     "concurrency",
     "go"
   ],
-  "repo_url": "git://g.csail.mit.edu/6.5840-golabs-2024"
+  "repo_url": "git://g.csail.mit.edu/6.5840-golabs-2024",
+  "output_files": [
+    {
+      "src": "/workspace/src/mr/coordinator.go",
+      "dest": "src/mr/coordinator.go"
+    },
+    {
+      "src": "/workspace/src/mr/rpc.go",
+      "dest": "src/mr/rpc.go"
+    },
+    {
+      "src": "/workspace/src/mr/worker.go",
+      "dest": "src/mr/worker.go"
+    }
+  ]
 }
