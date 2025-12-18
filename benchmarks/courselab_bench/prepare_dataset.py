@@ -28,7 +28,7 @@ def load_task_from_folder(task_folder: Path) -> dict:
     with evaluate_path.open("r") as f:
         evaluate_script = f.read()
 
-    return {
+    task_data = {
         "instance_id": config["instance_id"],
         "course_id": config["course_id"],
         "problem_statement": problem_statement,
@@ -39,7 +39,15 @@ def load_task_from_folder(task_folder: Path) -> dict:
         "evaluate_script": evaluate_script,
         "repo_url": config.get("repo_url"),
         "base_commit": config.get("base_commit"),
+        "task_folder": str(task_folder.resolve()),
     }
+
+    if "starter_files" in config:
+        task_data["starter_files"] = config["starter_files"]
+    if "output_files" in config:
+        task_data["output_files"] = config["output_files"]
+
+    return task_data
 
 
 def prepare_dataset(data_dir: Path, output_file: Path) -> None:
