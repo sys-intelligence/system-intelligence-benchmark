@@ -10,5 +10,93 @@
     "fault-tolerance",
     "go"
   ],
-  "repo_url": "git://g.csail.mit.edu/6.5840-golabs-2024"
+  "repo_url": "git://g.csail.mit.edu/6.5840-golabs-2024",
+  "starter_files": [
+    {
+      "src": "raft/persister.go",
+      "dest": "/workspace/src/raft/persister.go"
+    },
+    {
+      "src": "raft/election.go",
+      "dest": "/workspace/src/raft/election.go"
+    },
+    {
+      "src": "raft/append_entries.go",
+      "dest": "/workspace/src/raft/append_entries.go"
+    },
+    {
+      "src": "raft/util.go",
+      "dest": "/workspace/src/raft/util.go"
+    },
+    {
+      "src": "raft/install_snapshot.go",
+      "dest": "/workspace/src/raft/install_snapshot.go"
+    },
+    {
+      "src": "raft/raft.go",
+      "dest": "/workspace/src/raft/raft.go"
+    },
+    {
+      "src": "kvraft/server.go",
+      "dest": "/workspace/src/kvraft/server.go"
+    },
+    {
+      "src": "kvraft/client.go",
+      "dest": "/workspace/src/kvraft/client.go"
+    },
+    {
+      "src": "kvraft/common.go",
+      "dest": "/workspace/src/kvraft/common.go"
+    },
+    {
+      "src": "kvsrv/server.go",
+      "dest": "/workspace/src/kvsrv/server.go"
+    },
+    {
+      "src": "kvsrv/client.go",
+      "dest": "/workspace/src/kvsrv/client.go"
+    },
+    {
+      "src": "kvsrv/common.go",
+      "dest": "/workspace/src/kvsrv/common.go"
+    },
+    {
+      "src": "mr/coordinator.go",
+      "dest": "/workspace/src/mr/coordinator.go"
+    },
+    {
+      "src": "mr/worker.go",
+      "dest": "/workspace/src/mr/worker.go"
+    },
+    {
+      "src": "mr/rpc.go",
+      "dest": "/workspace/src/mr/rpc.go"
+    }
+  ],
+  "output_files": [
+    {
+      "src": "/workspace/src/shardctrler/client.go",
+      "dest": "src/shardctrler/client.go"
+    },
+    {
+      "src": "/workspace/src/shardctrler/common.go",
+      "dest": "src/shardctrler/common.go"
+    },
+    {
+      "src": "/workspace/src/shardctrler/server.go",
+      "dest": "src/shardctrler/server.go"
+    },
+    {
+      "src": "/workspace/src/shardkv/client.go",
+      "dest": "src/shardkv/client.go"
+    },
+    {
+      "src": "/workspace/src/shardkv/common.go",
+      "dest": "src/shardkv/common.go"
+    },
+    {
+      "src": "/workspace/src/shardkv/server.go",
+      "dest": "src/shardkv/server.go"
+    }
+  ]
 }
