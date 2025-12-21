@@ -1,0 +1,41 @@
+[package]
+name = "paper-benchmarks"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+automerge = "0.5.11"
+yrs = "0.20.0"
+#cola = { version = "0.4.5", features = ["encode", "serde"] }
+#cola = { path = "../../../../3rdparty/cola", features = ["encode", "serde", "stats"] }
+#cola-nocursor = { path = "../../../../3rdparty/cola", package = "cola" }
+criterion = { version = "0.5.1", optional = true }
+crdt-testdata = { path = "../diamond-types/crates/crdt-testdata" }
+diamond-types-crdt = { path = "../diamond-types/crates/diamond-types-crdt" }
+diamond-types = { path = "../diamond-types" }
+jumprope = { version = "1.1.2", features = ["buffered"] }
+trace-alloc = { path = "../diamond-types/crates/trace-alloc" }
+serde = "1.0.190"
+serde_json = "1.0.107"
+rand = "0.8.5"
+smallvec = { version = "1.11.1", features = ["serde"] }
+smartstring = { version = "1.0.1", features = ["serde"] }
+argh = "0.1.12"
+
+[features]
+memusage = ["trace-alloc/memusage"]
+bench = ["dep:criterion"]
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+#rustflags = ["-Clink-arg=-fuse-ld=lld", "-Clink-arg=-Wl,--no-rosegment"]
+#rustflags = ["-C target-cpu=native"]
+
+
+# This lets me compile a memusage target to a different directory.
+[profile.memusage]
+inherits = "release"

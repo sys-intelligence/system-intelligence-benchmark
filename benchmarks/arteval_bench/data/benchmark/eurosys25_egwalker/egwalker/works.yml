@@ -1,0 +1,175 @@
+#https://github.com/typst/hayagriva/blob/main/docs/file-format.md
+
+vscode-buffer:
+  type: web
+  title: Text Buffer Reimplementation
+  author: Peng Lyu
+  date: 2018-03-23
+  url: https://code.visualstudio.com/blogs/2018/03/23/text-buffer-reimplementation
+
+polog:
+  type: article
+  title: Pure Operation-Based Replicated Data Types
+  author: ["Baquero, Carlos", "Almeida, Paulo Sergio", "Shoker, Ali"]
+  date: 2017
+  url: https://arxiv.org/abs/1710.04469
+
+time-machines:
+  type: article
+  title: CRDT and OT generalize as Time Machines
+  author: ["Toomim, Michael"]
+  date: 2024
+  url: https://braid.org/time-machines
+
+fugue:
+  type: article
+  title: "The Art of the Fugue: Minimizing Interleaving in Collaborative Text Editing"
+  author: ["Weidner, Matthew", "Kleppmann, Martin"]
+  date: 2023
+  url: https://arxiv.org/abs/2305.00583
+
+reference-reg:
+  type: repository
+  title: "Reference Eg-walker implementation in Typescript"
+  author: ["Gentle, Joseph"]
+  url: https://github.com/josephg/reference-reg
+
+editing-traces:
+  type: repository
+  title: "Editing Traces (github repository)"
+  author: ["Gentle, Joseph"]
+  url: https://github.com/josephg/editing-traces
+
+dt:
+  type: repository
+  title: "Diamond Types: A fully featured realtime editing library"
+  author: ["Gentle, Joseph"]
+  url: https://github.com/josephg/diamond-types
+
+dt-crdt:
+  type: repository
+  title: "Diamond Types sequence CRDT implementation"
+  author: ["Gentle, Joseph"]
+  url: https://github.com/josephg/diamond-types/tree/master/crates/diamond-types-crdt
+
+am-converter:
+  type: repository
+  title: "Automerge Converter: An event graph replay function for Automerge"
+  author: ["Gentle, Joseph"]
+  url: https://github.com/josephg/automerge-converter/
+
+cola:
+  type: repository
+  title: "cola CRDT library"
+  author: ["Mazzarini, Riccardo"]
+  url: https://github.com/nomad/cola
+
+yjs:
+  type: web
+  title: "Yjs Shared Editing"
+  author: ["Jahns, Kevin"]
+  url: https://yjs.dev/
+
+yrs:
+  type: web
+  author: ["Sypytkowski, Bartosz", "Jahns, Kevin", "Waidhofer, John"]
+  title: "Y CRDT: Rust port of Yjs"
+  url: https://github.com/y-crdt/y-crdt
+
+jsonjoy:
+  type: web
+  title: "json-joy: Real-time JSON apps"
+  author: ["Dalecky, Vadim"]
+  url: https://jsonjoy.com/
+
+automerge:
+  type: web
+  title: "Automerge CRDT"
+  url: https://automerge.org/
+
+automerge-storage:
+  type: web
+  title: "Automerge Binary Document Format"
+  author: ["Good, Alex", "Jeffery, Andrew"]
+  url: https://automerge.org/automerge-binary-format-spec/
+
+automerge-columnar:
+  type: web
+  title: "Experiment: columnar data encoding for Automerge"
+  author: ["Kleppmann, Martin"]
+  date: 2019-07-02
+  url: https://github.com/automerge/automerge-perf/blob/master/columnar/README.md
+
+automerge-perf:
+  type: web
+  title: Benchmarking resources for Automerge
+  author: ["Kleppmann, Martin"]
+  date: 2020
+  url: https://github.com/automerge/automerge-perf
+
+crdt-papers:
+  type: web
+  title: CRDT Papers
+  author: ["Kleppmann, Martin", "Bieniusa, Annette", "Shapiro, Marc"]
+  url: https://crdt.tech/papers.html
+
+cola-gtree:
+  type: blog
+  title: "cola: a text CRDT for real-time collaborative editing"
+  author: ["Mazzarini, Riccardo"]
+  url: https://nomad.foo/blog/cola#an-even-better-alternative-g-trees
+
+crdts-go-brrr:
+  type: blog
+  title: "5000x faster CRDTs: An Adventure in Optimization"
+  author: ["Gentle, Joseph"]
+  date: 2021-07-31
+  url: https://josephg.com/blog/crdts-go-brrr/
+
+crdts-hard-parts:
+  type: Misc
+  title: "CRDTs: The Hard Parts"
+  author: ["Kleppmann, Martin"]
+  date: 2020-07-06
+  url: https://martin.kleppmann.com/2020/07/06/crdt-hard-parts-hydra.html
+  parent:
+    - type: Conference
+      title: "Hydra distributed computing conference"
+
+git-makefile:
+  type: web
+  title: Makefile for Git
+  url: https://github.com/git/git/blob/master/Makefile
+
+node-src-nodecc:
+  type: web
+  title: "Node.js source code: src/node.cc"
+  url: https://github.com/nodejs/node/blob/main/src/node.cc
+
+sharedb:
+  type: web
+  title: ShareDB
+  author: ["Gentle, Joseph"]
+  url: https://github.com/share/sharedb
+
+pijul:
+  type: web
+  title: Pijul
+  author: ["Meunier, Pierre-Étienne", "Becker, Florent"]
+  url: https://pijul.org/
+
+pijul-theory:
+  type: web
+  title: "The Pijul manual: Theory"
+  url: https://pijul.org/manual/theory.html
+
+darcs:
+  type: web
+  title: Darcs
+  url: https://darcs.net/
+
+darcs-book:
+  type: web
+  author: ["Kow, Eric"]
+  title: Understanding Darcs
+  url: https://en.wikibooks.org/wiki/Understanding_Darcs/Print_Version
