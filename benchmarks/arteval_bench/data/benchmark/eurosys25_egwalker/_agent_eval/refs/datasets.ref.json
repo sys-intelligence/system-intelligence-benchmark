@@ -1,0 +1,142 @@
+[
+  {
+    "filepath": "datasets/A1-uncompressed.am",
+    "sizeinbytes": 1445627
+  },
+  {
+    "filepath": "datasets/A1.am",
+    "sizeinbytes": 772717
+  },
+  {
+    "filepath": "datasets/A1.dt",
+    "sizeinbytes": 334914
+  },
+  {
+    "filepath": "datasets/A1.json",
+    "sizeinbytes": 1353802
+  },
+  {
+    "filepath": "datasets/A1.yjs",
+    "sizeinbytes": 308418
+  },
+  {
+    "filepath": "datasets/A2-uncompressed.am",
+    "sizeinbytes": 1113502
+  },
+  {
+    "filepath": "datasets/A2.am",
+    "sizeinbytes": 572699
+  },
+  {
+    "filepath": "datasets/A2.dt",
+    "sizeinbytes": 318046
+  },
+  {
+    "filepath": "datasets/A2.json",
+    "sizeinbytes": 1513005
+  },
+  {
+    "filepath": "datasets/A2.yjs",
+    "sizeinbytes": 506207
+  },
+  {
+    "filepath": "datasets/C1-uncompressed.am",
+    "sizeinbytes": 1572344
+  },
+  {
+    "filepath": "datasets/C1.am",
+    "sizeinbytes": 136380
+  },
+  {
+    "filepath": "datasets/C1.dt",
+    "sizeinbytes": 466960
+  },
+  {
+    "filepath": "datasets/C1.json",
+    "sizeinbytes": 13811442
+  },
+  {
+    "filepath": "datasets/C1.yjs",
+    "sizeinbytes": 845328
+  },
+  {
+    "filepath": "datasets/C2-uncompressed.am",
+    "sizeinbytes": 1732126
+  },
+  {
+    "filepath": "datasets/C2.am",
+    "sizeinbytes": 206973
+  },
+  {
+    "filepath": "datasets/C2.dt",
+    "sizeinbytes": 676591
+  },
+  {
+    "filepath": "datasets/C2.json",
+    "sizeinbytes": 18956694
+  },
+  {
+    "filepath": "datasets/C2.yjs",
+    "sizeinbytes": 725734
+  },
+  {
+    "filepath": "datasets/S1-uncompressed.am",
+    "sizeinbytes": 877862
+  },
+  {
+    "filepath": "datasets/S1.am",
+    "sizeinbytes": 341839
+  },
+  {
+    "filepath": "datasets/S1.dt",
+    "sizeinbytes": 316413
+  },
+  {
+    "filepath": "datasets/S1.json",
+    "sizeinbytes": 3011880
+  },
+  {
+    "filepath": "datasets/S1.yjs",
+    "sizeinbytes": 479708
+  },
+  {
+    "filepath": "datasets/S2-uncompressed.am",
+    "sizeinbytes": 1173041
+  },
+  {
+    "filepath": "datasets/S2.am",
+    "sizeinbytes": 601328
+  },
+  {
+    "filepath": "datasets/S2.dt",
+    "sizeinbytes": 471421
+  },
+  {
+    "filepath": "datasets/S2.json",
+    "sizeinbytes": 1685725
+  },
+  {
+    "filepath": "datasets/S2.yjs",
+    "sizeinbytes": 405640
+  },
+  {
+    "filepath": "datasets/S3-uncompressed.am",
+    "sizeinbytes": 1905274
+  },
+  {
+    "filepath": "datasets/S3.am",
+    "sizeinbytes": 831539
+  },
+  {
+    "filepath": "datasets/S3.dt",
+    "sizeinbytes": 729169
+  },
+  {
+    "filepath": "datasets/S3.json",
+    "sizeinbytes": 2478019
+  },
+  {
+    "filepath": "datasets/S3.yjs",
+    "sizeinbytes": 317745
+  }
+]
