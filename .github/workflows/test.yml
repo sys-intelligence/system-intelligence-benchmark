@@ -19,6 +19,7 @@ jobs:
         benchmark:
           - example_bench
           - course_exam_bench
+          - toposense_bench
           # TODO: For now, we comment out other benchmarks as they have no tests
           # - arteval_bench
           # - cache_bench

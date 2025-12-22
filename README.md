@@ -21,6 +21,7 @@ System Intelligence Benchmark currently includes the following example benchmark
 - **System Lab Benchmark** ([benchmarks/course_lab_bench/](benchmarks/course_lab_bench/)) - Assesses AI capability on practical system course labs and projects 
 - **System Artifact Benchmark** ([benchmarks/arteval_bench/](benchmarks/arteval_bench/)) - Evaluates AI performance on artifact evaluation
 - **System Modeling Benchmark** ([benchmarks/sysmobench/](benchmarks/sysmobench/)) - Evaluates an agent's ability to produce correct TLA+ models for real-world concurrent and distributed systems, covering system capabilities across system comprehension, abstraction, and potentially tool fluency.
+- **TopoSense Benchmark** ([benchmarks/toposense_bench/](benchmarks/toposense_bench/)) - Evaluates Semantic-Spatial Sensor Scheduling (S³) capabilities in large-scale IoT digital twins (5,250 queries across 2,510 cameras)
 - **Example Benchmark** ([benchmarks/example_bench/](benchmarks/example_bench/)) - Template and reference implementation for creating new benchmarks
 
 ## Quick Start
