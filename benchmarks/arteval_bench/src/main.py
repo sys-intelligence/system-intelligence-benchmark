@@ -48,6 +48,8 @@ def main(file_path, model, agent, save_path):
                 test_method=test_method,
                 save_path=save_path,
             )
+
+            result['expected_score'] = item.get('expected_score', -1)
             with open(f'{save_path}/result.jsonl', 'a+', encoding='utf-8') as fw:
                 fw.write(json.dumps(result) + '\n')
 
@@ -57,7 +59,7 @@ def main(file_path, model, agent, save_path):
         for line in f:
             result = json.loads(line.strip())
             if result.get('status') == 'success':
-                score_count += (result.get('score') == item.get('expected_score', -1))
+                success_count += (result.get('score') == result.get('expected_score', -1))
             total_count += 1
     logger.info(f'Test run completed: {success_count}/{total_count} tasks succeeded.')
     summary_data = {'final_score': success_count / total_count, 'total_tasks': total_count}
@@ -109,6 +111,8 @@ if __name__ == '__main__':
 
     if agent == 'claudecode':
         agent = './src/agents/claudecode'
+    elif agent == 'claude_sdk':
+        agent = './src/agents/claude_sdk'
     save_path = os.path.abspath(os.path.expanduser(save_path))
     os.makedirs(save_path, exist_ok=True)
 
