@@ -8,6 +8,9 @@ The entire artifact process can take around 2 hours if run with a concurrency of
 
 If you have any questions, please contact us via email or HotCRP.
 
+> [!NOTE]
+> This artifact version has removed the Reddis and Knative operators since the originally faulty images are no longer available. The current version also applies patch [#8ecdcda](https://github.com/xlab-uiuc/acto/commit/8ecdcda5a51d7c5625e49802bbd1bc75c0cf07ef) that allows Acto to load operators from pre-packaged archives when the original images are no longer availble for download.
+
 # 2. Prerequisites
 
 ## Setting up local environment
