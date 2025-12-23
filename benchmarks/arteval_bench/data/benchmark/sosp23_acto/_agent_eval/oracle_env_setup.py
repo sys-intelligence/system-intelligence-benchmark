@@ -34,14 +34,14 @@ DEPENDENCIES: List[Dependency] = [
     name="docker", binary="docker",
   ),
 
-  # Python v3.10+
+  # Python v3.8+
   Dependency(
     name="python3", binary="python3",
     cmd=["python3", "--version"], parse_regex=r"Python\s+([0-9.]+)",
-    require=(3, 8), compare="eq",
+    require=(3, 8), compare="gte",
   ),
 
-  # pip3 for Python 3.10+
+  # pip3 for Python 3.8+
   Dependency(
     name="pip3", binary="pip3",
   ),
