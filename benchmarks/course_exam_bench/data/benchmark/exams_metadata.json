@@ -59,6 +59,30 @@
       "score_median": 49,
       "score_standard_deviation": 11.07,
       "num_questions": 14
-    }
+    },
+	{
+	  "exam_id": "cs_423_operating_systems_design_fall_2025_exam_ii",
+	  "test_paper_name": "CS 423 Fall 2025 Exam II",
+	  "course": "Operating Systems Design",
+	  "year": 2025,
+	  "score_total": 24,
+	  "score_max": 21.5,
+	  "score_avg": 12.88,
+	  "score_median": 14.5,
+	  "score_standard_deviation": 6.25,
+	  "num_questions": 18
+	},
+	{
+	  "exam_id": "cs_423_operating_systems_design_fall_2025_exam_i",
+	  "test_paper_name": "CS 423 Fall 2025 Exam I",
+	  "course": "Operating Systems Design",
+	  "year": 2025,
+	  "score_total": 22,
+	  "score_max": 21,
+	  "score_avg": 9.43,
+	  "score_median": 9.5,
+	  "score_standard_deviation": 4.21,
+	  "num_questions": 15
+	}
   ]
 }
