@@ -1,0 +1,245 @@
+# Example Systems Course - 2024 Midterm Exam
+
+Total Points: 64 points, Duration: 90 minutes
+
+## Question 1 [5 points]
+
+What state is a process in when it is waiting for I/O to complete?
+
+A. Running
+B. Ready
+C. Blocked
+D. Terminated
+
+> [!NOTE]
+> Standard single choice with one correct answer. Graded by exact string match.
+>
+> ```json
+> {
+>   "instance_id": 1,
+>   "exam_id": "example_course_2024_midterm",
+>   "problem_id": "1",
+>   "points": 5,
+>   "problem": "...",
+>   "answer": "C",
+>   "type": "ExactMatch",
+>   "tags": ["operating-systems", "processes"]
+> }
+> ```
+
+## Question 2 [5 points]
+
+True or False: A race condition occurs when multiple threads access shared data concurrently and at least one thread modifies the data.
+
+> [!NOTE]
+> True/False question. Answer must be exactly "True" or "False".
+>
+> Multi-part True/False questions must be split into separate questions with `problem_id`s ("2.1", "2.2").
+>
+> ```json
+> {
+>   "instance_id": 2,
+>   "exam_id": "example_course_2024_midterm",
+>   "problem_id": "2",
+>   "points": 5,
+>   "problem": "...",
+>   "answer": "True",
+>   "type": "ExactMatch",
+>   "tags": ["operating-systems", "concurrency"]
+> }
+> ```
+
+## Question 3 [10 points]
+
+Explain the purpose of a Translation Lookaside Buffer (TLB) in a virtual memory system.
+
+> [!NOTE]
+> Free-form explanation. Default LLM-as-judge will evaluate quality, completeness, and accuracy then assign points out of 10.
+>
+> ```json
+> {
+>   "instance_id": 3,
+>   "exam_id": "example_course_2024_midterm",
+>   "problem_id": "3",
+>   "points": 10,
+>   "problem": "...",
+>   "answer": "The TLB is a hardware cache that stores recent virtual-to-physical address translations. It improves performance by avoiding the need to access the page table in memory for every memory reference. Since the TLB is much faster than main memory, most address translations can be done quickly using the cached entries.",
+>   "type": "Freeform",
+>   "tags": ["operating-systems", "virtual-memory"]
+> }
+> ```
+
+## Question 4 [10 points]
+
+Describe the two phases of the two-phase commit protocol.
+
+> [!NOTE]
+> Multi-part question with custom rubric. Custom rubric ensures each part is weighted correctly.
+>
+> ```json
+> {
+>   "instance_id": 4,
+>   "exam_id": "example_course_2024_midterm",
+>   "problem_id": "4",
+>   "points": 10,
+>   "problem": "...",
+>   "answer": "Phase 1 (Prepare): The coordinator sends PREPARE messages to all participants. Each participant votes YES if ready to commit or NO if it must abort. Phase 2 (Commit/Abort): If all participants vote YES, the coordinator sends COMMIT to all. If any vote NO, the coordinator sends ABORT to all.",
+>   "type": "Freeform",
+>   "tags": ["distributed-systems", "consensus"],
+>   "llm_judge_instructions": "Phase 1 description (5 points): Award full points for explaining prepare/vote phase. Phase 2 description (5 points): Award full points for explaining commit/abort decision."
+> }
+> ```
+
+## Question 5 [5 points]
+
+Which of the following operations modify the inode? (Select all that apply)
+
+A. Changing file permissions
+B. Reading file contents
+C. Changing file size
+
+> [!NOTE]
+> Multiple correct answers but NO partial credit. Only exact match "A,C" gets 5 points.
+>
+> ```json
+> {
+>   "instance_id": 5,
+>   "exam_id": "example_course_2024_midterm",
+>   "problem_id": "5",
+>   "points": 5,
+>   "problem": "...",
+>   "answer": "A,C",
+>   "type": "ExactMatch",
+>   "tags": ["operating-systems", "file-systems"]
+> }
+> ```
+
+## Question 6 [10 points]
+
+Which statements about CPU scheduling are true? (Select all that apply)
+
+A. Round-robin can lead to starvation
+B. SJF minimizes average waiting time
+C. Priority scheduling can have priority inversion
+
+> [!NOTE]
+> Multiple choice with partial credit. Freeform type with rubric allows rewarding incomplete but correct answers while penalizing wrong choices.
+>
+> ```json
+> {
+>   "instance_id": 6,
+>   "exam_id": "example_course_2024_midterm",
+>   "problem_id": "6",
+>   "points": 10,
+>   "problem": "...",
+>   "answer": "B,C",
+>   "type": "Freeform",
+>   "tags": ["operating-systems", "scheduling"],
+>   "llm_judge_instructions": "Correct: B,C. Award 10 points for B,C. Award 6 points for only B or only C. Award 0 if A is selected (incorrect)."
+> }
+> ```
+
+## Question 7 [Excluded - 5 points]
+
+Consider the Raft state diagram shown in Figure 1 below.
+
+![Raft State Diagram](raft.png)
+
+Based on the diagram, which transitions require a timeout?
+
+> [!NOTE]
+> CANNOT BE INCLUDED - References a figure/image. The benchmark cannot process visual content.
+>
+> Action:
+>
+> - Do NOT add to `questions.jsonl`
+> - DEDUCT 5 points from the exam total: 64 - 5 = 59 points
+> - Reduce question count: 11 → 10 questions (note: multi-part questions count as separate entries)
+
+## Question 8 [3 points]
+
+Refer to the Raft Algorithm Reference.
+
+True or False: A candidate must receive votes from a majority of servers to become leader.
+
+> [!NOTE]
+> ExactMatch with reference material. The reference .md file is provided to the LLM like a cheatsheet.
+>
+> ```json
+> {
+>   "instance_id": 7,
+>   "exam_id": "example_course_2024_midterm",
+>   "problem_id": "8",
+>   "points": 3,
+>   "problem": "...",
+>   "answer": "True",
+>   "type": "ExactMatch",
+>   "tags": ["distributed-systems", "raft"],
+>   "reference_materials": ["reference_materials/raft_basics.md"]
+> }
+> ```
+
+## Question 9 [7 points]
+
+Refer to the Raft Algorithm Reference.
+
+What are the three possible outcomes when a candidate runs for election? List all three.
+
+> [!NOTE]
+> Freeform with reference material and custom rubric. Custom rubric splits points across the three outcomes.
+>
+> ```json
+> {
+>   "instance_id": 8,
+>   "exam_id": "example_course_2024_midterm",
+>   "problem_id": "9",
+>   "points": 7,
+>   "problem": "...",
+>   "answer": "The three possible outcomes are: 1) The candidate wins the election by receiving votes from a majority of servers and becomes leader, 2) Another server wins the election and the candidate discovers the new leader and converts to follower, 3) Election timeout occurs with no winner (split vote), causing the candidate to start a new election.",
+>   "type": "Freeform",
+>   "tags": ["distributed-systems", "raft"],
+>   "reference_materials": ["reference_materials/raft_basics.md"],
+>   "llm_judge_instructions": "Award 2-3 points for each outcome mentioned: 1) wins election, 2) another server wins, 3) timeout/no winner."
+> }
+> ```
+
+## Question 10 [4 points]
+
+Consider the following statements about distributed consensus:
+
+10.1 [2 points] True or False: In Paxos, a proposer must receive responses from a majority of acceptors to achieve consensus.
+
+10.2 [2 points] True or False: The CAP theorem states that a distributed system can simultaneously guarantee Consistency, Availability, and Partition tolerance.
+
+> [!NOTE]
+> Multi-part True/False question. Must be split into separate questions with sub-problem IDs.
+>
+> Question 10.1:
+>
+> ```json
+> {
+>   "instance_id": 9,
+>   "exam_id": "example_course_2024_midterm",
+>   "problem_id": "10.1",
+>   "points": 2,
+>   "problem": "True or False: In Paxos, a proposer must receive responses from a majority of acceptors to achieve consensus.",
+>   "answer": "True",
+>   "type": "ExactMatch",
+>   "tags": ["distributed-systems", "paxos", "consensus"]
+> }
+> ```
+>
+> Question 10.2:
+>
+> ```json
+> {
+>   "instance_id": 10,
+>   "exam_id": "example_course_2024_midterm",
+>   "problem_id": "10.2",
+>   "points": 2,
+>   "problem": "True or False: The CAP theorem states that a distributed system can simultaneously guarantee Consistency, Availability, and Partition tolerance.",
+>   "answer": "False",
+>   "type": "ExactMatch",
+>   "tags": ["distributed-systems", "cap-theorem"]
+> }
+> ```
