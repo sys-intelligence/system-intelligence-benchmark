@@ -17,8 +17,8 @@ The benchmark framework is **still under development**. If you have any question
 
 System Intelligence Benchmark currently includes the following example benchmarks. Each benchmark assesses specific capabilities across multiple levels within a given research direction. Some benchmarks are still under development — we're actively updating them. Stay tuned!
 
-- **System Exam Benchmark** ([benchmarks/course_exam_bench/](benchmarks/course_exam_bench/)) - Tests LLM understanding of system concepts through university course exams (54 questions across 4 exams)
-- **System Lab Benchmark** ([benchmarks/course_lab_bench/](benchmarks/course_lab_bench/)) - Assesses AI capability on practical system course labs and projects 
+- **System Exam Benchmark** ([benchmarks/course_exam_bench/](benchmarks/course_exam_bench/)) - Tests LLM understanding of system concepts through university course exams
+- **System Lab Benchmark** ([benchmarks/courselab_bench/](benchmarks/courselab_bench/)) - Assesses AI capability on practical system course labs and projects 
 - **System Artifact Benchmark** ([benchmarks/arteval_bench/](benchmarks/arteval_bench/)) - Evaluates AI performance on artifact evaluation
 - **System Modeling Benchmark** ([benchmarks/sysmobench/](benchmarks/sysmobench/)) - Evaluates an agent's ability to produce correct TLA+ models for real-world concurrent and distributed systems, covering system capabilities across system comprehension, abstraction, and potentially tool fluency.
 - **TopoSense Benchmark** ([benchmarks/toposense_bench/](benchmarks/toposense_bench/)) - Evaluates Semantic-Spatial Sensor Scheduling (S³) capabilities in large-scale IoT digital twins (5,250 queries across 2,510 cameras)

@@ -1,6 +1,0 @@
-sentence-transformers==4.0.1
-scikit-learn==1.6.1
-requests
-azure-identity
-tomli
-litellm
