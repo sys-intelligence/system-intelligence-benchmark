@@ -23,9 +23,14 @@
 What state is a process in when it is waiting for I/O to complete?
 
 A. Running
+
 B. Ready
+
 C. Blocked
+
 D. Terminated
+
+Your answer should be a single letter only (A, B, C, or D).
 
 ```json
 {
@@ -44,6 +49,8 @@ D. Terminated
 
 True or False: A race condition occurs when multiple threads access shared data concurrently and at least one thread modifies the data.
 
+Your answer should be either "True" or "False" only. No extra text.
+
 ```json
 {
   "problem_id": "2",
@@ -61,6 +68,8 @@ True or False: A race condition occurs when multiple threads access shared data 
 
 Explain the purpose of a Translation Lookaside Buffer (TLB) in a virtual memory system.
 
+Your answer should be a brief explanation (about 2-3 sentences).
+
 ```json
 {
   "problem_id": "3",
@@ -77,6 +86,8 @@ Explain the purpose of a Translation Lookaside Buffer (TLB) in a virtual memory 
 ## Question 4 [10 points]
 
 Describe the two phases of the two-phase commit protocol.
+
+Your answer should include a brief description of each phase (about 1-2 sentences each).
 
 ```json
 {
@@ -97,8 +108,12 @@ Describe the two phases of the two-phase commit protocol.
 Which of the following operations modify the inode? (Select all that apply)
 
 A. Changing file permissions
+
 B. Reading file contents
+
 C. Changing file size
+
+Your answer should be a comma-separated list of letters only (no extra text). For example: "A,B"
 
 ```json
 {
@@ -106,8 +121,8 @@ C. Changing file size
   "points": 5,
   "type": "ExactMatch",
   "tags": ["operating-systems", "file-systems"],
-  "answer": "A,C",
-  "comments": "Multiple correct answers but NO partial credit. Only exact match \"A,C\" gets 5 points."
+  "answer": "A, C",
+  "comments": "Multiple correct answers but NO partial credit. Only exact match \"A, C\" gets 5 points."
 }
 ```
 
@@ -118,8 +133,12 @@ C. Changing file size
 Which statements about CPU scheduling are true? (Select all that apply)
 
 A. Round-robin can lead to starvation
+
 B. SJF minimizes average waiting time
+
 C. Priority scheduling can have priority inversion
+
+Your answer should be a comma-separated list of letters only (no extra text). For example: "A, B"
 
 ```json
 {
@@ -127,8 +146,8 @@ C. Priority scheduling can have priority inversion
   "points": 10,
   "type": "Freeform",
   "tags": ["operating-systems", "scheduling"],
-  "answer": "B,C",
-  "llm_judge_instructions": "Correct: B,C. Award 10 points for B,C. Award 6 points for only B or only C. Award 0 if A is selected (incorrect).",
+  "answer": "B, C",
+  "llm_judge_instructions": "Correct: B, C. Award 10 points for B, C. Award 6 points for only B or only C. Award 0 if A is selected (incorrect).",
   "comments": "Multiple choice with partial credit. Freeform type with rubric allows rewarding incomplete but correct answers while penalizing wrong choices."
 }
 ```
@@ -160,6 +179,8 @@ Refer to the Raft Algorithm Reference.
 
 True or False: A candidate must receive votes from a majority of servers to become leader.
 
+Your answer should be either "True" or "False" only. No extra text.
+
 ```json
 {
   "problem_id": "8",
@@ -180,6 +201,8 @@ Refer to the Raft Algorithm Reference.
 
 What are the three possible outcomes when a candidate runs for election? List all three.
 
+Your answer should list the three outcomes in a single response (one to two sentences each).
+
 ```json
 {
   "problem_id": "9",
@@ -199,6 +222,8 @@ What are the three possible outcomes when a candidate runs for election? List al
 
 True or False: In Paxos, a proposer must receive responses from a majority of acceptors to achieve consensus.
 
+Your answer should be either "True" or "False" only. No extra text.
+
 ```json
 {
   "problem_id": "10.1",
@@ -215,6 +240,8 @@ True or False: In Paxos, a proposer must receive responses from a majority of ac
 ## Question 10.2 [2 points]
 
 True or False: The CAP theorem states that a distributed system can simultaneously guarantee Consistency, Availability, and Partition tolerance.
+
+Your answer should be either "True" or "False" only. No extra text.
 
 ```json
 {

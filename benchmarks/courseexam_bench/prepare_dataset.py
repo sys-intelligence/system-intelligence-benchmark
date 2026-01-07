@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 
 
-def parse_exam_markdown(exam_md_path):
+def parse_exam_markdown(exam_md_path, start_instance_id):
     content = exam_md_path.read_text()
 
     exam_metadata_match = re.search(r"```json\n(\{[^`]+?\})\n```", content)
@@ -12,7 +12,7 @@ def parse_exam_markdown(exam_md_path):
     sections = content.split("\n---\n")[1:]
 
     questions = []
-    instance_id = 1
+    instance_id = start_instance_id
 
     for section in sections:
         json_blocks = re.findall(r"```json\n(\{[^`]+?\})\n```", section)
@@ -67,7 +67,7 @@ def parse_exam_markdown(exam_md_path):
             questions.append(question)
             instance_id += 1
 
-    return exam_metadata, questions
+    return exam_metadata, questions, instance_id
 
 
 def main():
@@ -76,6 +76,7 @@ def main():
 
     all_exams_metadata = []
     all_questions = []
+    next_instance_id = 1
 
     for exam_folder in data_dir.iterdir():
         if not exam_folder.is_dir() or exam_folder.name in [
@@ -88,7 +89,9 @@ def main():
         if not exam_md.exists():
             continue
 
-        exam_metadata, questions = parse_exam_markdown(exam_md)
+        exam_metadata, questions, next_instance_id = parse_exam_markdown(
+            exam_md, next_instance_id
+        )
         all_exams_metadata.append(exam_metadata)
         all_questions.extend(questions)
 
