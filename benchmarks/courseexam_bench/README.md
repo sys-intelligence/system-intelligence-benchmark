@@ -19,8 +19,21 @@ What's not allowed:
 - Questions requiring file system interaction
 - Questions requiring web access or external tools
 - Any form of agent execution beyond reading and answering
+- Questions with images/figures (see below for details)
 
 > We understand that different professors and universities use different terminology (e.g., "take-home exam," "assignments" instead of "labs"), but the line we draw is that the exam benchmark only includes plain text questions with optional reference markdown files. If a question requires any form of execution, environment setup, or interactive problem-solving, it belongs in the [Course Lab Benchmark](../courselab_bench/) instead, which offers more flexibility for coding tasks and agent interactions.
+
+### No Images/Figures Policy
+
+We don't allow pictures or images in questions to avoid penalizing text-only agents. The rule is that figures must have a textual ground truth. No task should rely on visual interpretation alone.
+
+Every figure should have a canonical textual representation that is sufficient to solve the task without seeing the image.
+
+What to do instead:
+
+- If a question depends on a figure, provide a verbose textual description of the figure or use structured diagram languages (e.g., [Mermaid](https://mermaid.js.org/))
+- Convert visual information into tables, lists, or structured text descriptions
+- Exclude questions that cannot be represented textually
 
 ## Data Format
 
