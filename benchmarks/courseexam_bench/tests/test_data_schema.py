@@ -2,8 +2,17 @@ import json
 from pathlib import Path
 import pytest
 import re
+import subprocess
+import sys
 
 DATA_DIR = Path(__file__).parent.parent / "data"
+
+@pytest.fixture(scope="session", autouse=True)
+def generate_dataset():
+    script_path = Path(__file__).parent.parent / "prepare_dataset.py"
+    result = subprocess.run([sys.executable, str(script_path)], capture_output=True, text=True)
+    if result.returncode != 0:
+        pytest.fail(f"prepare_dataset.py failed: {result.stderr}")
 
 
 def load_questions():
