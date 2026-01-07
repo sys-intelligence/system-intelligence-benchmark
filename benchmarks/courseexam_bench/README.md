@@ -41,14 +41,14 @@ The benchmark consists of exam questions stored in a structured format:
 
 ```
 data/
-├── exams_metadata.json       # Exam-level metadata
-├── questions.jsonl           # Question data
-└── reference_materials/      # Cheatsheets and reference documents
-    ├── raft_basics.md
-    └── ...
+├── exams_metadata.json       # Exam-level metadata (generated)
+├── questions.jsonl           # Question data (generated)
+├── reference_materials/      # Cheatsheets and reference documents
+│   ├── raft_basics.md
+│   └── ...
+└── example_course_2024_midterm/
+    └── exam.md               # Exam in markdown format
 ```
-
-> We provide an annotated example exam to guide you through the process. See [data/example_exam/EXAMPLE_EXAM.md](data/example_exam/EXAMPLE_EXAM.md) for a complete tutorial
 
 ### Exam Metadata Schema
 
@@ -123,14 +123,29 @@ Optional fields:
 - `reference_materials` (array): Paths to reference markdown files (e.g., `["reference_materials/raft_basics.md"]`)
 - `llm_judge_instructions` (string): Custom grading rubric for Freeform questions
 
+## Adding New Exams
+
+Exams are written in markdown format and automatically converted to the JSON format using `prepare_dataset.py`.
+
+### Markdown Format
+
+See [data/example_course_2024_midterm/exam.md](data/example_course_2024_midterm/exam.md) for a complete example with comments explaining each question type.
+
+Overview of the format:
+
+- JSON block at the top for exam metadata
+- Questions separated by `---`
+- Question text in markdown
+- JSON block for question metadata and answer
+- Optional `comments` field for notes about the question
+
 ### Steps to Add an Exam
 
-1. Review the annotated example: [data/example_exam/EXAMPLE_EXAM.md](data/example_exam/EXAMPLE_EXAM.md)
-2. Add a new exam metadata entry to `data/exams_metadata.json`
-3. Exclude questions with figures/images (deduct their points from total)
-4. Split multi-part True/False questions into separate entries (use problem_ids like "2.1", "2.2")
-5. Add each question as one line in `data/questions.jsonl` (use incremental `instance_id`)
-6. Add exam metadata to `data/exams_metadata.json` (make sure points and question counts match)
-7. (Optional) Create reference materials in `data/reference_materials/` and link them in questions
+1. Create a new folder in `data/`: `data/your_exam_name/`
+2. Create `exam.md` in that folder following the format (see [example_course_2024_midterm/exam.md](data/example_course_2024_midterm/exam.md))
+3. (Optional) Add reference materials (`.md` files) to the same folder
+4. Run the preparation script: `python prepare_dataset.py`
+
+The script will automatically parse your markdown, assign incremental `instance_id` values, and generate `data/questions.jsonl` and `data/exams_metadata.json`. It will also copy any reference materials to `data/reference_materials/`.
 
 > If anything in this documentation or the example exam is unclear, please [open an issue](https://github.com/sys-intelligence/system-intelligence-benchmark/issues) with details about what needs clarification.
