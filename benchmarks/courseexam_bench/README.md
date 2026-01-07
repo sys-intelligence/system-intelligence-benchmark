@@ -78,6 +78,10 @@ Required fields:
 - `score_total` (number): Total points (must match sum of question points)
 - `num_questions` (integer): Number of questions (must match actual count)
 
+Optional fields:
+
+- `institution` (string): University or institution name
+
 ### Question Types
 
 ExactMatch: Questions with one correct answer, graded by exact string match

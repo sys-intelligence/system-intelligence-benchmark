@@ -5,6 +5,7 @@
   "exam_id": "example_course_2024_midterm",
   "test_paper_name": "Example Systems Course: 2024 Midterm Exam",
   "course": "Example Systems Course",
+  "institution": "Example University",
   "year": 2024,
   "score_total": 59,
   "score_max": 59.0,
