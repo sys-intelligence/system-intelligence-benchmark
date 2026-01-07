@@ -1,2 +1,3 @@
 data/questions.jsonl
 data/exams_metadata.json
+data/reference_materials/**
