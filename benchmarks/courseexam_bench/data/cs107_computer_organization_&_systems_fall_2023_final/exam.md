@@ -130,7 +130,7 @@ Your answer should be a complete implementation of the `serialize` function as d
   "problem_id": "1",
   "points": 10,
   "type": "Freeform",
-  "tags": ["C-programming", "struct-memory-layout", "dynamic-memory-allocation"],
+  "tags": ["c-programming", "struct-memory-layout", "dynamic-memory-allocation"],
   "answer": "```\nchar *serialize(struct string strings[], size_t len) {\n    char *serialization = strdup(\"\");\n    size_t length = 0;\n    for (size_t i = 0; i < len; i++) {\n        serialization = realloc(serialization, length + strings[i].length + 1);\n        if (strings[i].length <= 15) {\n            strcpy(serialization + length, strings[i].chars);\n        } else {\n            strncpy(serialization + length, strings[i].chars, 8);\n            strcpy(serialization + length + 8, *(char **) &strings[i].chars[8]);\n        }\n        length += strings[i].length;\n    }\n    return serialization;\n}\n```",
   "comments": "Expect proper pointer casting when accessing the external char* within the chars[16] array and correct management of the heap-allocated serialization string.",
   "llm_judge_instructions": "The answer is one correct implementation of the serialize function as described. Award full points for a correct and efficient implementation that handles both short and long strings properly. Partial credit may be given for partially correct implementations that demonstrate understanding of the memory layout and dynamic allocation."
