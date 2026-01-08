@@ -18,7 +18,6 @@ jobs:
       matrix:
         benchmark:
           - example_bench
-          - course_exam_bench
           - toposense_bench
           - courselab_bench
           - courseexam_bench

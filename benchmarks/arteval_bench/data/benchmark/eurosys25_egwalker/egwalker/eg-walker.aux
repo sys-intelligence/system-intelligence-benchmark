@@ -1,0 +1,97 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{Ellis1989}
+\citation{Nichols1995}
+\citation{DayRichter2010}
+\citation{Li2006,Roh2011RGA,Sun2020OT}
+\@LN@col{1}
+\@writefile{toc}{\contentsline {section}{Abstract}{1}{section*.1}\protected@file@percent }
+\@LN@col{2}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Two concurrent insertions into a text document.}}{1}{figure.caption.5}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{two-inserts}{{1}{1}{Two concurrent insertions into a text document}{figure.caption.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\newlabel{introduction}{{1}{1}{Introduction}{section.1}{}}
+\citation{Upwelling,Patchwork}
+\citation{Oster2006WOOT}
+\citation{crdt-papers}
+\citation{DayRichter2010}
+\citation{overleaf-ot}
+\citation{ditto-aircraft}
+\citation{ditto-military}
+\citation{antarctica}
+\citation{Hellerstein2010}
+\@LN@col{1}
+\@LN@col{2}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Background}{2}{section.2}\protected@file@percent }
+\citation{Shapiro2011}
+\citation{Lamport1978}
+\citation{Birman1991,Cachin2011}
+\@LN@col{1}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}System model}{3}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Event graphs}{3}{subsection.2.2}\protected@file@percent }
+\newlabel{event-graphs}{{2.2}{3}{Event graphs}{subsection.2.2}{}}
+\@LN@col{2}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces The event graph corresponding to \autoref {two-inserts}.}}{3}{figure.caption.6}\protected@file@percent }
+\newlabel{graph-example}{{2}{3}{The event graph corresponding to \autoref {two-inserts}}{figure.caption.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Document versions}{3}{subsection.2.3}\protected@file@percent }
+\newlabel{versions}{{2.3}{3}{Document versions}{subsection.2.3}{}}
+\citation{polog}
+\@LN@col{1}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Replaying editing history}{4}{subsection.2.4}\protected@file@percent }
+\newlabel{replay}{{2.4}{4}{Replaying editing history}{subsection.2.4}{}}
+\@LN@col{2}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces An event graph (left) and one possible topologically sorted order of that graph (right).}}{4}{figure.caption.7}\protected@file@percent }
+\newlabel{topological-sort}{{3}{4}{An event graph (left) and one possible topologically sorted order of that graph (right)}{figure.caption.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Implementing OT using a CRDT}{4}{subsection.2.5}\protected@file@percent }
+\newlabel{crdt-replay}{{2.5}{4}{Implementing OT using a CRDT}{subsection.2.5}{}}
+\citation{Boehm1995}
+\citation{vscode-buffer}
+\citation{Attiya2016}
+\citation{fugue}
+\@LN@col{1}
+\@writefile{toc}{\contentsline {section}{\numberline {3}The Event Graph Walker algorithm}{5}{section.3}\protected@file@percent }
+\newlabel{algorithm}{{3}{5}{The Event Graph Walker algorithm}{section.3}{}}
+\@LN@col{2}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Characteristics of Eg-walker\xspace  }{5}{subsection.3.1}\protected@file@percent }
+\newlabel{characteristics}{{3.1}{5}{Characteristics of \algname }{subsection.3.1}{}}
+\citation{CLRS2009}
+\@LN@col{1}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Walking the event graph}{6}{subsection.3.2}\protected@file@percent }
+\newlabel{graph-walk}{{3.2}{6}{Walking the event graph}{subsection.3.2}{}}
+\@LN@col{2}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces An event graph. Starting with document ``hi'', one user changes ``hi'' to ``hey'', while concurrently another user capitalises the ``H''. After merging to the state ``Hey'', one of them appends an exclamation mark to produce ``Hey!''.}}{6}{figure.caption.8}\protected@file@percent }
+\newlabel{graph-hi-hey}{{4}{6}{An event graph. Starting with document ``hi'', one user changes ``hi'' to ``hey'', while concurrently another user capitalises the ``H''. After merging to the state ``Hey'', one of them appends an exclamation mark to produce ``Hey!''}{figure.caption.8}{}}
+\citation{Roh2011RGA}
+\citation{Nicolaescu2016YATA}
+\citation{yjs}
+\@LN@col{1}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Representing prepare and effect versions}{7}{subsection.3.3}\protected@file@percent }
+\newlabel{prepare-effect-versions}{{3.3}{7}{Representing prepare and effect versions}{subsection.3.3}{}}
+\@LN@col{2}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces State machine for internal state variable $s_p$.}}{7}{figure.caption.9}\protected@file@percent }
+\newlabel{spv-state}{{5}{7}{State machine for internal state variable $s_p$}{figure.caption.9}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Left: the internal state after applying $e_1 ... e_4$ from \autoref {graph-hi-hey}. Right: after $\mathsf  {retreat}(e_4)$ and $\mathsf  {retreat}(e_3)$, the prepare state is updated to mark ``H'' as \texttt  {NotInsertedYet}, and the deletion of ``h'' is undone. The effect state is unchanged.}}{7}{figure.caption.10}\protected@file@percent }
+\newlabel{crdt-state-1}{{6}{7}{Left: the internal state after applying $e_1 ... e_4$ from \autoref {graph-hi-hey}. Right: after $\mathsf {retreat}(e_4)$ and $\mathsf {retreat}(e_3)$, the prepare state is updated to mark ``H'' as \texttt {NotInsertedYet}, and the deletion of ``h'' is undone. The effect state is unchanged}{figure.caption.10}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces The internal Eg-walker\xspace  state after replaying all of the events in \autoref {graph-hi-hey}.}}{7}{figure.caption.11}\protected@file@percent }
+\newlabel{crdt-state-2}{{7}{7}{The internal \algname state after replaying all of the events in \autoref {graph-hi-hey}}{figure.caption.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Mapping indexes to character IDs}{7}{subsection.3.4}\protected@file@percent }
+\newlabel{b-trees}{{3.4}{7}{Mapping indexes to character IDs}{subsection.3.4}{}}
+\citation{CLRS2009}
+\@LN@col{1}
+\@LN@col{2}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Clearing the internal state}{8}{subsection.3.5}\protected@file@percent }
+\newlabel{clearing}{{3.5}{8}{Clearing the internal state}{subsection.3.5}{}}
+\citation{automerge-storage,automerge-columnar}
+\citation{Abadi2013,Stonebraker2005}
+\citation{yjs}
+\@LN@col{1}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.6}Partial event graph replay}{9}{subsection.3.6}\protected@file@percent }
+\newlabel{partial-replay}{{3.6}{9}{Partial event graph replay}{subsection.3.6}{}}
+\@LN@col{2}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.7}Algorithm complexity}{9}{subsection.3.7}\protected@file@percent }
+\newlabel{complexity}{{3.7}{9}{Algorithm complexity}{subsection.3.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.8}Storing the event graph}{9}{subsection.3.8}\protected@file@percent }
+\newlabel{storage}{{3.8}{9}{Storing the event graph}{subsection.3.8}{}}
