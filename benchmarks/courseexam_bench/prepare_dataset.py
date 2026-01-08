@@ -6,7 +6,7 @@ from pathlib import Path
 def parse_exam_markdown(exam_md_path, start_instance_id):
     content = exam_md_path.read_text()
 
-    exam_metadata_match = re.search(r"```json\n(\{[^`]+?\})\n```", content)
+    exam_metadata_match = re.search(r"```json\n(\{.*?\})\n```", content, re.DOTALL)
     exam_metadata = json.loads(exam_metadata_match.group(1))
 
     sections = content.split("\n---\n")[1:]
@@ -15,7 +15,7 @@ def parse_exam_markdown(exam_md_path, start_instance_id):
     instance_id = start_instance_id
 
     for section in sections:
-        json_blocks = re.findall(r"```json\n(\{[^`]+?\})\n```", section)
+        json_blocks = re.findall(r"```json\n(\{.*?\})\n```", section, re.DOTALL)
 
         for json_block in json_blocks:
             question_data = json.loads(json_block)
