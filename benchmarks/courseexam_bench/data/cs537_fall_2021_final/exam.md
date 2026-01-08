@@ -5,6 +5,7 @@
   "exam_id": "cs537_fall_2021_final",
   "test_paper_name": "CS 537 Fall 2021 Final",
   "course": "Operating Systems",
+  "institution": "University of Wisconsin-Madison",
   "year": 2021,
   "score_total": 60,
   "score_max": 60.0,
