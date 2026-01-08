@@ -89,6 +89,8 @@ ExactMatch: Questions with one correct answer, graded by exact string match
 - Single choice (A/B/C/D)
 - True/False
 
+> **Note:** For ExactMatch questions, always include explicit instructions about the expected answer format in the question text. For example: "Your answer should be one letter only (A, B, C, D, or E). No extra text."
+
 Freeform: Free-form text questions graded by LLM-as-judge
 
 - Explanation questions
@@ -142,6 +144,15 @@ Overview of the format:
 - Question text in markdown
 - JSON block for question metadata and answer
 - Optional `comments` field for notes about the question
+
+#### Handling Multi-Part Questions
+
+Each question should be standalone. The `problem_id` field is flexible and supports values like `2.1` or `4a` for subquestions.
+
+If multiple subquestions share the same context, you have two options:
+
+- Separate questions: Create individual questions with their own JSON blocks. Make sure to include the shared context in each question's text.
+- Combined question: Merge subquestions into one question (JSON). Ask for a comma-separated list of answers (e.g., `"A, B, D"`) for `ExactMatch`, or use `Freeform` with an LLM judge for more complex grading.
 
 ### Steps to Add an Exam
 
