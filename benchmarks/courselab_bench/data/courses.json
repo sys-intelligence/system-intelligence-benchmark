@@ -11,6 +11,12 @@
       "name": "6.5840: Distributed Systems",
       "institution": "MIT",
       "year": 2024
+    },
+    {
+      "course_id": "ostep_projects",
+      "name": "OSTEP Projects",
+      "institution": "University of Wisconsin-Madison",
+      "year": 2024
     }
   ]
 }

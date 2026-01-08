@@ -1,0 +1,14 @@
+{
+  "instance_id": "ostep_projects_processes_shell",
+  "course_id": "ostep_projects",
+  "docker_image": "xuafeng/swe-go-python:latest",
+  "timeout_minutes": 20,
+  "tags": [
+    "operating-systems",
+    "processes",
+    "shell",
+    "c"
+  ],
+  "repo_url": "https://github.com/remzi-arpacidusseau/ostep-projects",
+  "base_commit": "76cff3f89f4bf337af6e02e53a831b7eeb1396df"
+}
