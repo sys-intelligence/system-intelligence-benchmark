@@ -47,7 +47,7 @@ Please explain what mmap does in `mmap(NULL, 211975, PROT_READ, MAP_PRIVATE, 3, 
   "points": 1,
   "type": "Freeform",
   "tags": ["kernel-interface", "system-calls"],
-  "answer": "It maps the file `/etc/ld.so.cache` (fd=3) into the process's virtual address space.",
+  "answer": "It maps the file /etc/ld.so.cache (fd=3) into the process's virtual address space.",
   "llm_judge_instructions": "Must mention map a file in memory and fd. Grade by understanding."
 }
 ```
@@ -303,8 +303,8 @@ Please help Cathy identify the possible cause for the kernel panic. (2 points)
   "type": "Freeform",
   "tags": ["procfs", "linux-kernel", "system-calls"],
   "reference_materials": ["MP1.md"],
-  "answer": "`tail` calls `lseek`, but the proc file’s `proc_lseek` handler is NULL or incorrectly implemented, causing a null pointer dereference when the kernel attempts to invoke it.",
-  "llm_judge_instructions": "Must mention `lseek` and missing/NULL `proc_lseek` handler. Grade by understanding."
+  "answer": "tail calls lseek, but the proc file’s proc_lseek handler is NULL or incorrectly implemented, causing a null pointer dereference when the kernel attempts to invoke it.",
+  "llm_judge_instructions": "Must mention lseek and missing/NULL proc_lseek handler. Grade by understanding."
 }
 ```
 
