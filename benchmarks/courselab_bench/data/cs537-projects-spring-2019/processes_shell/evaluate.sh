@@ -1,12 +1,16 @@
 #!/bin/bash
 set -e
 
-#!/bin/bash
-set -e
-
 echo "=== Evaluation ==="
 
 cd /workspace/processes-shell
+
+if [ -f /tmp/checksums/protected.sha256 ]; then
+  sha256sum -c /tmp/checksums/protected.sha256 || {
+    echo "FAIL: protected files were modified"
+    exit 1
+  }
+fi
 
 echo "Building wish"
 if [ -f Makefile ]; then
