@@ -363,7 +363,7 @@ Considering the problem symptom from the previous question and his implementatio
   "tags": ["realtime-scheduling", "timers", "linux-kernel"],
   "reference_materials": ["MP2.md"],
   "answer": "The timer is programmed incorrectly (e.g., using the wrong next-period calculation), causing the period start to drift later over time and eventually miss deadlines.",
-  "llm_judge_instructions": "Must point to incorrect timer or `mod_timer` usage."
+  "llm_judge_instructions": "Must point to incorrect timer or mod_timer usage."
 }
 ```
 
