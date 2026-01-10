@@ -7,8 +7,8 @@
   "course": "Operating Systems",
   "institution": "University of Wisconsin-Madison",
   "year": 2021,
-  "score_total": 60,
-  "num_questions": 59
+  "score_total": 56,
+  "num_questions": 56
 }
 ```
 
@@ -123,7 +123,7 @@ C) regular
 D) multi-zoned
 
 E) shingled
-
+  
 Your answer should be one letter only (A, B, C, D, or E). No extra text.
 
 ```json
@@ -138,138 +138,6 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "disk-geometry"
   ],
   "answer": "D"
-}
-```
----
-
-## Question 5 [1 point]
-
-The image depicts a fully specified physical magnetic disk model viewed from above, with all elements needed for disk-scheduling reasoning explicitly encoded. The disk consists of four concentric circular tracks: an outermost track, two intermediate tracks, and a small innermost track surrounding a central spindle marked by a yellow dot that represents the axis of rotation. Each of the three outer tracks is divided into angular sectors labeled with block numbers, and these numbers increase monotonically in the counter-clockwise direction, which is the disk’s rotation direction as indicated by a bold upward arrow on the right side labeled “Rotate.” The outermost track contains blocks 0 through 11, the next track inward contains blocks 12 through 23, and the third track inward contains blocks 24 through 35; the innermost circle contains no numbered blocks and appears to be non-addressable or irrelevant for the scheduling problem. Sector numbers are positioned at their approximate angular locations on each track, implicitly defining sector boundaries and relative angular offsets across tracks. On the left side of the disk is a grey actuator arm assembly consisting of a vertical column and a horizontal extension, forming an inverted L shape, terminating in a yellow circular read/write head. This head is positioned radially over the second track from the outside and angularly aligned with the sector labeled 6, which is further emphasized by a small rectangular marker containing the number “6” placed at that exact angular position on the track boundary; this unambiguously defines the initial head state in both radius (track) and angle (sector). The disk’s alternating grey shading distinguishes tracks visually but has no semantic meaning beyond clarity. The head is assumed to move only radially (to change tracks), while angular movement is entirely due to disk rotation, so a block can only be serviced when it physically rotates under the head. Text in the upper right (“s to start”, “p to pause”, “q to quit”) indicates the image likely originates from an interactive visualization but does not affect the disk model itself. Combined, the diagram explicitly defines the disk geometry, track layout, block ordering, rotation direction, initial head position at block 6, and the physical access model in which rotational latency matters; together with the stated scheduling assumptions in the problem (FIFO versus SSTF with essentially zero seek time), this information is sufficient to deterministically reason about the service order and identify which request is serviced last.
-
-Given the disk to the right (which rotates counter-clockwise), and assuming FIFO disk scheduling, what request would be serviced last, assuming the requests are: 13, 4, 35, 34, 5
-A) 13
-
-B) 4
-
-C) 35
-
-D) 34
-
-E) 5
-
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
-
-```json
-{
-  "problem_id": "5",
-  "points": 1,
-  "type": "ExactMatch",
-  "tags": [
-    "operating-systems",
-    "disks",
-    "disk-scheduling",
-    "io"
-  ],
-  "answer": "E"
-}
-```
----
-
-## Question 6 [1 point]
-
-The image depicts a fully specified physical magnetic disk model viewed from above, with all elements needed for disk-scheduling reasoning explicitly encoded. The disk consists of four concentric circular tracks: an outermost track, two intermediate tracks, and a small innermost track surrounding a central spindle marked by a yellow dot that represents the axis of rotation. Each of the three outer tracks is divided into angular sectors labeled with block numbers, and these numbers increase monotonically in the counter-clockwise direction, which is the disk’s rotation direction as indicated by a bold upward arrow on the right side labeled “Rotate.” The outermost track contains blocks 0 through 11, the next track inward contains blocks 12 through 23, and the third track inward contains blocks 24 through 35; the innermost circle contains no numbered blocks and appears to be non-addressable or irrelevant for the scheduling problem. Sector numbers are positioned at their approximate angular locations on each track, implicitly defining sector boundaries and relative angular offsets across tracks. On the left side of the disk is a grey actuator arm assembly consisting of a vertical column and a horizontal extension, forming an inverted L shape, terminating in a yellow circular read/write head. This head is positioned radially over the second track from the outside and angularly aligned with the sector labeled 6, which is further emphasized by a small rectangular marker containing the number “6” placed at that exact angular position on the track boundary; this unambiguously defines the initial head state in both radius (track) and angle (sector). The disk’s alternating grey shading distinguishes tracks visually but has no semantic meaning beyond clarity. The head is assumed to move only radially (to change tracks), while angular movement is entirely due to disk rotation, so a block can only be serviced when it physically rotates under the head. Text in the upper right (“s to start”, “p to pause”, “q to quit”) indicates the image likely originates from an interactive visualization but does not affect the disk model itself. Combined, the diagram explicitly defines the disk geometry, track layout, block ordering, rotation direction, initial head position at block 6, and the physical access model in which rotational latency matters; together with the stated scheduling assumptions in the problem (FIFO versus SSTF with essentially zero seek time), this information is sufficient to deterministically reason about the service order and identify which request is serviced last.
-
-Now assume a SSTF (shortest seek first) disk scheduler, and a VERY FAST (essentially infinitely fast) seek; which request would be serviced last? (assume that when you get to a particular track, the scheduler will read the blocks in the fastest order available on that track). Requests: 13, 4, 35, 34, 5.
-A) 13
-
-B) 4
-
-C) 35
-
-D) 34
-
-E) 5
-
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
-
-```json
-{
-  "problem_id": "6",
-  "points": 1,
-  "type": "ExactMatch",
-  "tags": [
-    "operating-systems",
-    "disks",
-    "disk-scheduling",
-    "io"
-  ],
-  "answer": "C"
-}
-```
----
-
-## Question 7 [1 point]
-
-The image depicts a fully specified physical magnetic disk model viewed from above, with all elements needed for disk-scheduling reasoning explicitly encoded. The disk consists of four concentric circular tracks: an outermost track, two intermediate tracks, and a small innermost track surrounding a central spindle marked by a yellow dot that represents the axis of rotation. Each of the three outer tracks is divided into angular sectors labeled with block numbers, and these numbers increase monotonically in the counter-clockwise direction, which is the disk’s rotation direction as indicated by a bold upward arrow on the right side labeled “Rotate.” The outermost track contains blocks 0 through 11, the next track inward contains blocks 12 through 23, and the third track inward contains blocks 24 through 35; the innermost circle contains no numbered blocks and appears to be non-addressable or irrelevant for the scheduling problem. Sector numbers are positioned at their approximate angular locations on each track, implicitly defining sector boundaries and relative angular offsets across tracks. On the left side of the disk is a grey actuator arm assembly consisting of a vertical column and a horizontal extension, forming an inverted L shape, terminating in a yellow circular read/write head. This head is positioned radially over the second track from the outside and angularly aligned with the sector labeled 6, which is further emphasized by a small rectangular marker containing the number “6” placed at that exact angular position on the track boundary; this unambiguously defines the initial head state in both radius (track) and angle (sector). The disk’s alternating grey shading distinguishes tracks visually but has no semantic meaning beyond clarity. The head is assumed to move only radially (to change tracks), while angular movement is entirely due to disk rotation, so a block can only be serviced when it physically rotates under the head. Text in the upper right (“s to start”, “p to pause”, “q to quit”) indicates the image likely originates from an interactive visualization but does not affect the disk model itself. Combined, the diagram explicitly defines the disk geometry, track layout, block ordering, rotation direction, initial head position at block 6, and the physical access model in which rotational latency matters; together with the stated scheduling assumptions in the problem (FIFO versus SSTF with essentially zero seek time), this information is sufficient to deterministically reason about the service order and identify which request is serviced last.
-
-Now assume a SATF (shortest access first) scheduler, and a VERY FAST (essentially infinitely fast) seek; which request will be serviced last?
-A) 13
-
-B) 4
-
-C) 35
-
-D) 34
-
-E) 5
-
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
-
-```json
-{
-  "problem_id": "7",
-  "points": 1,
-  "type": "ExactMatch",
-  "tags": [
-    "operating-systems",
-    "disks",
-    "disk-scheduling",
-    "io"
-  ],
-  "answer": "E"
-}
-```
----
-
-## Question 8 [1 point]
-
-The image depicts a fully specified physical magnetic disk model viewed from above, with all elements needed for disk-scheduling reasoning explicitly encoded. The disk consists of four concentric circular tracks: an outermost track, two intermediate tracks, and a small innermost track surrounding a central spindle marked by a yellow dot that represents the axis of rotation. Each of the three outer tracks is divided into angular sectors labeled with block numbers, and these numbers increase monotonically in the counter-clockwise direction, which is the disk’s rotation direction as indicated by a bold upward arrow on the right side labeled “Rotate.” The outermost track contains blocks 0 through 11, the next track inward contains blocks 12 through 23, and the third track inward contains blocks 24 through 35; the innermost circle contains no numbered blocks and appears to be non-addressable or irrelevant for the scheduling problem. Sector numbers are positioned at their approximate angular locations on each track, implicitly defining sector boundaries and relative angular offsets across tracks. On the left side of the disk is a grey actuator arm assembly consisting of a vertical column and a horizontal extension, forming an inverted L shape, terminating in a yellow circular read/write head. This head is positioned radially over the second track from the outside and angularly aligned with the sector labeled 6, which is further emphasized by a small rectangular marker containing the number “6” placed at that exact angular position on the track boundary; this unambiguously defines the initial head state in both radius (track) and angle (sector). The disk’s alternating grey shading distinguishes tracks visually but has no semantic meaning beyond clarity. The head is assumed to move only radially (to change tracks), while angular movement is entirely due to disk rotation, so a block can only be serviced when it physically rotates under the head. Text in the upper right (“s to start”, “p to pause”, “q to quit”) indicates the image likely originates from an interactive visualization but does not affect the disk model itself. Combined, the diagram explicitly defines the disk geometry, track layout, block ordering, rotation direction, initial head position at block 6, and the physical access model in which rotational latency matters; together with the stated scheduling assumptions in the problem (FIFO versus SSTF with essentially zero seek time), this information is sufficient to deterministically reason about the service order and identify which request is serviced last.
-
-Assuming a VERY FAST seek (essentially infinitely fast), how would you order the disk schedulers for those five requests, from fastest to slowest?
-A) SSTF, SATF, FIFO
-
-B) SSTF, FIFO, SATF
-
-C) SATF, SSTF, FIFO
-
-D) SATF, FIFO, SSTF
-
-E) FIFO, SATF, SSTF
-
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
-
-```json
-{
-  "problem_id": "8",
-  "points": 1,
-  "type": "ExactMatch",
-  "tags": [
-    "operating-systems",
-    "disks",
-    "disk-scheduling",
-    "io"
-  ],
-  "answer": "C"
 }
 ```
 ---
