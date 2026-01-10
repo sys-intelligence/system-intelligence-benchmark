@@ -1,0 +1,15 @@
+{
+  "instance_id": "cs537-projects-spring-2019-processes-shell",
+  "course_id": "cs537-projects-spring-2019",
+  "docker_image": "xuafeng/swe-go-python:latest",
+  "timeout_minutes": 20,
+  "tags": ["operating-systems", "processes", "shell", "c"],
+  "repo_url": "https://github.com/remzi-arpacidusseau/ostep-projects",
+  "base_commit": "76cff3f89f4bf337af6e02e53a831b7eeb1396df",
+  "output_files": [
+    {
+      "src": "/workspace/processes-shell/wish.c",
+      "dest": "processes-shell/wish.c"
+    }
+  ]
+}
