@@ -41,6 +41,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "storage-hardware",
     "disk-geometry"
   ],
+  "choices": [
+    "deleted",
+    "written",
+    "read from",
+    "erased",
+    "truncated"
+  ],
   "answer": "B"
 }
 ```
@@ -72,6 +79,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "disks",
     "storage-hardware",
     "disk-geometry"
+  ],
+  "choices": [
+    "platter",
+    "surface",
+    "track",
+    "sector",
+    "block"
   ],
   "answer": "A"
 }
@@ -105,6 +119,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "storage-hardware",
     "disk-geometry"
   ],
+  "choices": [
+    "platter",
+    "surface",
+    "track",
+    "sector",
+    "block"
+  ],
   "answer": "C"
 }
 ```
@@ -136,6 +157,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "disks",
     "storage-hardware",
     "disk-geometry"
+  ],
+  "choices": [
+    "wicked smart",
+    "extended",
+    "regular",
+    "multi-zoned",
+    "shingled"
   ],
   "answer": "D"
 }
@@ -169,6 +197,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "disk-scheduling",
     "io"
   ],
+  "choices": [
+    "transition, position, constitution",
+    "move head, wait for head to stop moving, transfer",
+    "position, transfer, react",
+    "shake, rattle, roll",
+    "seek, rotate, transfer"
+  ],
   "answer": "E"
 }
 ```
@@ -201,6 +236,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "disk-scheduling",
     "io"
   ],
+  "choices": [
+    "PASS",
+    "CRANK",
+    "SCAN",
+    "CHECK",
+    "FAIRPLAY"
+  ],
   "answer": "C"
 }
 ```
@@ -232,6 +274,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "raid",
     "storage",
     "fault-tolerance"
+  ],
+  "choices": [
+    "size",
+    "the odds",
+    "reliability",
+    "latency",
+    "distribution"
   ],
   "answer": "C"
 }
@@ -269,14 +318,15 @@ Your answer should be two letters separated by a comma, in order for Part A then
 {
   "problem_id": "12-13",
   "points": 2,
-  "type": "ExactMatch",
+  "type": "Freeform",
   "tags": [
     "operating-systems",
     "raid",
     "fault-tolerance",
     "performance"
   ],
-  "answer": "C,D"
+  "answer": "C,D",
+  "llm_judge_instructions": "This question is worth 2 points total. Award 2 points if Part A is C and Part B is D in order (spaces optional, e.g., \"C,D\" or \"C, D\"). Award 1 point if exactly one part is correct and the other is incorrect (e.g., \"C,A\" or \"B,D\"). Award 0 points for any other response, missing part, or unclear format."
 }
 ```
 ---
@@ -313,6 +363,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "storage",
     "fault-tolerance"
   ],
+  "choices": [
+    "00",
+    "01",
+    "10",
+    "11",
+    "None of the above"
+  ],
   "answer": "D"
 }
 ```
@@ -344,6 +401,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "raid",
     "storage",
     "fault-tolerance"
+  ],
+  "choices": [
+    "N x B",
+    "N",
+    "B",
+    "N x (B - 1)",
+    "(N - 1) x B"
   ],
   "answer": "E"
 }
@@ -377,6 +441,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "storage",
     "fault-tolerance"
   ],
+  "choices": [
+    "a little better",
+    "a little worse",
+    "a lot better",
+    "a lot worse",
+    "about the same"
+  ],
   "answer": "A"
 }
 ```
@@ -408,6 +479,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "raid",
     "storage",
     "fault-tolerance"
+  ],
+  "choices": [
+    "0",
+    "1",
+    "4",
+    "5",
+    "4 and 5"
   ],
   "answer": "E"
 }
@@ -441,6 +519,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "storage",
     "fault-tolerance"
   ],
+  "choices": [
+    "2, 1",
+    "1, 2",
+    "2, 2",
+    "1, 1",
+    "None of the above"
+  ],
   "answer": "C"
 }
 ```
@@ -472,6 +557,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "raid",
     "storage",
     "fault-tolerance"
+  ],
+  "choices": [
+    "N x R MB/s",
+    "N x R / 2 MB/s",
+    "N x R / 4 MB/s",
+    "R / 2 MB/s",
+    "R MB/s"
   ],
   "answer": "C"
 }
@@ -505,6 +597,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "storage",
     "fault-tolerance"
   ],
+  "choices": [
+    "rebooting",
+    "a parity-based approach",
+    "mirroring",
+    "thinking",
+    "striping"
+  ],
   "answer": "E"
 }
 ```
@@ -536,6 +635,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "flash",
     "storage",
     "ftl"
+  ],
+  "choices": [
+    "mega pages",
+    "blocks",
+    "units",
+    "chunks",
+    "candy bars"
   ],
   "answer": "B"
 }
@@ -569,6 +675,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "storage",
     "ftl"
   ],
+  "choices": [
+    "4 KB",
+    "256 KB",
+    "256 MB",
+    "256 GB",
+    "over 1 TB"
+  ],
   "answer": "A"
 }
 ```
@@ -600,6 +713,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "flash",
     "storage",
     "ftl"
+  ],
+  "choices": [
+    "can be re-programmed repeatedly (without intervening steps)",
+    "is guaranteed to store bits within it, permanently",
+    "can never be re-programmed",
+    "can be re-programmed, but first must be read",
+    "cannot be re-programmed until the entire block is erased"
   ],
   "answer": "E"
 }
@@ -633,6 +753,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "storage",
     "ftl"
   ],
+  "choices": [
+    "head crashes",
+    "read/write disturbance",
+    "cracking",
+    "wear out",
+    "burn out"
+  ],
   "answer": "D"
 }
 ```
@@ -664,6 +791,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "flash",
     "storage",
     "ftl"
+  ],
+  "choices": [
+    "wear leveling",
+    "read programming",
+    "garbage collection",
+    "input reduction",
+    "write amplification"
   ],
   "answer": "C"
 }
@@ -697,6 +831,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "storage",
     "ftl"
   ],
+  "choices": [
+    "1000 microseconds",
+    "1100 microseconds",
+    "1200 microseconds",
+    "40000 microseconds",
+    "1 millisecond"
+  ],
   "answer": "C"
 }
 ```
@@ -728,6 +869,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "flash",
     "storage",
     "ftl"
+  ],
+  "choices": [
+    "10 microseconds",
+    "40 microseconds",
+    "1000 microseconds",
+    "1040 microseconds",
+    "2 milliseconds"
   ],
   "answer": "B"
 }
@@ -763,6 +911,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "storage",
     "ftl"
   ],
+  "choices": [
+    "q",
+    "i",
+    "U",
+    "K",
+    "z"
+  ],
   "answer": "C"
 }
 ```
@@ -794,6 +949,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "flash",
     "storage",
     "ftl"
+  ],
+  "choices": [
+    "7",
+    "8",
+    "9",
+    "10",
+    "11"
   ],
   "answer": "B"
 }
@@ -827,6 +989,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "storage",
     "ftl"
   ],
+  "choices": [
+    "100 microseconds",
+    "120 microseconds",
+    "140 microseconds",
+    "200 microseconds",
+    "1040 microseconds"
+  ],
   "answer": "C"
 }
 ```
@@ -858,6 +1027,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "file-systems",
     "metadata",
     "storage"
+  ],
+  "choices": [
+    "superblock",
+    "inode",
+    "data block",
+    "directory",
+    "journal"
   ],
   "answer": "B"
 }
@@ -891,6 +1067,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "inodes",
     "metadata"
   ],
+  "choices": [
+    "4096 KB",
+    "4100 KB",
+    "4104 KB",
+    "4044 KB",
+    "4144 KB"
+  ],
   "answer": "E"
 }
 ```
@@ -922,6 +1105,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "file-systems",
     "inodes",
     "metadata"
+  ],
+  "choices": [
+    "~4 KB",
+    "~1 MB",
+    "~4 MB",
+    "~1 GB",
+    "~4 GB"
   ],
   "answer": "E"
 }
@@ -955,6 +1145,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "directories",
     "metadata"
   ],
+  "choices": [
+    "directory name, file attribute",
+    "file name, inode number",
+    "file name, parent location",
+    "inode number, file type",
+    "inode type, file directory"
+  ],
   "answer": "B"
 }
 ```
@@ -986,6 +1183,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "file-systems",
     "free-space",
     "allocation"
+  ],
+  "choices": [
+    "free lists",
+    "management teams",
+    "hamburgers",
+    "bitmaps",
+    "inodes"
   ],
   "answer": "D"
 }
@@ -1019,6 +1223,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "directories",
     "path-lookup"
   ],
+  "choices": [
+    "0",
+    "1",
+    "2",
+    "3",
+    "4"
+  ],
   "answer": "D"
 }
 ```
@@ -1050,6 +1261,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "file-systems",
     "inodes",
     "allocation"
+  ],
+  "choices": [
+    "the file\u2019s inode, data bitmap, and the data block itself",
+    "the directory data block, the data block, and the superblock",
+    "the inode bitmap, the directory data block, and the inode",
+    "the journal, the data block itself, and the directory",
+    "the department, the chair, the entire university"
   ],
   "answer": "A"
 }
@@ -1083,6 +1301,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "buffering",
     "performance"
   ],
+  "choices": [
+    "skipping, tricking, and faking out",
+    "batching, scheduling, and avoiding writes altogether",
+    "batching, scheduling, and smoothing writes out",
+    "batching, avoiding writes, and spacing writes out over time",
+    "anticipating, logging, and batch amortizing"
+  ],
   "answer": "B"
 }
 ```
@@ -1114,6 +1339,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "file-systems",
     "vsfs",
     "directories"
+  ],
+  "choices": [
+    "creat(\"/m\")",
+    "mkdir(\"/m\")",
+    "unlink(\"/m\")",
+    "append a block to root directory",
+    "append a block to root inode"
   ],
   "answer": "A"
 }
@@ -1147,6 +1379,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "vsfs",
     "directories"
   ],
+  "choices": [
+    "mkdir(\"/o\")",
+    "unlink(\"/m\")",
+    "read(\"/m\")",
+    "link(\"/m\", \"/o\")",
+    "creat(\"/o\")"
+  ],
   "answer": "D"
 }
 ```
@@ -1178,6 +1417,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "file-systems",
     "crash-consistency",
     "fsck"
+  ],
+  "choices": [
+    "the data is on disk, but it can never be read",
+    "the data is on disk, and can be read after recovery, but it is garbage",
+    "the data is on disk, but the inode bitmap says it is free",
+    "the data is on disk, and it can be easily read after recovery",
+    "the data never reaches the disk"
   ],
   "answer": "A"
 }
@@ -1211,6 +1457,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "crash-consistency",
     "fsck"
   ],
+  "choices": [
+    "the data is on disk, but it can never be read",
+    "the data may seemingly be read after recovery, but it is garbage",
+    "the data bitmap and inode bitmap don\u2019t agree",
+    "the data is on disk, and can be easily read after recovery",
+    "the inode cannot be read"
+  ],
   "answer": "B"
 }
 ```
@@ -1242,6 +1495,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "file-systems",
     "crash-consistency",
     "fsck"
+  ],
+  "choices": [
+    "file system inconsistency (the inode and data bitmap disagree)",
+    "file system inconsistency (the data block and inode disagree)",
+    "file system inconsistency (the directory and inode disagree)",
+    "file system inconsistency (the data bitmap and inode bitmap disagree)",
+    "file system confusion"
   ],
   "answer": "A"
 }
@@ -1275,6 +1535,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "crash-consistency",
     "fsck"
   ],
+  "choices": [
+    "computationally",
+    "passionately",
+    "logically",
+    "atomically",
+    "sequentially"
+  ],
   "answer": "D"
 }
 ```
@@ -1306,6 +1573,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "file-systems",
     "crash-consistency",
     "fsck"
+  ],
+  "choices": [
+    "slow",
+    "complicated",
+    "redundant",
+    "incoherent",
+    "fast"
   ],
   "answer": "A"
 }
@@ -1339,6 +1613,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "journaling",
     "crash-consistency"
   ],
+  "choices": [
+    "transaction",
+    "full write",
+    "journal delete",
+    "checkpoint",
+    "phase out"
+  ],
   "answer": "D"
 }
 ```
@@ -1370,6 +1651,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "file-systems",
     "journaling",
     "crash-consistency"
+  ],
+  "choices": [
+    "inodes",
+    "user data",
+    "directory data",
+    "bitmaps",
+    "information"
   ],
   "answer": "B"
 }
@@ -1403,6 +1691,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "journaling",
     "crash-consistency"
   ],
+  "choices": [
+    "the checkpoint",
+    "freeing space in the journal",
+    "the transaction commit block",
+    "anything else",
+    "sunrise"
+  ],
   "answer": "C"
 }
 ```
@@ -1434,6 +1729,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "file-systems",
     "journaling",
     "crash-consistency"
+  ],
+  "choices": [
+    "all data is lost",
+    "the system may not be able to reboot",
+    "the recovery starts over after reboot, but might lose data committed to the journal",
+    "the recovery starts over after reboot, and should work correctly",
+    "you are out of luck."
   ],
   "answer": "D"
 }
@@ -1467,6 +1769,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "journaling",
     "performance"
   ],
+  "choices": [
+    "1.5",
+    "2",
+    "3",
+    "4",
+    "5"
+  ],
   "answer": "B"
 }
 ```
@@ -1498,6 +1807,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "nfs",
     "distributed-systems",
     "network-file-systems"
+  ],
+  "choices": [
+    "performance",
+    "sharing",
+    "reliability",
+    "code coverage",
+    "ease of testing"
   ],
   "answer": "B"
 }
@@ -1531,6 +1847,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "distributed-systems",
     "network-file-systems"
   ],
+  "choices": [
+    "application demands",
+    "clients with little memory",
+    "slow disks",
+    "bears",
+    "network partitions"
+  ],
   "answer": "E"
 }
 ```
@@ -1562,6 +1885,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "nfs",
     "distributed-systems",
     "network-file-systems"
+  ],
+  "choices": [
+    "stateless",
+    "harmless",
+    "connectionless",
+    "tasteless",
+    "quirky"
   ],
   "answer": "A"
 }
@@ -1595,6 +1925,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "distributed-systems",
     "network-file-systems"
   ],
+  "choices": [
+    "file descriptor",
+    "security token",
+    "smoke screen indicator",
+    "request identifier",
+    "generation number"
+  ],
   "answer": "E"
 }
 ```
@@ -1626,6 +1963,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "nfs",
     "distributed-systems",
     "network-file-systems"
+  ],
+  "choices": [
+    "NFSPROC_RMDIR",
+    "NFSPROC_MKDIR",
+    "NFSPROC_LOOKUP",
+    "NFSPROC_REMOVE",
+    "NFSPROC_FLUSH"
   ],
   "answer": "C"
 }
@@ -1659,6 +2003,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "distributed-systems",
     "network-file-systems"
   ],
+  "choices": [
+    "never",
+    "once",
+    "silently",
+    "many times",
+    "in reverse"
+  ],
   "answer": "D"
 }
 ```
@@ -1690,6 +2041,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "nfs",
     "distributed-systems",
     "network-file-systems"
+  ],
+  "choices": [
+    "caching",
+    "oddly efficient",
+    "redundancy-based",
+    "timeout/retry",
+    "handshake/fistbump"
   ],
   "answer": "D"
 }
@@ -1723,6 +2081,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "distributed-systems",
     "network-file-systems"
   ],
+  "choices": [
+    "latency/staleness",
+    "visibility/correctness",
+    "choiceness/visibility",
+    "correctness/staleness",
+    "staleness/visibility"
+  ],
   "answer": "E"
 }
 ```
@@ -1755,6 +2120,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "distributed-systems",
     "network-file-systems"
   ],
+  "choices": [
+    "latency",
+    "staleness",
+    "correctness",
+    "visibility",
+    "choiceness"
+  ],
   "answer": "D"
 }
 ```
@@ -1786,6 +2158,13 @@ Your answer should be one letter only (A, B, C, D, or E). No extra text.
     "nfs",
     "distributed-systems",
     "network-file-systems"
+  ],
+  "choices": [
+    "performance; this approach is usually faster",
+    "correctness; this ensures no writes are lost due to an untimely server crash",
+    "choiceness; having more choice is critical in the modern world",
+    "caching in both clients and servers adds too much complexity to the protocol",
+    "lost to history"
   ],
   "answer": "B"
 }
