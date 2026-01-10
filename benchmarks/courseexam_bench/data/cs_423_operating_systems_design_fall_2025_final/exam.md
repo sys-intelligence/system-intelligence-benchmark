@@ -58,7 +58,7 @@ If both the guest and host use 5-level page tables, how many steps does nested t
 
 ## Question 3 [1 point]
 
-Can you describe the difference in handling page faults in a bare-mental (non-virtualized) environment versus a virtualized environment (e.g., in the guest)? (1 point)
+Can you describe the difference in handling page faults in a bare-metal (non-virtualized) environment versus a virtualized environment (e.g., in the guest)? (1 point)
 
 ```json
 {
