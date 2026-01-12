@@ -28,7 +28,7 @@ D) erased
 
 E) truncated
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -67,7 +67,7 @@ D) sector
 
 E) block
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -106,7 +106,7 @@ D) sector
 
 E) block
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -145,7 +145,7 @@ D) multi-zoned
 
 E) shingled
   
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -184,7 +184,7 @@ D) shake, rattle, roll
 
 E) seek, rotate, transfer
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -223,7 +223,7 @@ D) CHECK
 
 E) FAIRPLAY
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -262,7 +262,7 @@ D) latency
 
 E) distribution
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -312,21 +312,16 @@ D) N x S / 2 MB/s
 
 E) N x S x S MB/s
 
-Your answer should be two letters separated by a comma, in order for Part A then Part B (for example: C,D).
+Your answer should be two letters separated by a comma, in order for Part A then Part B (for example: "A, B").
 
 ```json
 {
   "problem_id": "12-13",
   "points": 2,
   "type": "Freeform",
-  "tags": [
-    "operating-systems",
-    "raid",
-    "fault-tolerance",
-    "performance"
-  ],
-  "answer": "C,D",
-  "llm_judge_instructions": "This question is worth 2 points total. Award 2 points if Part A is C and Part B is D in order (spaces optional, e.g., \"C,D\" or \"C, D\"). Award 1 point if exactly one part is correct and the other is incorrect (e.g., \"C,A\" or \"B,D\"). Award 0 points for any other response, missing part, or unclear format."
+  "tags": ["operating-systems", "raid", "fault-tolerance", "performance"],
+  "answer": "C, D",
+  "llm_judge_instructions": "Award 2 points if the 2 answers are correct (C for Part A, D for Part B). Award 1 point if only one of the two answers is correct. Award 0 points if neither answer is correct."
 }
 ```
 ---
@@ -350,7 +345,7 @@ D) 11
 
 E) None of the above
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -389,7 +384,7 @@ D) N x (B - 1)
 
 E) (N - 1) x B
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -428,7 +423,7 @@ D) a lot worse
 
 E) about the same
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -467,7 +462,7 @@ D) 5
 
 E) 4 and 5
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -506,7 +501,7 @@ D) 1, 1
 
 E) None of the above
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -545,7 +540,7 @@ D) R / 2 MB/s
 
 E) R MB/s
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -584,7 +579,7 @@ D) thinking
 
 E) striping
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -623,7 +618,7 @@ D) chunks
 
 E) candy bars
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -662,7 +657,7 @@ D) 256 GB
 
 E) over 1 TB
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -701,7 +696,7 @@ D) can be re-programmed, but first must be read
 
 E) cannot be re-programmed until the entire block is erased
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -740,7 +735,7 @@ D) wear out
 
 E) burn out
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -779,7 +774,7 @@ D) input reduction
 
 E) write amplification
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -818,7 +813,7 @@ D) 40000 microseconds
 
 E) 1 millisecond
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -857,7 +852,7 @@ D) 1040 microseconds
 
 E) 2 milliseconds
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -898,7 +893,7 @@ D) K
 
 E) z
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -937,7 +932,7 @@ D) 10
 
 E) 11
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -976,7 +971,7 @@ D) 200 microseconds
 
 E) 1040 microseconds
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1015,7 +1010,7 @@ D) directory
 
 E) journal
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1054,7 +1049,7 @@ D) 4044 KB
 
 E) 4144 KB
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1093,7 +1088,7 @@ D) ~1 GB
 
 E) ~4 GB
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1132,7 +1127,7 @@ D) inode number, file type
 
 E) inode type, file directory
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1171,7 +1166,7 @@ D) bitmaps
 
 E) inodes
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1210,7 +1205,7 @@ D) 3
 
 E) 4
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1249,7 +1244,7 @@ D) the journal, the data block itself, and the directory
 
 E) the department, the chair, the entire university
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1288,7 +1283,7 @@ D) batching, avoiding writes, and spacing writes out over time
 
 E) anticipating, logging, and batch amortizing
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1327,7 +1322,7 @@ D) append a block to root directory
 
 E) append a block to root inode
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1366,7 +1361,7 @@ D) link("/m", "/o")
 
 E) creat("/o")
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1405,7 +1400,7 @@ D) the data is on disk, and it can be easily read after recovery
 
 E) the data never reaches the disk
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1444,7 +1439,7 @@ D) the data is on disk, and can be easily read after recovery
 
 E) the inode cannot be read
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1483,7 +1478,7 @@ D) file system inconsistency (the data bitmap and inode bitmap disagree)
 
 E) file system confusion
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1522,7 +1517,7 @@ D) atomically
 
 E) sequentially
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1561,7 +1556,7 @@ D) incoherent
 
 E) fast
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1600,7 +1595,7 @@ D) checkpoint
 
 E) phase out
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1639,7 +1634,7 @@ D) bitmaps
 
 E) information
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1678,7 +1673,7 @@ D) anything else
 
 E) sunrise
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1717,7 +1712,7 @@ D) the recovery starts over after reboot, and should work correctly
 
 E) you are out of luck.
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1756,7 +1751,7 @@ D) 4
 
 E) 5
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1795,7 +1790,7 @@ D) code coverage
 
 E) ease of testing
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1834,7 +1829,7 @@ D) bears
 
 E) network partitions
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1873,7 +1868,7 @@ D) tasteless
 
 E) quirky
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1912,7 +1907,7 @@ D) request identifier
 
 E) generation number
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1951,7 +1946,7 @@ D) NFSPROC_REMOVE
 
 E) NFSPROC_FLUSH
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -1990,7 +1985,7 @@ D) many times
 
 E) in reverse
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -2029,7 +2024,7 @@ D) timeout/retry
 
 E) handshake/fistbump
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -2068,7 +2063,7 @@ D) correctness/staleness
 
 E) staleness/visibility
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -2107,7 +2102,7 @@ D) visibility
 
 E) choiceness
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
@@ -2146,7 +2141,7 @@ D) caching in both clients and servers adds too much complexity to the protocol
 
 E) lost to history
 
-Your answer should be one letter only (A, B, C, D, or E). No extra text.
+Your answer should be one letter only (A, B, C, D, or E).
 
 ```json
 {
