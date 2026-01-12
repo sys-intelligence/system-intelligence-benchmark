@@ -6,6 +6,8 @@ We include a simple ReAct agent inspired by [mini-swe-agent](https://github.com/
 
 ## Quick Start
 
+> Some tasks (e.g., CMU 15-213 Data Lab) require x86-specific packages and may not run on other architectures. The evaluation infrastructure is being updated to address this (See #48).
+
 Make sure to export the appropriate API keys for your chosen model provider (copy `.env.toml.example` to `.env.toml` and fill in your keys). We use litellm for model access.
 
 ```bash
