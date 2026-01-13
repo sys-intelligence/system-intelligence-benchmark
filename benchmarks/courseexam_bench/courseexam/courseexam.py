@@ -12,7 +12,6 @@ from inspect_ai.solver import (
 from courseexam.dataset import load_dataset, load_exam_metadata
 from courseexam.metrics import (
     points_accuracy,
-    points_mean,
     total_points_earned,
     total_points_possible,
 )
@@ -64,7 +63,6 @@ def courseexam(
         scorer=exam_scorer(judge_model=judge_model),
         metrics=[
             points_accuracy(),
-            points_mean(),
             total_points_earned(),
             total_points_possible(),
         ],

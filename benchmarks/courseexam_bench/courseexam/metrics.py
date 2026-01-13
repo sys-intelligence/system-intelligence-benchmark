@@ -21,23 +21,6 @@ def points_accuracy() -> Metric:
 
 
 @metric
-def points_mean() -> Metric:
-    def metric_fn(scores: list[SampleScore]) -> float:
-        if not scores:
-            return 0.0
-
-        total_earned = 0.0
-
-        for sample_score in scores:
-            metadata = sample_score.score.metadata or {}
-            total_earned += metadata.get("points_earned", 0)
-
-        return total_earned / len(scores)
-
-    return metric_fn
-
-
-@metric
 def total_points_earned() -> Metric:
     def metric_fn(scores: list[SampleScore]) -> float:
         total = 0.0

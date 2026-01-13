@@ -2,7 +2,6 @@ from .courseexam import courseexam
 from .dataset import load_dataset, load_exam_metadata
 from .metrics import (
     points_accuracy,
-    points_mean,
     total_points_earned,
     total_points_possible,
 )
@@ -14,7 +13,6 @@ __all__ = [
     "load_exam_metadata",
     "exam_scorer",
     "points_accuracy",
-    "points_mean",
     "total_points_earned",
     "total_points_possible",
 ]
