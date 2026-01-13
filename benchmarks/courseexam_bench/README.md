@@ -2,11 +2,9 @@
 
 A benchmark for evaluating AI agents on systems course exam questions. This benchmark tests AI agents' ability to answer technical exam questions covering topics like operating systems, distributed systems, databases, and networking.
 
-> Note: The infrastructure to run this benchmark is still work in progress. For now, we are focused on defining the data format and collecting exam questions.
+## What is this benchmark?
 
-## Scope: Standalone Questions Only
-
-This benchmark is designed for standalone exam questions similar to traditional paper exams. Think of this as a closed-book exam with an optional cheatsheet where students solve questions using only pen and paper (no code execution, no file system access, no web browsing, or any other agent actions)
+This benchmark is designed for standalone exam questions similar to traditional paper exams. Think of this as a closed-book exam with an optional cheatsheet where students solve questions using only pen and paper (no code execution, no file system access, no web browsing, or any other agent actions).
 
 What's allowed:
 
@@ -19,11 +17,92 @@ What's not allowed:
 - Questions requiring file system interaction
 - Questions requiring web access or external tools
 - Any form of agent execution beyond reading and answering
-- Questions with images/figures (see below for details)
+- Questions with images/figures (see policy below)
 
-> We understand that different professors and universities use different terminology (e.g., "take-home exam," "assignments" instead of "labs"), but the line we draw is that the exam benchmark only includes plain text questions with optional reference markdown files. If a question requires any form of execution, environment setup, or interactive problem-solving, it belongs in the [Course Lab Benchmark](../courselab_bench/) instead, which offers more flexibility for coding tasks and agent interactions.
+> We understand that different professors and universities use different terminology (e.g., "take-home exam," "assignments" instead of "labs"), but the line we draw is that the exam benchmark only includes plain text questions with optional reference markdown files. If a question requires any form of execution, environment setup, or interactive problem-solving, it belongs in the [Course Lab Benchmark](../courselab_bench/) instead.
 
-### No Images/Figures Policy
+## Running Evaluation
+
+This benchmark uses [Inspect](https://inspect.ai-safety-institute.org.uk/) for evaluation. After preparing the dataset, you can run evaluations with different models and configurations.
+
+```bash
+# Install the benchmark
+pip install -e .
+
+# Prepare the dataset (run this once after adding new exams)
+python prepare_dataset.py
+
+inspect eval courseexam --model openai/gpt-4
+
+# Filter by exam
+inspect eval courseexam -T exam_ids=example_course_2024_midterm --model openai/gpt-4
+
+# Filter by question type (ExactMatch or Freeform)
+inspect eval courseexam -T question_types=ExactMatch --model openai/gpt-4
+
+# Filter by tags
+inspect eval courseexam -T tags=operating-systems --model openai/gpt-4
+
+# Use a different judge model for Freeform questions
+inspect eval courseexam -T judge_model=openai/gpt-4o --model openai/gpt-4
+
+# If you prefer to modify the configuration in code, edit run_eval.py then run:
+python run_eval.py
+```
+
+After running evaluations, view results with:
+
+```bash
+inspect view
+```
+
+## Adding New Exams
+
+Exams are written in markdown format and automatically converted using `prepare_dataset.py`.
+
+### Markdown Format
+
+See [data/raw/example_course_2024_midterm/exam.md](data/raw/example_course_2024_midterm/exam.md) for a complete example with comments explaining each question type.
+
+Format overview:
+
+- JSON block at the top for exam metadata
+- Questions separated by `---`
+- Question text in markdown
+- JSON block for question metadata and answer
+- Optional `comments` field for notes about the question
+
+### Steps to Add an Exam
+
+1. Create a new folder in `data/raw/`: `data/raw/your_exam_name/`
+2. Create `exam.md` in that folder following the format
+3. (Optional) Add reference materials (`.md` files) to the same folder
+4. Run the preparation script: `python prepare_dataset.py`
+
+The script will automatically parse your markdown and generate `data/questions.jsonl` and `data/exams_metadata.json`. It will also copy any reference materials to `data/reference_materials/`.
+
+### Handling Multi-Part Questions
+
+Each question should be standalone. The `problem_id` field is flexible and supports values like `2.1` or `4a` for subquestions.
+
+If multiple subquestions share the same context, you have two options:
+
+- Separate questions: Create individual questions with their own JSON blocks. Make sure to include the shared context in each question's text.
+- Combined question: Merge subquestions into one question (JSON). Ask for a comma-separated list of answers (e.g., `"A, B, D"`) for `ExactMatch`, or use `Freeform` with an LLM judge for more complex grading.
+
+## Question Types
+
+ExactMatch: Questions with one correct answer, graded by exact string match
+
+- Single choice (A/B/C/D)
+- True/False
+
+Freeform: Free-form text questions graded by LLM-as-judge
+
+- Explanation questions
+- Multiple choice with partial credit (using custom rubric)
+
+## No Images/Figures Policy
 
 We don't allow pictures or images in questions to avoid penalizing text-only agents. The rule is that figures must have a textual ground truth. No task should rely on visual interpretation alone.
 
@@ -41,13 +120,14 @@ The benchmark consists of exam questions stored in a structured format:
 
 ```
 data/
+├── raw/                      # Source exam.md files
+│   └── example_course_2024_midterm/
+│       └── exam.md
 ├── exams_metadata.json       # Exam-level metadata (generated)
 ├── questions.jsonl           # Question data (generated)
-├── reference_materials/      # Cheatsheets and reference documents
-│   ├── raft_basics.md
-│   └── ...
-└── example_course_2024_midterm/
-    └── exam.md               # Exam in markdown format
+└── reference_materials/      # Cheatsheets and reference documents
+    ├── raft_basics.md
+    └── ...
 ```
 
 ### Exam Metadata Schema
@@ -82,85 +162,40 @@ Optional fields:
 
 - `institution` (string): University or institution name
 
-### Question Types
-
-ExactMatch: Questions with one correct answer, graded by exact string match
-
-- Single choice (A/B/C/D)
-- True/False
-
-> **Note:** For ExactMatch questions, always include explicit instructions about the expected answer format in the question text. For example: "Your answer should be one letter only (A, B, C, D, or E). No extra text."
-
-Freeform: Free-form text questions graded by LLM-as-judge
-
-- Explanation questions
-- Multiple choice with partial credit (using custom rubric)
-
 ### Question Schema
-
-Each line in `questions.jsonl` is a JSON object:
 
 ```json
 {
-  "instance_id": 1,
-  "exam_id": "example_course_2024_midterm",
-  "problem_id": "1",
-  "points": 5,
-  "problem": "What state is a process in when it is waiting for I/O?...",
-  "answer": "C",
-  "type": "ExactMatch",
-  "tags": ["operating-systems", "processes"]
+  "input": "What state is a process in when it is waiting for I/O?",
+  "target": "C",
+  "choices": ["Running", "Ready", "Blocked", "Terminated"],
+  "id": "example_course_2024_midterm_1",
+  "metadata": {
+    "exam_id": "example_course_2024_midterm",
+    "problem_id": "1",
+    "points": 5,
+    "type": "ExactMatch",
+    "tags": ["operating-systems", "processes"]
+  }
 }
 ```
 
 Required fields:
 
-- `instance_id` (integer): Globally unique identifier (incremental by 1)
-- `exam_id` (string): Links to exam in exams_metadata.json
-- `problem_id` (string): Question identifier within exam (e.g., "1", "2.1", "4a")
-- `points` (integer): Points allocated to this question
-- `problem` (string): Question text in markdown format
-- `answer` (string): Correct answer
-- `type` (string): Either "ExactMatch" or "Freeform"
-- `tags` (array): Topic tags (minimum 1, lowercase with hyphens)
+- `input` (string): Question text in markdown format
+- `target` (string): Correct answer
+- `id` (string): Unique identifier
+- `metadata`:
+  - `exam_id` (string): Links to exam in exams_metadata.json
+  - `problem_id` (string): Question identifier within exam (e.g., "1", "2.1", "4a")
+  - `points` (integer): Points allocated to this question
+  - `type` (string): Either "ExactMatch" or "Freeform"
+  - `tags` (array): Topic tags (minimum 1, lowercase with hyphens)
 
 Optional fields:
 
-- `reference_materials` (array): Paths to reference markdown files (e.g., `["reference_materials/raft_basics.md"]`)
-- `llm_judge_instructions` (string): Custom grading rubric for Freeform questions
-
-## Adding New Exams
-
-Exams are written in markdown format and automatically converted to the JSON format using `prepare_dataset.py`.
-
-### Markdown Format
-
-See [data/example_course_2024_midterm/exam.md](data/example_course_2024_midterm/exam.md) for a complete example with comments explaining each question type.
-
-Overview of the format:
-
-- JSON block at the top for exam metadata
-- Questions separated by `---`
-- Question text in markdown
-- JSON block for question metadata and answer
-- Optional `comments` field for notes about the question
-
-#### Handling Multi-Part Questions
-
-Each question should be standalone. The `problem_id` field is flexible and supports values like `2.1` or `4a` for subquestions.
-
-If multiple subquestions share the same context, you have two options:
-
-- Separate questions: Create individual questions with their own JSON blocks. Make sure to include the shared context in each question's text.
-- Combined question: Merge subquestions into one question (JSON). Ask for a comma-separated list of answers (e.g., `"A, B, D"`) for `ExactMatch`, or use `Freeform` with an LLM judge for more complex grading.
-
-### Steps to Add an Exam
-
-1. Create a new folder in `data/`: `data/your_exam_name/`
-2. Create `exam.md` in that folder following the format (see [example_course_2024_midterm/exam.md](data/example_course_2024_midterm/exam.md))
-3. (Optional) Add reference materials (`.md` files) to the same folder
-4. Run the preparation script: `python prepare_dataset.py`
-
-The script will automatically parse your markdown, assign incremental `instance_id` values, and generate `data/questions.jsonl` and `data/exams_metadata.json`. It will also copy any reference materials to `data/reference_materials/`.
+- `choices` (array): Answer choices for multiple choice/True-False questions. Required for ExactMatch questions with options. Target must be a letter (A, B, C, etc.) corresponding to the choice index.
+- `metadata.reference_materials` (array): Paths to reference markdown files (e.g., `["reference_materials/raft_basics.md"]`)
+- `metadata.llm_judge_instructions` (string): Custom grading rubric for Freeform questions
 
 > If anything in this documentation or the example exam is unclear, please [open an issue](https://github.com/sys-intelligence/system-intelligence-benchmark/issues) with details about what needs clarification.

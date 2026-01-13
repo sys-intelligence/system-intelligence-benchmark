@@ -37,14 +37,13 @@ C. 2
 
 D. 3
 
-Your answer should be one of: A, B, C, D only (no extra text).
-
 ```json
 {
   "problem_id": "1",
   "points": 5,
   "type": "ExactMatch",
   "tags": ["file-systems", "xv6", "inodes"],
+  "choices": ["A", "B", "C", "D"],
   "answer": "C",
   "comments": "C. A directory is implemented using an inode, and one inode is created for directory a and one is created for directory b"
 }
@@ -88,14 +87,13 @@ C. file data
 
 D. a bitmap
 
-Your answer should be one of: A, B, C, D only (no extra text).
-
 ```json
 {
   "problem_id": "2",
   "points": 5,
   "type": "ExactMatch",
   "tags": ["file-systems", "xv6", "logging"],
+  "choices": ["A", "B", "C", "D"],
   "answer": "A",
   "comments": "A. Block 770 is a data block and data blocks of directories contain directory entries."
 }
@@ -127,14 +125,13 @@ C. an error because 'b' points to itself
 
 D. nothing because xv6 will panic
 
-Your answer should be one of: A, B, C, D only (no extra text).
-
 ```json
 {
   "problem_id": "3",
   "points": 5,
   "type": "ExactMatch",
   "tags": ["file-systems", "xv6", "symlinks"],
+  "choices": ["A", "B", "C", "D"],
   "answer": "C",
   "comments": "C. When the kernel resolves the symlink 'b' in open, it will find the symlink 'b'. The fs lab requires your solution detects this cycle and return an error."
 }
@@ -160,14 +157,13 @@ D. New system calls cannot start until the just-closed transaction has finished 
 
 E. New system calls cannot start until all updated buffers from the just-closed transaction have been synced to their homes on disk.
 
-Your answer should be one of: A, B, C, D, E only (no extra text).
-
 ```json
 {
   "problem_id": "4",
   "points": 5,
   "type": "ExactMatch",
   "tags": ["file-systems", "journaling", "ext3"],
+  "choices": ["A", "B", "C", "D", "E"],
   "answer": "B",
   "comments": "B. The delay serves to prevent partial modifications made by system calls in the next transaction from being seen by system calls that are finishing in the first transaction."
 }
@@ -193,6 +189,7 @@ Hatshepsut runs this program. Both calls to mkdir() return success. Hatshepsut c
 crash just after the program exits. Then she re-starts the computer, which runs the EXT3 recovery program.
 
 What could Hatshepsut see after recovery? (Choose all that apply.)
+
 A. She might see neither /aaa nor /zzz.
 
 B. She might see /aaa but not /zzz.
@@ -203,13 +200,13 @@ D. She might see both /zzz and /aaa.
 
 E. None of the above.
 
-Your answer should be a comma-separated list of letters only (no extra text). For example: "B, C"
+Your answer should be a comma-separated list of letters. For example: "A, C"
 
 ```json
 {
   "problem_id": "5",
   "points": 5,
-  "type": "ExactMatch",
+  "type": "Freeform",
   "tags": ["file-systems", "journaling", "ext3", "atomicity"],
   "answer": "A, B, D",
   "comments": "A, B, and D. A can occur if the system crashed before the transaction(s) reflecting the mkdirs finished committing. B can occur if the two mkdirs are in different transactions, and only the first manages to finish committing. C cannot occur because system calls are placed in transactions in order, and the transactions are also replayed in order during recovery"
@@ -281,8 +278,6 @@ C. 1000
 
 D. ((1 ≪ 27) \* 8) / 4096
 
-Your answer should be one of: A, B, C, D only (no extra text).
-
 ```json
 {
   "problem_id": "6",
@@ -290,6 +285,7 @@ Your answer should be one of: A, B, C, D only (no extra text).
   "type": "ExactMatch",
   "tags": ["virtual-memory", "linux", "page-faults"],
   "reference_materials": ["mmap.md"],
+  "choices": ["A", "B", "C", "D"],
   "answer": "B",
   "comments": "B. The page fault handler uses only 1 page. If it maps a new page, it unmaps the old page."
 }
@@ -362,8 +358,6 @@ D. 16
 
 E. 8192
 
-Your answer should be one of: A, B, C, D, E only (no extra text).
-
 ```json
 {
   "problem_id": "7",
@@ -371,6 +365,7 @@ Your answer should be one of: A, B, C, D, E only (no extra text).
   "type": "ExactMatch",
   "tags": ["virtual-memory", "linux", "page-faults"],
   "reference_materials": ["mmap.md"],
+  "choices": ["A", "B", "C", "D", "E"],
   "answer": "D",
   "comments": "D. The loop goes through the first 8192 entries in the sqrts table. A double is 8 bytes and 512 fit on a single page of 4096 bytes (4096/8 = 512). Thus, the total number of virtual pages referenced in the loop is 8192/512 = 16. The page fault handler will be invoked once for each of the 16 pages."
 }
@@ -395,13 +390,13 @@ D. Copy-on-write fork() is not possble for L4Linux because the CPU delivers page
 
 E. None of the above.
 
-Your answer should be a comma-separated list of letters only (no extra text). For example: "B, C"
+Your answer should be a comma-separated list of letters. For example: "B, C"
 
 ```json
 {
   "problem_id": "8",
   "points": 5,
-  "type": "ExactMatch",
+  "type": "Freeform",
   "tags": ["microkernels", "l4linux", "fork"],
   "answer": "E",
   "comments": "E. Not A: fork is a Linux system call, implemented by the Linux kernel server, not by the L4 kernel. Not B: Linux processes communicate with the Linux server via IPC messages, not by system call traps. Not C: The Linux kernel server is not privileged, and cannot modify the page table register; only the L4 kernel can do this. Not D: the L4 kernel forwards page faults to the Linux kernel server."
@@ -428,13 +423,13 @@ E. A divide-by-zero error in the network domain won't crash the rv6 file system.
 
 F. None of the above.
 
-Your answer should be a comma-separated list of letters only (no extra text). For example: "B, C"
+Your answer should be a comma-separated list of letters. For example: "B, C"
 
 ```json
 {
   "problem_id": "9",
   "points": 5,
-  "type": "ExactMatch",
+  "type": "Freeform",
   "tags": ["redleaf"],
   "answer": "C, E",
   "comments": "C and E. A is false because RedLeaf uses language techniques that disallow domains to dereferences arbitrary addresses. B is false, because RedLeaf explicitly disallows this; only pointers in the shared heap can be passed to other domains. C is true, because RedLeaf follows the Rust borrow rules, which allow two domains to have an immutable reference to the same object. D is false, because RedLeaf doesn't use page tables but relies on language techniques for isolation; the mmap lab requires the use of page tables. E is true, because RedLeaf is designed to catch errors like these and clean up a domain that experience such an error."
@@ -461,14 +456,13 @@ D. He will see livelock, because at high enough arrival rates the CPU will spend
 
 E. He will see livelock, because the polling thread can only process packets at some finite rate, and the input rate could be higher than that.
 
-Your answer should be one of: A, B, C, D, E only (no extra text).
-
 ```json
 {
   "problem_id": "10",
   "points": 5,
   "type": "ExactMatch",
   "tags": ["operating-systems", "networking"],
+  "choices": ["A", "B", "C", "D", "E"],
   "answer": "D"
 }
 ```
@@ -538,13 +532,13 @@ E. The Meltdown attack on xv6 wouldn't be able to dump all of xv6 kernel memory 
 
 F. None of the above.
 
-Your answer should be a comma-separated list of letters only (no extra text). For example: "B, C"
+Your answer should be a comma-separated list of letters. For example: "B, C"
 
 ```json
 {
   "problem_id": "12",
   "points": 5,
-  "type": "ExactMatch",
+  "type": "Freeform",
   "tags": ["meltdown"],
   "answer": "A, B, C, D, E",
   "comments": "A, B, C, D, and E. B is true because eventually the CPU will generate an exception, perhaps after speculating on a few instructions. E is true, because xv6 has separate kernel and user page tables, and the user page tables don't map all of kernel memory."
@@ -658,14 +652,13 @@ C. Ben's change could cause invoke syscall() to dereference a pointer to freed m
 
 D. Ben's change could cause retract table() to dereference a pointer to freed memory.
 
-Your answer should be one of: A, B, C, D only (no extra text).
-
 ```json
 {
   "problem_id": "14",
   "points": 5,
   "type": "ExactMatch",
   "tags": ["operating-systems", "concurrency", "rcu"],
+  "choices": ["A", "B", "C", "D"],
   "answer": "C",
   "comments": "C. Ben's modified retract table() frees local_table before the call to synchronize_rcu(). An execution of invoke_syscall() might be active at the same time on another CPU, and might read the old value of local_table just after it has been freed and re-used for something else."
 }

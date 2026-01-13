@@ -22,24 +22,15 @@
 
 What state is a process in when it is waiting for I/O to complete?
 
-A. Running
-
-B. Ready
-
-C. Blocked
-
-D. Terminated
-
-Your answer should be a single letter only (A, B, C, or D).
-
 ```json
 {
   "problem_id": "1",
   "points": 5,
   "type": "ExactMatch",
   "tags": ["operating-systems", "processes"],
+  "choices": ["Running", "Ready", "Blocked", "Terminated"],
   "answer": "C",
-  "comments": "Standard single choice with one correct answer. Graded by exact string match."
+  "comments": "Multiple choice question. The choices field is required for ExactMatch questions with options."
 }
 ```
 
@@ -49,16 +40,14 @@ Your answer should be a single letter only (A, B, C, or D).
 
 True or False: A race condition occurs when multiple threads access shared data concurrently and at least one thread modifies the data.
 
-Your answer should be either "True" or "False" only. No extra text.
-
 ```json
 {
   "problem_id": "2",
   "points": 5,
   "type": "ExactMatch",
   "tags": ["operating-systems", "concurrency"],
-  "answer": "True",
-  "comments": "True/False question. Answer must be exactly \"True\" or \"False\". Multi-part True/False questions must be split into separate questions with problem_ids (\"2.1\", \"2.2\")."
+  "choices": ["True", "False"],
+  "answer": "A"
 }
 ```
 
@@ -113,16 +102,20 @@ B. Reading file contents
 
 C. Changing file size
 
-Your answer should be a comma-separated list of letters only (no extra text). For example: "A,B"
-
 ```json
 {
   "problem_id": "5",
   "points": 5,
-  "type": "ExactMatch",
+  "type": "Freeform",
   "tags": ["operating-systems", "file-systems"],
-  "answer": "A, C",
-  "comments": "Multiple correct answers but NO partial credit. Only exact match \"A, C\" gets 5 points."
+  "choices": [
+    "Changing file permissions",
+    "Reading file contents",
+    "Changing file size"
+  ],
+  "answer": "The operations that modify the inode are: A (Changing file permissions) and C (Changing file size). Reading file contents (B) does not modify the inode.",
+  "llm_judge_instructions": "Award full 5 points if the student correctly identifies both A and C. Award 0 points for any other answer. Acceptable formats include: 'A, C', 'A and C', 'A & C', or explaining that A and C are correct.",
+  "comments": "Multiple choice with multiple correct answers. Since we can't use ExactMatch for multi-select, we use Freeform with LLM judge."
 }
 ```
 
@@ -188,7 +181,8 @@ Your answer should be either "True" or "False" only. No extra text.
   "type": "ExactMatch",
   "tags": ["distributed-systems", "raft"],
   "reference_materials": ["raft_basics.md"],
-  "answer": "True",
+  "choices": ["True", "False"],
+  "answer": "A",
   "comments": "ExactMatch with reference material. The reference .md file is provided to the LLM like a cheatsheet."
 }
 ```
@@ -230,7 +224,8 @@ Your answer should be either "True" or "False" only. No extra text.
   "points": 2,
   "type": "ExactMatch",
   "tags": ["distributed-systems", "paxos", "consensus"],
-  "answer": "True",
+  "choices": ["True", "False"],
+  "answer": "A",
   "comments": "Multi-part True/False question. Must be split into separate questions with sub-problem IDs."
 }
 ```
@@ -249,7 +244,8 @@ Your answer should be either "True" or "False" only. No extra text.
   "points": 2,
   "type": "ExactMatch",
   "tags": ["distributed-systems", "cap-theorem"],
-  "answer": "False",
+  "choices": ["True", "False"],
+  "answer": "B",
   "comments": "Multi-part True/False question. Must be split into separate questions with sub-problem IDs."
 }
 ```

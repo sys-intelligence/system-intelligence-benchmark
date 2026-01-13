@@ -7,10 +7,13 @@ import sys
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 
+
 @pytest.fixture(scope="session", autouse=True)
 def generate_dataset():
     script_path = Path(__file__).parent.parent / "prepare_dataset.py"
-    result = subprocess.run([sys.executable, str(script_path)], capture_output=True, text=True)
+    result = subprocess.run(
+        [sys.executable, str(script_path)], capture_output=True, text=True
+    )
     if result.returncode != 0:
         pytest.fail(f"prepare_dataset.py failed: {result.stderr}")
 
@@ -57,59 +60,38 @@ class TestQuestionsSchema:
     def test_questions_required_fields(self):
         questions = load_questions()
         required_fields = [
-            "instance_id",
-            "exam_id",
-            "problem_id",
-            "points",
-            "problem",
-            "answer",
-            "type",
-            "tags",
+            "input",
+            "target",
+            "id",
+            "metadata",
         ]
 
         for q in questions:
             for field in required_fields:
                 assert (
                     field in q
-                ), f"Question {q.get('instance_id', '?')} missing required field: {field}"
+                ), f"Question {q.get('id', '?')} missing required field: {field}"
 
-    def test_instance_ids_unique(self):
+            metadata_fields = ["exam_id", "problem_id", "points", "type", "tags"]
+            for field in metadata_fields:
+                assert (
+                    field in q["metadata"]
+                ), f"Question {q.get('id', '?')} missing metadata field: {field}"
+
+    def test_ids_unique(self):
         questions = load_questions()
-        instance_ids = [q["instance_id"] for q in questions]
-        assert len(instance_ids) == len(
-            set(instance_ids)
-        ), "Duplicate instance_ids found"
-
-    def test_instance_ids_incremental(self):
-        questions = load_questions()
-        instance_ids = sorted([q["instance_id"] for q in questions])
-
-        for i in range(len(instance_ids) - 1):
-            expected_next = instance_ids[i] + 1
-            actual_next = instance_ids[i + 1]
-            assert (
-                actual_next == expected_next
-            ), f"instance_ids not incremental: found {instance_ids[i]} then {actual_next}, expected {expected_next}"
-
-    def test_instance_id_type(self):
-        questions = load_questions()
-        for q in questions:
-            assert isinstance(
-                q["instance_id"], int
-            ), f"instance_id must be integer: {q['instance_id']}"
-            assert (
-                q["instance_id"] > 0
-            ), f"instance_id must be positive: {q['instance_id']}"
+        ids = [q["id"] for q in questions]
+        assert len(ids) == len(set(ids)), "Duplicate IDs found"
 
     def test_exam_id_type(self):
         questions = load_questions()
         for q in questions:
             assert isinstance(
-                q["exam_id"], str
-            ), f"exam_id must be string in question {q['instance_id']}"
+                q["metadata"]["exam_id"], str
+            ), f"exam_id must be string in question {q['id']}"
             assert (
-                len(q["exam_id"]) > 0
-            ), f"exam_id cannot be empty in question {q['instance_id']}"
+                len(q["metadata"]["exam_id"]) > 0
+            ), f"exam_id cannot be empty in question {q['id']}"
 
     def test_exam_id_exists_in_metadata(self):
         questions = load_questions()
@@ -118,40 +100,38 @@ class TestQuestionsSchema:
         exam_ids_in_metadata = {e["exam_id"] for e in exams}
 
         for q in questions:
-            exam_id = q["exam_id"]
+            exam_id = q["metadata"]["exam_id"]
             assert (
                 exam_id in exam_ids_in_metadata
-            ), f"Question {q['instance_id']}: exam_id '{exam_id}' not found in exams_metadata.json"
+            ), f"Question {q['id']}: exam_id '{exam_id}' not found in exams_metadata.json"
 
     def test_points_type(self):
         questions = load_questions()
         for q in questions:
             assert isinstance(
-                q["points"], int
-            ), f"points must be integer in question {q['instance_id']}"
+                q["metadata"]["points"], int
+            ), f"points must be integer in question {q['id']}"
             assert (
-                q["points"] > 0
-            ), f"points must be positive in question {q['instance_id']}"
+                q["metadata"]["points"] > 0
+            ), f"points must be positive in question {q['id']}"
 
     def test_problem_type(self):
         questions = load_questions()
         for q in questions:
             assert isinstance(
-                q["problem"], str
-            ), f"problem must be string in question {q['instance_id']}"
+                q["metadata"]["problem_id"], str
+            ), f"problem_id must be string in question {q['id']}"
             assert (
-                len(q["problem"]) > 0
-            ), f"problem cannot be empty in question {q['instance_id']}"
+                len(q["metadata"]["problem_id"]) > 0
+            ), f"problem_id cannot be empty in question {q['id']}"
 
     def test_answer_type(self):
         questions = load_questions()
         for q in questions:
             assert isinstance(
-                q["answer"], str
-            ), f"answer must be string in question {q['instance_id']}"
-            assert (
-                len(q["answer"]) > 0
-            ), f"answer cannot be empty in question {q['instance_id']}"
+                q["target"], str
+            ), f"target must be string in question {q['id']}"
+            assert len(q["target"]) > 0, f"target cannot be empty in question {q['id']}"
 
     def test_question_type_valid(self):
         questions = load_questions()
@@ -159,73 +139,73 @@ class TestQuestionsSchema:
 
         for q in questions:
             assert (
-                q["type"] in valid_types
-            ), f"Invalid type '{q['type']}' in question {q['instance_id']}. Must be one of {valid_types}"
+                q["metadata"]["type"] in valid_types
+            ), f"Invalid type '{q['metadata']['type']}' in question {q['id']}. Must be one of {valid_types}"
 
     def test_tags_format(self):
         questions = load_questions()
 
         for q in questions:
             assert isinstance(
-                q["tags"], list
-            ), f"tags must be list in question {q['instance_id']}"
+                q["metadata"]["tags"], list
+            ), f"tags must be list in question {q['id']}"
             assert (
-                len(q["tags"]) >= 1
-            ), f"At least one tag required in question {q['instance_id']}"
+                len(q["metadata"]["tags"]) >= 1
+            ), f"At least one tag required in question {q['id']}"
 
-            for tag in q["tags"]:
+            for tag in q["metadata"]["tags"]:
                 assert isinstance(
                     tag, str
-                ), f"Each tag must be string in question {q['instance_id']}"
+                ), f"Each tag must be string in question {q['id']}"
                 assert re.match(
                     r"^[a-z0-9-]+$", tag
-                ), f"Invalid tag format '{tag}' in question {q['instance_id']}. Use lowercase with hyphens"
+                ), f"Invalid tag format '{tag}' in question {q['id']}. Use lowercase with hyphens"
 
     def test_reference_materials_format(self):
         questions = load_questions()
 
         for q in questions:
-            if "reference_materials" in q:
+            if "reference_materials" in q.get("metadata", {}):
                 assert isinstance(
-                    q["reference_materials"], list
-                ), f"reference_materials must be list in question {q['instance_id']}"
+                    q["metadata"]["reference_materials"], list
+                ), f"reference_materials must be list in question {q['id']}"
 
-                for ref in q["reference_materials"]:
+                for ref in q["metadata"]["reference_materials"]:
                     assert isinstance(
                         ref, str
-                    ), f"Each reference_material must be string in question {q['instance_id']}"
+                    ), f"Each reference_material must be string in question {q['id']}"
                     assert ref.startswith(
                         "reference_materials/"
-                    ), f"Reference path must start with 'reference_materials/' in question {q['instance_id']}"
+                    ), f"Reference path must start with 'reference_materials/' in question {q['id']}"
                     assert ref.endswith(
                         ".md"
-                    ), f"Reference material must be .md file in question {q['instance_id']}"
+                    ), f"Reference material must be .md file in question {q['id']}"
 
     def test_reference_materials_exist(self):
         questions = load_questions()
 
         for q in questions:
-            if "reference_materials" in q:
-                for ref in q["reference_materials"]:
+            if "reference_materials" in q.get("metadata", {}):
+                for ref in q["metadata"]["reference_materials"]:
                     ref_path = DATA_DIR / ref
                     assert (
                         ref_path.exists()
-                    ), f"Question {q['instance_id']}: reference material not found: {ref}"
+                    ), f"Question {q['id']}: reference material not found: {ref}"
                     assert (
                         ref_path.is_file()
-                    ), f"Question {q['instance_id']}: reference material is not a file: {ref}"
+                    ), f"Question {q['id']}: reference material is not a file: {ref}"
 
     def test_llm_judge_instructions_format(self):
         questions = load_questions()
 
         for q in questions:
-            if "llm_judge_instructions" in q:
+            if "llm_judge_instructions" in q.get("metadata", {}):
                 assert isinstance(
-                    q["llm_judge_instructions"], str
-                ), f"llm_judge_instructions must be string in question {q['instance_id']}"
+                    q["metadata"]["llm_judge_instructions"], str
+                ), f"llm_judge_instructions must be string in question {q['id']}"
                 assert (
-                    len(q["llm_judge_instructions"]) >= 20
-                ), f"llm_judge_instructions too short in question {q['instance_id']}"
+                    len(q["metadata"]["llm_judge_instructions"]) >= 20
+                ), f"llm_judge_instructions too short in question {q['id']}"
 
 
 class TestExamsMetadata:
@@ -291,9 +271,11 @@ class TestDataConsistency:
 
         for exam in exams:
             exam_id = exam["exam_id"]
-            exam_questions = [q for q in questions if q["exam_id"] == exam_id]
+            exam_questions = [
+                q for q in questions if q["metadata"]["exam_id"] == exam_id
+            ]
 
-            total_points = sum(q["points"] for q in exam_questions)
+            total_points = sum(q["metadata"]["points"] for q in exam_questions)
             expected_points = exam["score_total"]
 
             assert (
@@ -307,7 +289,9 @@ class TestDataConsistency:
 
         for exam in exams:
             exam_id = exam["exam_id"]
-            exam_questions = [q for q in questions if q["exam_id"] == exam_id]
+            exam_questions = [
+                q for q in questions if q["metadata"]["exam_id"] == exam_id
+            ]
 
             actual_count = len(exam_questions)
             expected_count = exam["num_questions"]
