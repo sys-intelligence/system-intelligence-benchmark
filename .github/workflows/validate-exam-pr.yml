@@ -101,7 +101,7 @@ jobs:
           **Exams tested:**
           $(echo "${{ steps.detect_exams.outputs.exam_ids }}" | tr ',' '\n' | sed 's/^/- `/' | sed 's/$/`/')
 
-          **Evaluation file:** Download the \`evaluation-results\` artifact from [this workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) and inspect it using \`inspect view <file>.eval\` or the [Inspect VS Code extension](https://marketplace.visualstudio.com/items?itemName=UKGovernmentAISafetyInstitute.inspect-ai).
+          **Evaluation file:** Download the \`evaluation-results\` artifact from [this workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) and inspect it using \`inspect view <file>.eval\` or the [Inspect VS Code extension](https://marketplace.visualstudio.com/items?itemName=UKGovernmentAISafetyInstitute.inspect-ai). For more details on how to use the web-based log viewer, see [Inspect Log Viewer documentation](https://inspect.aisi.org.uk/log-viewer.html)
 
           This experimental run helps you verify that questions have enough context for the LLM to answer and that grading rubrics are appropriate.
           EOF
