@@ -1,0 +1,9 @@
+{
+  "instance_id": "cs537-projects-spring-2019__processes_shell",
+  "course_id": "cs537-projects-spring-2019",
+  "timeout_minutes": 20,
+  "tags": ["operating-systems", "processes", "shell", "c"],
+  "artifacts": [
+    "processes-shell/wish.c"
+  ]
+}

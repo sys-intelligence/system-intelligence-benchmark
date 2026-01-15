@@ -1,0 +1,15 @@
+{
+  "instance_id": "cmu_15-213__data_lab",
+  "course_id": "cmu_15-213",
+  "timeout_minutes": 30,
+  "tags": [
+    "bit-manipulation",
+    "c-programming",
+    "computer-systems",
+    "integer-representation",
+    "floating-point"
+  ],
+  "artifacts": [
+    "bits.c"
+  ]
+}

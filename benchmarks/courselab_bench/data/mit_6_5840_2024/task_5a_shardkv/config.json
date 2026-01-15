@@ -1,0 +1,13 @@
+{
+  "instance_id": "mit_6_5840_2024__shardkv_5a",
+  "course_id": "mit_6_5840_2024",
+  "timeout_minutes": 40,
+  "artifacts": [
+    "src/src/shardctrler/client.go",
+    "src/src/shardctrler/common.go",
+    "src/src/shardctrler/server.go",
+    "src/src/shardkv/client.go",
+    "src/src/shardkv/common.go",
+    "src/src/shardkv/server.go"
+  ]
+}
