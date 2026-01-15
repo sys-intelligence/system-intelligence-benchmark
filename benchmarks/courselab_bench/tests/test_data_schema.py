@@ -140,19 +140,47 @@ class TestTaskStructure:
                 files = list(starter_dir.rglob("*"))
                 assert len(files) > 0, f"{task_folder.name}: starter directory is empty"
 
-    def test_starter_files_exist(self):
+    def test_instance_id_format(self):
         task_folders = get_task_folders(DATA_DIR)
+
         for task_folder in task_folders:
             config_path = task_folder / "config.json"
             with config_path.open("r") as f:
                 config = json.load(f)
 
-            if "starter_files" in config:
-                for item in config["starter_files"]:
-                    src_file = task_folder / "starter_files" / item["src"]
-                    assert (
-                        src_file.exists()
-                    ), f"{task_folder.name}: starter file not found: {item['src']}"
+            instance_id = config["instance_id"]
+            assert (
+                "__" in instance_id
+            ), f"{task_folder.name}: instance_id should use __ separator (course__task format)"
+
+    def test_courses_json_exists(self):
+        courses_path = DATA_DIR / "courses.json"
+        assert courses_path.exists(), "courses.json not found in data directory"
+
+    def test_courses_json_valid(self):
+        courses_path = DATA_DIR / "courses.json"
+        with courses_path.open("r") as f:
+            courses = json.load(f)
+
+        assert "courses" in courses, "courses.json must have 'courses' key"
+        assert isinstance(courses["courses"], list), "'courses' must be a list"
+
+        for course in courses["courses"]:
+            assert isinstance(course, dict), "each course must be an object"
+            assert "course_id" in course, "each course must have course_id"
+            assert "num_tasks" in course, "each course must have num_tasks"
+
+    def test_starter_files_exist(self):
+        task_folders = get_task_folders(DATA_DIR)
+
+        for task_folder in task_folders:
+            starter_dir = task_folder / "starter"
+            if starter_dir.exists():
+                assert (
+                    starter_dir.is_dir()
+                ), f"{task_folder.name}: starter must be a directory"
+                files = list(starter_dir.rglob("*"))
+                assert len(files) > 0, f"{task_folder.name}: starter directory is empty"
 
 
 if __name__ == "__main__":
