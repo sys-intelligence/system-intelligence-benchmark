@@ -1,0 +1,9 @@
+services:
+  default:
+    image: golang:1.21-bookworm
+    init: true
+    command: tail -f /dev/null
+    working_dir: /workspace
+    network_mode: bridge
+    cpus: '2.0'
+    mem_limit: 2gb
