@@ -1,0 +1,10 @@
+{
+  "instance_id": "mit_6_5840_2024__kvsrv",
+  "course_id": "mit_6_5840_2024",
+  "timeout_minutes": 30,
+  "artifacts": [
+    "src/src/kvsrv/client.go",
+    "src/src/kvsrv/common.go",
+    "src/src/kvsrv/server.go"
+  ]
+}
