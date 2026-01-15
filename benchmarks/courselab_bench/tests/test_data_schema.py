@@ -7,15 +7,10 @@ DATA_DIR = Path(__file__).parent.parent / "data"
 
 def get_task_folders(data_dir: Path) -> list[Path]:
     task_folders = []
-    for item in data_dir.iterdir():
-        if not item.is_dir():
+    for config_path in data_dir.rglob("config.json"):
+        if config_path.name == "courses.json":
             continue
-        if (item / "config.json").exists():
-            task_folders.append(item)
-        else:
-            for task_dir in item.iterdir():
-                if task_dir.is_dir() and (task_dir / "config.json").exists():
-                    task_folders.append(task_dir)
+        task_folders.append(config_path.parent)
     return task_folders
 
 
@@ -29,7 +24,7 @@ class TestTaskStructure:
 
     def test_required_files_exist(self):
         task_folders = get_task_folders(DATA_DIR)
-        required_files = ["config.json", "task.md", "preprocess.sh", "evaluate.sh"]
+        required_files = ["config.json", "task.md", "compose.yaml", "evaluate.sh"]
 
         for task_folder in task_folders:
             for filename in required_files:
@@ -43,11 +38,13 @@ class TestTaskStructure:
             config_path = task_folder / "config.json"
             with config_path.open("r") as f:
                 config = json.load(f)
-            assert isinstance(config, dict), f"{task_folder.name}: config.json must be object"
+            assert isinstance(
+                config, dict
+            ), f"{task_folder.name}: config.json must be object"
 
     def test_config_required_fields(self):
         task_folders = get_task_folders(DATA_DIR)
-        required_fields = ["instance_id", "course_id", "docker_image"]
+        required_fields = ["instance_id", "course_id", "timeout_minutes"]
 
         for task_folder in task_folders:
             config_path = task_folder / "config.json"
@@ -56,7 +53,19 @@ class TestTaskStructure:
 
             for field in required_fields:
                 assert field in config, f"{task_folder.name}: missing {field}"
-                assert isinstance(config[field], str), f"{task_folder.name}: {field} must be string"
+
+            assert isinstance(
+                config["instance_id"], str
+            ), f"{task_folder.name}: instance_id must be string"
+            assert isinstance(
+                config["course_id"], str
+            ), f"{task_folder.name}: course_id must be string"
+            assert isinstance(
+                config["timeout_minutes"], (int, float)
+            ), f"{task_folder.name}: timeout_minutes must be number"
+            assert (
+                config["timeout_minutes"] > 0
+            ), f"{task_folder.name}: timeout_minutes must be positive"
 
     def test_config_optional_fields(self):
         task_folders = get_task_folders(DATA_DIR)
@@ -66,47 +75,14 @@ class TestTaskStructure:
             with config_path.open("r") as f:
                 config = json.load(f)
 
-            if "timeout_minutes" in config:
-                assert isinstance(config["timeout_minutes"], (int, float))
-                assert config["timeout_minutes"] > 0
-
-            if "tags" in config:
-                assert isinstance(config["tags"], list)
-                for tag in config["tags"]:
-                    assert isinstance(tag, str)
-
-            if "repo_url" in config:
-                assert isinstance(config["repo_url"], (str, type(None)))
-
-            if "base_commit" in config:
-                assert isinstance(config["base_commit"], (str, type(None)))
-
-            if "starter_files" in config:
-                assert isinstance(config["starter_files"], list)
-                for item in config["starter_files"]:
-                    assert isinstance(item, dict)
-                    assert "src" in item
-                    assert "dest" in item
-                    assert isinstance(item["src"], str)
-                    assert isinstance(item["dest"], str)
-
-            if "output_files" in config:
-                assert isinstance(config["output_files"], list)
-                for item in config["output_files"]:
-                    assert isinstance(item, dict)
-                    assert "src" in item
-                    assert "dest" in item
-                    assert isinstance(item["src"], str)
-                    assert isinstance(item["dest"], str)
-
-    def test_scripts_executable(self):
-        task_folders = get_task_folders(DATA_DIR)
-        script_files = ["preprocess.sh", "evaluate.sh"]
-
-        for task_folder in task_folders:
-            for script in script_files:
-                script_path = task_folder / script
-                assert script_path.exists()
+            if "artifacts" in config:
+                assert isinstance(
+                    config["artifacts"], list
+                ), f"{task_folder.name}: artifacts must be list"
+                for artifact in config["artifacts"]:
+                    assert isinstance(
+                        artifact, str
+                    ), f"{task_folder.name}: each artifact must be string"
 
     def test_instance_ids_unique(self):
         task_folders = get_task_folders(DATA_DIR)
@@ -118,21 +94,51 @@ class TestTaskStructure:
                 config = json.load(f)
             instance_ids.append(config["instance_id"])
 
-        assert len(instance_ids) == len(set(instance_ids)), "Duplicate instance_ids found"
+        assert len(instance_ids) == len(
+            set(instance_ids)
+        ), "Duplicate instance_ids found"
 
-    def test_starter_files_exist(self):
+    def test_instance_id_format(self):
         task_folders = get_task_folders(DATA_DIR)
+
         for task_folder in task_folders:
             config_path = task_folder / "config.json"
             with config_path.open("r") as f:
                 config = json.load(f)
 
-            if "starter_files" in config:
-                for item in config["starter_files"]:
-                    src_file = task_folder / "starter_files" / item["src"]
-                    assert (
-                        src_file.exists()
-                    ), f"{task_folder.name}: starter file not found: {item['src']}"
+            instance_id = config["instance_id"]
+            assert (
+                "__" in instance_id
+            ), f"{task_folder.name}: instance_id should use __ separator (course__task format)"
+
+    def test_courses_json_exists(self):
+        courses_path = DATA_DIR / "courses.json"
+        assert courses_path.exists(), "courses.json not found in data directory"
+
+    def test_courses_json_valid(self):
+        courses_path = DATA_DIR / "courses.json"
+        with courses_path.open("r") as f:
+            courses = json.load(f)
+
+        assert "courses" in courses, "courses.json must have 'courses' key"
+        assert isinstance(courses["courses"], list), "'courses' must be a list"
+
+        for course in courses["courses"]:
+            assert isinstance(course, dict), "each course must be an object"
+            assert "course_id" in course, "each course must have course_id"
+            assert "num_tasks" in course, "each course must have num_tasks"
+
+    def test_starter_files_exist(self):
+        task_folders = get_task_folders(DATA_DIR)
+
+        for task_folder in task_folders:
+            starter_dir = task_folder / "starter"
+            if starter_dir.exists():
+                assert (
+                    starter_dir.is_dir()
+                ), f"{task_folder.name}: starter must be a directory"
+                files = list(starter_dir.rglob("*"))
+                assert len(files) > 0, f"{task_folder.name}: starter directory is empty"
 
 
 if __name__ == "__main__":

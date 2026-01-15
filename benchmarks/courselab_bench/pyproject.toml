@@ -1,43 +1,16 @@
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "courselab-bench"
 version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = ["inspect-ai>=0.3.0"]
 description = "A benchmark for evaluating AI agents on systems programming labs"
 readme = "README.md"
-requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Tarek Elsayed", email = "tareknaser360@gmail.com" }]
 
-dependencies = [
-    "pydantic>=2.0",
-    "pyyaml>=6.0",
-    "click>=8.0",
-    "loguru>=0.7",
-    "litellm>=1.0",
-    "tomli>=2.0; python_version < '3.11'",
-]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[project.optional-dependencies]
-dev = ["pytest>=7.0", "pytest-cov>=4.0", "black>=23.0", "ruff>=0.1"]
-
-[project.scripts]
-courselab-bench = "courselab_bench.cli:main"
-
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["courselab_bench*"]
-
-[tool.black]
-line-length = 100
-target-version = ["py310"]
-
-[tool.ruff]
-line-length = 100
-target-version = "py310"
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-markers = ["requires_api: tests that need API keys", "slow: slow tests"]
+[tool.hatch.build.targets.wheel]
+packages = ["courselab"]

@@ -1,0 +1,10 @@
+{
+  "instance_id": "distributed_systems__echo_server",
+  "course_id": "distributed_systems",
+  "timeout_minutes": 10,
+  "artifacts": [
+    "server.py",
+    "test_server.py",
+    "*.log"
+  ]
+}

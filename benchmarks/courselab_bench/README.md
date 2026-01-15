@@ -1,129 +1,77 @@
 # Course Lab Benchmark
 
-A benchmark for evaluating AI agents on systems programming labs. Agents run in Docker containers and are evaluated on their ability to complete course lab assignments.
-
-We include a simple ReAct agent inspired by [mini-swe-agent](https://github.com/AUTOMATIC/mini-swe-agent).
-
-## Quick Start
-
-> Some tasks (e.g., CMU 15-213 Data Lab) require x86-specific packages and may not run on other architectures. The evaluation infrastructure is being updated to address this (See #48).
-
-Make sure to export the appropriate API keys for your chosen model provider (copy `.env.toml.example` to `.env.toml` and fill in your keys). We use litellm for model access.
+Evaluate AI agents on systems programming lab assignments.
 
 ```bash
 pip install -e .
 
-# Prepare dataset (This will generate data/tasks.jsonl using the tasks in data/)
-python prepare_dataset.py
-
 # Run all tasks
-python run_benchmark.py
+inspect eval courselab --model anthropic/claude-haiku-4-5
+
+# Run specific tasks
+inspect eval courselab --model anthropic/claude-haiku-4-5 \
+  -T task_ids='["distributed_systems__echo_server"]'
+
+# Run with custom parameters
+inspect eval courselab --model anthropic/claude-haiku-4-5 \
+  -T max_turns=50
+
+# View results
+inspect view
+
+# For more fine-grained control, modify and run the evaluation script directly:
+python run_eval.py
 ```
-
-## Usage
-
-```bash
-python run_benchmark.py \
-  --tasks data/tasks.jsonl \
-  --model anthropic/claude-sonnet-4-5-20250929 \
-  --max-steps 50 \
-  --max-cost 20.0
-```
-
-## Output
-
-Each run creates a directory with a single `results.json` file:
-
-```json
-{
-  "config": { "model": "...", "max_steps": 50, ... },
-  "summary": {
-    "total": 10,
-    "passed": 8,
-    "success_rate": 0.8,
-    "total_cost": 0.234,
-    "by_course": { "mit_6_5840_2024": { "total": 10, "passed": 8, ... } }
-  },
-  "results": [
-    {
-      "instance_id": "test__simple__echo",
-      "passed": true,
-      "agent_status": "completed",
-      "test_output": "PASS: ...",
-      "test_exit_code": 0,
-      "duration_seconds": 12.5,
-      "model_cost": 0.0033
-    }
-  ]
-}
-```
-
-Detailed agent trajectories are saved in `trajectories/{instance_id}.jsonl`.
 
 ## Task Structure
 
-Tasks are organized in a folder hierarchy:
+Each lab task requires the following files:
 
 ```
-data/
-└── course_id/
-    └── task_id/
-        ├── config.json           # Task metadata
-        ├── task.md               # Problem statement
-        ├── preprocess.sh         # Setup script (runs before agent)
-        ├── evaluate.sh           # Evaluation script (determines pass/fail)
-        └── starter_files/        # Optional: files to copy to container
-            └── ...
+data/course_id/task_id/
+├── config.json      # Task metadata and artifacts to capture
+├── task.md          # Problem statement shown to the agent
+├── compose.yaml     # Docker sandbox configuration
+├── evaluate.sh      # Grading script (exit 0 = pass, non-zero = fail)
+├── preprocess.sh    # Optional: setup script run before agent starts
+└── starter/         # Optional: starter files copied to workspace
+    └── *.py
 ```
 
-### config.json
+- `config.json`: Contains `instance_id`, `course_id`, `timeout_minutes`, and optional `artifacts` list (files to capture after evaluation)
+- `task.md`: Problem description given to the agent
+- `compose.yaml`: Docker sandbox specification
+- `evaluate.sh`: Runs tests and returns exit code 0 for pass, non-zero for fail
+- `preprocess.sh`: Optional setup script that runs before the agent starts (commonly used with `evaluate.sh` to verify test files remain unchanged via hashing)
+- `starter/`: Optional directory containing starter files that are copied to the workspace with the same relative paths
 
-Required fields:
+See [`data/distributed_systems/task_1_echo_server/`](data/distributed_systems/task_1_echo_server/) for a complete example.
 
-- `instance_id`: Unique identifier (e.g., `"test__simple__echo"`)
-- `course_id`: Course identifier (e.g., `"test_course"`)
-- `docker_image`: Docker image to use (e.g., `"xuafeng/swe-go-python:latest"`)
+## Adding New Labs
 
-Optional fields:
+1. Create task directory: `data/course_id/task_id/`
+2. Update `data/courses.json` with course metadata
+3. Add `config.json`, `task.md`, `compose.yaml`, and `evaluate.sh`
+4. Optionally add `starter/` directory with skeleton code
+5. Optionally add `preprocess.sh` for test file integrity checks
+6. Run tests to validate: `python -m pytest tests/test_data_schema.py -v`
 
-- `timeout_minutes`: Maximum execution time (default: 30)
-- `tags`: List of topic tags
-- `repo_url`: Git repository to clone
-- `base_commit`: Git commit to checkout
-- `starter_files`: List of files to copy from `starter_files/` directory to container (`src` is relative to `starter_files/`, `dest` is absolute path in container)
-- `output_files`: List of files to copy from container to output directory after agent completes (`src` is absolute path in container, `dest` is relative to output directory)
+> Note on Sandboxing: Inspect AI offers multiple sandbox environments (Docker, Kubernetes, local, etc.). For simplicity, and because the majority of tasks won't require more than that, we currently expose a streamlined way to include tasks that use Docker sandboxing via `compose.yaml`. For more information regarding sandboxing and available environments in Inspect AI, see the [Sandboxing documentation](https://inspect.aisi.org.uk/sandboxing.html#environment-binding). If the lab you are adding requires a different sandboxing environment (e.g., Kubernetes), refer to the Inspect AI documentation.
 
-### task.md
+## Using Custom Agents
 
-Markdown file containing the problem statement given to the agent.
+To use a different agent, pass it to the `courselab()` function:
 
-### preprocess.sh
+```python
+from inspect_ai import eval
+from inspect_ai.solver import basic_agent
+from inspect_ai.tool import bash
+from courselab import courselab
 
-Shell script that runs before the agent starts. Use this to:
+eval(
+    courselab(agent=basic_agent(tools=[bash()])),
+    model="openai/gpt-4"
+)
+```
 
-- Set up the environment
-- Create checksums of files that shouldn't be modified
-
-Exit with code 0 on success, non-zero on failure.
-
-### evaluate.sh
-
-Runs after the agent completes. Exit 0 for PASS, non-zero for FAIL.
-Print verbose output for debugging (captured in results).
-
-> The evaluation script is automatically retried up to 3 times or until a successful evaluation. This helps handle flaky tests or non-deterministic timeouts common in some systems programming labs.
-
-### Example Task
-
-See `data/test_course/test__simple__echo/` for a minimal example, or `data/mit_6_5840_2024/4a_kvraft/` for an example using `starter_files` and `output_files`.
-
-## Adding New Tasks
-
-1. If you are adding tasks for a new course, first add a new entry to [`/data/courses.json`](./data/courses.json) with the course metadata
-2. Create a new folder: `data/{course_id}/{task_id}/` (where `{course_id}` matches the entry in `courses.json`)
-3. Add the 4 required files: `config.json`, `task.md`, `preprocess.sh`, `evaluate.sh` for each task
-4. (Optional) Create a `starter_files/` directory and add files that should be copied to the container
-5. (Optional) Configure `starter_files` and `output_files` in `config.json`
-6. Make scripts executable
-7. Run `python prepare_dataset.py` to regenerate `tasks.jsonl`
-8. Run the benchmark
+See the [Inspect AI Agents documentation](https://inspect.ai-safety-institute.org.uk/agents.html) for more information.
