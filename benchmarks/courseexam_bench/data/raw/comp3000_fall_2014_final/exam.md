@@ -1,11 +1,11 @@
-# COMP 3000 Fall 2014 Final
+# COMP 3000A Fall 2014 Final Exam
 
 ```json
 {
   "exam_id": "comp3000_fall_2014_final",
-  "test_paper_name": "COMP 3000 Fall 2014 Final",
-  "course": "COMP 3000",
-  "institution": "University of Carleton",
+  "test_paper_name": "COMP 3000A Fall 2014 Final Exam",
+  "course": "COMP3000",
+  "institution": "Carleton University",
   "year": 2014,
   "score_total": 25,
   "num_questions": 20
@@ -16,16 +16,16 @@
 
 ## Question 1 [1 point(s)]
 
-Each file has read, write, and execute permissions specified three times, e.g., a file may have “rw-r–r–”. Why three times and not just once?
+{Question text ONLY - no answer, no solution in the text}
 
 ```json
 {
   "problem_id": "1",
   "points": 1,
   "type": "Freeform",
-  "tags": ["unix","permissions","file-system"],
-  "answer": "In UNIX the first set of permissions are for the file’s owner, the next set is for members of the file’s group, and the third is for everyone else.",
-  "llm_judge_instructions": "Award 1 point for correctly identifying the tripartite permission sets (owner, group, others)."
+  "tags": ["operating-systems"],
+  "answer": "In UNIX the first set of permissions are for the file's owner, the next set is for members of the file's group, and the third is for everyone else.",
+  "llm_judge_instructions": "Award up to 1.0 point: 1.0 point if the response correctly names all three scopes (owner, group, others) and gives brief correct context; 0.5 points if exactly two scopes are correctly named; 0.25 points if exactly one scope is correctly named; 0.0 points if none are correct."
 }
 ```
 
@@ -40,9 +40,9 @@ What is the kernel mechanism that allows a user to forcibly terminate a running 
   "problem_id": "2",
   "points": 1,
   "type": "Freeform",
-  "tags": ["unix","signals","process-management"],
-  "answer": "You send a KILL signal (SIGKILL, e.g., kill -SIGKILL <pid> or kill -9 <pid>).",
-  "llm_judge_instructions": "Award 1 point for identifying signal-based termination (e.g., SIGKILL) and 0 points otherwise."
+  "tags": ["operating-systems"],
+  "answer": "You send a signal such as SIGKILL (often via kill -SIGKILL <pid> or kill -9 <pid>) to forcibly terminate a process.",
+  "llm_judge_instructions": "Award up to 1.0 point: 1.0 point for naming signal-based termination (e.g., SIGKILL/-9) and providing a correct example command; 0.5 points if the answer mentions signals but gives no correct example, or provides an example but does not mention signals explicitly; 0.0 points otherwise."
 }
 ```
 
@@ -57,9 +57,9 @@ If we have a system where virtual address 0x722B2104 mapped to physical address 
   "problem_id": "3",
   "points": 1,
   "type": "Freeform",
-  "tags": ["virtual-memory","paging"],
-  "answer": "2^23 bytes (the largest page size is determined by the number of identical low-order bits; here the common suffix allows 2^23).",
-  "llm_judge_instructions": "Award 1 point for citing the maximum page size determined by common low-order bits, specifically 2^23 in this example."
+  "tags": ["virtual-memory"],
+  "answer": "2^23 bytes (the largest page size is determined by the number of identical low-order bits in the virtual and physical addresses; here the common low-order 23 bits imply a 2^23-byte page).",
+  "llm_judge_instructions": "Award up to 1.0 point: 1.0 point for giving the correct largest page size (2^23 bytes) with brief correct reasoning; 0.5 points for correctly explaining the method (common low-order bits) but not providing the final numeric page size; 0.0 points otherwise."
 }
 ```
 
@@ -74,9 +74,9 @@ Do pointers in userspace C programs contain virtual or physical addresses on Lin
   "problem_id": "4",
   "points": 1,
   "type": "Freeform",
-  "tags": ["userspace","virtual-memory","pointers"],
-  "answer": "All pointers in userspace contain virtual addresses because userspace runs in its own virtual address space.",
-  "llm_judge_instructions": "Award 1 point for stating pointers are virtual addresses and brief justification."
+  "tags": ["operating-systems"],
+  "answer": "They contain virtual addresses. User-space processes use a virtual address space; physical addresses are only directly used in kernel/supervisor mode.",
+  "llm_judge_instructions": "Award up to 1.0 point: 1.0 point for stating that user-space pointers are virtual addresses and providing a brief correct justification (e.g., virtual address space and translation via page tables); 0.5 points for stating 'virtual' without adequate justification; 0.0 points otherwise."
 }
 ```
 
@@ -91,9 +91,9 @@ What data structure allows the kernel to determine when a process is accessing a
   "problem_id": "5",
   "points": 1,
   "type": "Freeform",
-  "tags": ["virtual-memory","memory-management"],
-  "answer": "The page table of the process.",
-  "llm_judge_instructions": "Award 1 point for identifying the page table as the data structure used to validate memory access."
+  "tags": ["memory-management"],
+  "answer": "A process's page table.",
+  "llm_judge_instructions": "Award 1.0 point for identifying the page table (or equivalent address-translation structure such as page tables/memory management unit entries). 0.0 points otherwise."
 }
 ```
 
@@ -108,9 +108,9 @@ In C, the function call stack is used to store three distinct kinds of values, o
   "problem_id": "6",
   "points": 1,
   "type": "Freeform",
-  "tags": ["c","call-stack"],
+  "tags": ["programming-language","cpu-architecture"],
   "answer": "The return address.",
-  "llm_judge_instructions": "Award 1 point for identifying the return address as the required value."
+  "llm_judge_instructions": "Award 1.0 point for identifying the return address as the value required by the CPU; 0.0 points otherwise."
 }
 ```
 
@@ -125,9 +125,9 @@ In a system with a 64-bit address space, does the physical address space have mo
   "problem_id": "7",
   "points": 1,
   "type": "Freeform",
-  "tags": ["virtual-memory","architecture"],
-  "answer": "Less than 64 bits; for example, current systems often have 48-bit physical addresses (e.g., 256 TB).",
-  "llm_judge_instructions": "Award 1 point for noting the physical address space is smaller than 64 bits and giving an example such as 48-bit."
+  "tags": ["architectures"],
+  "answer": "Typically less than 64 bits (for example many current systems use 48-bit or similar physical addresses).",
+  "llm_judge_instructions": "Award up to 1.0 point: 1.0 point for stating the physical address space is typically less than 64 bits and giving a plausible example (e.g., 48-bit); 0.5 points for stating 'less than 64 bits' without an example; 0.0 points otherwise."
 }
 ```
 
@@ -135,16 +135,16 @@ In a system with a 64-bit address space, does the physical address space have mo
 
 ## Question 8 [1 point(s)]
 
-Can concurrency primitives such as mutexes be implemented without the use of special instructions such as xchg on modern CPUs? In other words, can such concurrency primitives be written purely in C on current processors? Explain.
+Can concurrency primitive such as mutexes be implemented without the use of special instruction such as xchg on modern CPUs? In other words, can such concurrency primitives be written purely in C on current processors? Explain.
 
 ```json
 {
   "problem_id": "8",
   "points": 1,
   "type": "Freeform",
-  "tags": ["concurrency","cpu-instructions"],
-  "answer": "Concurrency primitives must use special instructions because of memory hierarchy and synchronization requirements (e.g., xchg helps synchronize between cores).",
-  "llm_judge_instructions": "Award 1 point for recognizing the need for special instructions (like xchg) to ensure correct synchronization."
+  "tags": ["concurrency","cpu-architecture"],
+  "answer": "No; on modern multi-core CPUs you need atomic instructions (e.g., xchg, cmpxchg, atomic builtins) to implement correct mutexes to avoid races across cores and ensure atomicity and memory ordering.",
+  "llm_judge_instructions": "Award up to 1.0 point: 1.0 point for stating that atomic hardware instructions are required (mentioning examples like xchg or cmpxchg or atomic builtins) and explaining why (cross-core synchronization/memory ordering); 0.5 points for mentioning need for synchronization or atomicity without naming an instruction or clear reason; 0.0 points otherwise."
 }
 ```
 
@@ -159,9 +159,9 @@ A fork bomb can be as simple as “while (1) fork();”. Why are fork bombs so d
   "problem_id": "9",
   "points": 2,
   "type": "Freeform",
-  "tags": ["process-management","fork"],
-  "answer": "Fork bombs are dangerous because they can create an unbounded number of processes; this exhausts CPU, memory, and process table resources, starving legitimate processes and potentially preventing system actions like killing the fork bomb.",
-  "llm_judge_instructions": "Award 2 points for noting unbounded process creation and impact on CPU time and system resources; partial credit for describing resource exhaustion."
+  "tags": ["process-management"],
+  "answer": "Fork bombs rapidly create an unbounded number of processes, exhausting process table entries and other resources. The scheduler must attempt to allocate CPU time across many processes, starving legitimate work; system limits (PID space, memory, file descriptors) can be exhausted, causing system-wide degradation.",
+  "llm_judge_instructions": "Award up to 2.0 points: 1.0 point for explaining that a fork bomb creates an unbounded number of processes and depletes resources (process table entries, memory, etc.); 1.0 point for explaining the impact on scheduling and system performance (e.g., CPU time fragmentation, starvation of other processes, system instability). Partial credit proportional to coverage of these points; 0.0 points if neither aspect is addressed."
 }
 ```
 
@@ -176,9 +176,9 @@ What is the relationship between function calls, system calls, and library calls
   "problem_id": "10",
   "points": 2,
   "type": "Freeform",
-  "tags": ["systems","abstraction"],
-  "answer": "Function calls and library calls run in the user process; system calls invoke the kernel and switch to supervisor mode; library calls are calls to dynamically linked libraries (indirect via relocation) while function calls are to statically linked code.",
-  "llm_judge_instructions": "Award 2 points for distinguishing user-space function/library calls from kernel-space system calls and noting dynamic vs static linking aspects."
+  "tags": ["systems-call-models"],
+  "answer": "Function calls and library calls execute within the process in user space; system calls transfer control to the kernel (supervisor mode) via the system call interface/dispatcher. Library calls are function calls provided by libraries; some library calls may invoke system calls internally.",
+  "llm_judge_instructions": "Award up to 2.0 points: 1.0 point for correctly explaining that function/library calls run in user-space within the process; 1.0 point for correctly explaining that system calls transition into the kernel (supervisor mode) via a syscall interface/dispatcher and may involve a context switch or trap. Partial credit awarded if one of the two aspects is correctly explained."
 }
 ```
 
@@ -193,9 +193,9 @@ What happens when you type a command at a shell prompt in UNIX that is not built
   "problem_id": "11",
   "points": 2,
   "type": "Freeform",
-  "tags": ["shell","external-command","process-management"],
-  "answer": "The shell runs a separate executable with the same name as the command in a new process; it searches PATH for the binary; the shell forks to create a child and then uses execve to run the command.",
-  "llm_judge_instructions": "Award 2 points for identifying external command execution via fork and execve and PATH lookup."
+  "tags": ["shell","process-management"],
+  "answer": "The shell locates an executable file (by searching directories listed in the PATH environment variable) and runs that program in a new process. Typically the shell forks to create a child process and the child uses execve (or equivalent) to replace its image with the executable.",
+  "llm_judge_instructions": "Award up to 2.0 points: 1.0 point for explaining that the shell searches PATH to locate an external executable and distinguishes it from builtins (naming PATH is sufficient); 1.0 point for explaining that the shell uses fork (to create a child) and execve (or equivalent) to run the command in the child process. Partial credit if only one of these two components is correctly explained (award 1.0 if fully correct for one component, 0.5 if partial)."
 }
 ```
 
@@ -203,16 +203,16 @@ What happens when you type a command at a shell prompt in UNIX that is not built
 
 ## Question 12 [1 point(s)]
 
-Hard Disk Recovery: To make the files on /dev/sdb1 accessible in /mnt, what command should you run (as root)? Please give the full command.
+Hard Disk Recovery:Your Linux computer’s hard disk is starting to produce errors and you do not have a current backup of the disk. Your old disk is 500Gb; you are replacing it with a 2Tb drive (2000 Gb). You have already purchased and installed the new disk in the computer and have installed a fresh copy of Linux onto it. The new hard drive is now /dev/sda, with everything in one partition in /dev/sda1, while the old hard drive is in /dev/sdb, with all of its data in /dev/sdb1. You boot from the first disk and the old, failing disk (/dev/sdb) is unmounted.
 
 ```json
 {
   "problem_id": "12",
   "points": 1,
   "type": "Freeform",
-  "tags": ["disk-recovery","mount"],
-  "answer": "mount /dev/sdb1 /mnt",
-  "llm_judge_instructions": "Award 1 point for the exact mount command."
+  "tags": ["disk-recovery"],
+  "answer": "Make a full image or copy of the failing disk before attempting repairs or repeated mounts (for example, use ddrescue to image /dev/sdb to another drive/file), or mount the filesystem read-only to inspect it. Avoid writing to the failing disk.",
+  "llm_judge_instructions": "Award up to 1.0 point: 1.0 point for advising to image/backup the failing disk (e.g., ddrescue) or to mount it read-only to avoid further damage; 0.5 points for suggesting one of these actions without sufficient justification; 0.0 points otherwise."
 }
 ```
 
@@ -220,16 +220,16 @@ Hard Disk Recovery: To make the files on /dev/sdb1 accessible in /mnt, what comm
 
 ## Question 13 [1 point(s)]
 
-Hard Disk Recovery: When attempting to access files from the disk you find that the underlying filesystem has been heavily corrupted. So, you’d like to try and repair the damage. What command should you use to attempt to repair the filesystem on /dev/sdb1?
+To make the files on /dev/sdb1 accessible in /mnt,  what command should you run (as root)? Please give the full command.
 
 ```json
 {
   "problem_id": "13",
   "points": 1,
   "type": "Freeform",
-  "tags": ["disk-recovery","fsck"],
-  "answer": "fsck or fsck.ext4 (e.g., fsck /dev/sdb1).",
-  "llm_judge_instructions": "Award 1 point for recommending fsck on /dev/sdb1."
+  "tags": ["disk-recovery"],
+  "answer": "mount /dev/sdb1 /mnt",
+  "llm_judge_instructions": "Award 1.0 point for the exact command: mount /dev/sdb1 /mnt. 0.0 points for any other command or incorrect syntax."
 }
 ```
 
@@ -237,16 +237,16 @@ Hard Disk Recovery: When attempting to access files from the disk you find that 
 
 ## Question 14 [1 point(s)]
 
-Hard Disk Recovery: Before you attempt the repair a friend warns you that if the repair goes badly you may lose even more data from the disk. Thus you decide you want to copy the raw data from disk into a file first. What command could you use to make a bit-for-bit copy of /dev/sdb1 into the file /old-image?
+When attempting to access files from the disk you find that the underlying filesystem has been heavily corrupted. So, you’d like to try and repair the damage. What command should you use to attempt to repair the filesystem on /dev/sdb1?
 
 ```json
 {
   "problem_id": "14",
   "points": 1,
   "type": "Freeform",
-  "tags": ["disk-recovery","dd"],
-  "answer": "dd if=/dev/sdb1 of=/old-image",
-  "llm_judge_instructions": "Award 1 point for the dd command that copies raw data."
+  "tags": ["disk-recovery"],
+  "answer": "fsck /dev/sdb1 (or the appropriate fsck.<fstype> such as fsck.ext4 /dev/sdb1).",
+  "llm_judge_instructions": "Award 1.0 point for recommending fsck (or a specific fsck.<fstype>) with the device (e.g., fsck /dev/sdb1 or fsck.ext4 /dev/sdb1). 0.0 points otherwise."
 }
 ```
 
@@ -254,16 +254,16 @@ Hard Disk Recovery: Before you attempt the repair a friend warns you that if the
 
 ## Question 15 [2 point(s)]
 
-You decide to use the rsync command to copy the files from /mnt to /old. Because the old disk is failing, you have to run rsync multiple times. You notice that each timer rsync seems to pick up right where it left off, in that it doesn’t copy files that have been fully transferred but does continue to copy files that it was in the middle of copying. How does rsync know which files to copy? And is it possible for rsync to make a mistake (to not copy a file that is in fact different between the two directories)?
+You decide to use rsync to copy the files from /mnt to /old. Because the old disk is failing, you have to run rsync multiple times. You notice that each rsync seems to pick up right where it left off, in that it doesn’t copy files that have been fully transferred but does continue to copy files that it was in the middle of copying. How does rsync know which files to copy? And is it possible for rsync to make a mistake (to not copy a file that is in fact different between the two directories)?
 
 ```json
 {
   "problem_id": "15",
   "points": 2,
   "type": "Freeform",
-  "tags": ["rsync","file-synchronization","troubleshooting"],
-  "answer": "Rsync compares file metadata (modification time, size, etc.) and copies only those with differences; by default it does not compare contents. It can miss updates if metadata matches; using --checksum compares contents and is slower.",
-  "llm_judge_instructions": "Award 2 points for describing metadata-based synchronization and the potential for missing differences; optionally award extra for mentioning --checksum."
+  "tags": ["file-sync","rsync"],
+  "answer": "By default rsync decides whether to copy based on file metadata such as size and modification time; it will skip files whose metadata indicate they are unchanged. This means it can miss differences if metadata match but contents differ; using the --checksum option forces content checksumming at the cost of speed.",
+  "llm_judge_instructions": "Award up to 2.0 points: 1.0 point for explaining that rsync uses metadata (size, mtime) to decide whether to copy; 1.0 point for noting that this can lead to missed differences if metadata match and for mentioning --checksum as a remedy. Partial credit (1.0) if only one of the two main points is correctly explained."
 }
 ```
 
@@ -271,16 +271,16 @@ You decide to use the rsync command to copy the files from /mnt to /old. Because
 
 ## Question 16 [1 point(s)]
 
-We want to use an authentication agent-type architecture where one process will store and protect all of a user’s secrets. How do processes know how to contact the authentication agent for the current user?
+We want to use an authentication agent-type architecture where one process will store and protect all of a user’s secrets. We know that ssh has a similar architecture but we don’t understand how various processes can find the authentication agent. How do processes know how to contact the authentication agent for the current user?
 
 ```json
 {
   "problem_id": "16",
   "points": 1,
   "type": "Freeform",
-  "tags": ["security","authentication","environment"],
-  "answer": "Processes locate the authentication agent via environment variables, e.g., SSH_AUTH_SOCK.",
-  "llm_judge_instructions": "Award 1 point for identifying the environment variable (SSH_AUTH_SOCK) that provides the agent contact info."
+  "tags": ["security","authentication"],
+  "answer": "Processes locate the authentication agent via environment variables such as SSH_AUTH_SOCK that point to the agent's communication socket.",
+  "llm_judge_instructions": "Award 1.0 point for mentioning environment variables (e.g., SSH_AUTH_SOCK) that indicate how to contact the agent. 0.0 points otherwise."
 }
 ```
 
@@ -295,9 +295,9 @@ We’ve implemented a custom filesystem using FUSE. On some file operations our 
   "problem_id": "17",
   "points": 1,
   "type": "Freeform",
-  "tags": ["fuse","kernel-space","pointer-errors"],
-  "answer": "Dereferencing an invalid pointer, e.g., attempting to dereference a NULL pointer.",
-  "llm_judge_instructions": "Award 1 point for pointing to a null/invalid pointer dereference as the likely cause."
+  "tags": ["filesystem","fuse"],
+  "answer": "Most likely dereferencing an invalid pointer (for example dereferencing NULL or an uninitialized pointer).",
+  "llm_judge_instructions": "Award 1.0 point for identifying invalid pointer dereference (e.g., NULL or uninitialized pointer) as the likely cause. 0.0 points otherwise."
 }
 ```
 
@@ -312,9 +312,9 @@ When the FUSE process crashes the filesystem still is listed by the df command, 
   "problem_id": "18",
   "points": 1,
   "type": "Freeform",
-  "tags": ["fuse","unmount"],
-  "answer": "fusermount -u <name-of-mountpoint>",
-  "llm_judge_instructions": "Award 1 point for the correct unmount command."
+  "tags": ["filesystem","fuse"],
+  "answer": "fusermount -u <mountpoint>",
+  "llm_judge_instructions": "Award 1.0 point for the correct command syntax to unmount the FUSE filesystem (e.g., fusermount -u <mountpoint>). 0.0 points otherwise."
 }
 ```
 
@@ -329,9 +329,9 @@ One of our new developers is saying that our filesystem will perform better if w
   "problem_id": "19",
   "points": 1,
   "type": "Freeform",
-  "tags": ["filesystem","kernel-module","performance"],
-  "answer": "A kernel implementation can avoid an extra context switch into the user-space FUSE process, reducing overhead.",
-  "llm_judge_instructions": "Award 1 point for mentioning reduced context switches or in-kernel execution benefits."
+  "tags": ["filesystem","kernel"],
+  "answer": "Kernel implementation avoids the user-space process context switches and extra IPC between kernel and FUSE daemon, reducing overhead.",
+  "llm_judge_instructions": "Award 1.0 point for noting that kernel-space implementation avoids extra context switches/IPC overhead incurred by FUSE, leading to better performance. 0.0 points otherwise."
 }
 ```
 
@@ -346,8 +346,8 @@ If the current buggy FUSE code is ported to a kernel module, would you expect it
   "problem_id": "20",
   "points": 2,
   "type": "Freeform",
-  "tags": ["fuse","kernel-space","segmentation-faults"],
-  "answer": "The same bad pointer dereferences would still be present, but in the kernel they wouldn’t generate SIGSEGV signals; instead, they may produce Oops messages or panics.",
-  "llm_judge_instructions": "Award 2 points for explaining that kernel context changes remove typical user-space signals, with possible kernel Oops/panics instead."
+  "tags": ["filesystem","kernel"],
+  "answer": "Yes, the same coding errors (e.g., bad pointer dereferences) would still exist; however, in kernel context they do not raise user-space signals like SIGSEGV. Instead they typically produce kernel oops messages or cause a panic, affecting the whole system.",
+  "llm_judge_instructions": "Award up to 2.0 points: 1.0 point for stating that the underlying bugs (e.g., pointer dereferences) will still exist after porting; 1.0 point for explaining the difference in failure modes in kernel context (no SIGSEGV for kernel code; rather Oops/panic and broader system impact). Partial credit (1.0) if only one of these aspects is explained correctly."
 }
 ```
