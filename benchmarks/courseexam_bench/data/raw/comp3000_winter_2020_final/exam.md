@@ -1,10 +1,10 @@
-# COMP 3000B: Operating Systems
+# COMP 3000B: Operating Systems Winter 2020 Final
 
 ```json
 {
   "exam_id": "comp3000_winter_2020_final",
-  "test_paper_name": "COMP 3000B: Operating Systems",
-  "course": "COMP 3000",
+  "test_paper_name": "COMP 3000B: Operating Systems Winter 2020 Final",
+  "course": "COMP3000",
   "institution": "Carleton University",
   "year": 2020,
   "score_total": 60,
@@ -23,9 +23,9 @@ When you interact with bash (via ssh or a graphical terminal) what file does bas
   "problem_id": "1",
   "points": 2,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "bash reads from a numbered file in /dev/pts (e.g., /dev/pts/0) to obtain user input. This is a character device, not a regular file.",
-  "llm_judge_instructions": "Award full credit for identifying that bash reads from a /dev/pts device (a pseudoterminal) and that it is a character device, not a regular file."
+  "tags": ["operating-systems","bash","shell"],
+  "answer": "bash reads from a numbered file /dev/pts (such as /dev/pts/0) in order to obtain user input. This file is a character device, it is not a regular file.",
+  "llm_judge_instructions": "Award 2 points for identifying /dev/pts (a terminal device file) as the source of user input and noting that it is a character device and not a regular file. Award 0 points otherwise."
 }
 ```
 
@@ -39,10 +39,10 @@ When you type the command ls > ls.log at a bash shell prompt, what process opens
 {
   "problem_id": "2",
   "points": 1,
-  "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "bash",
-  "llm_judge_instructions": "Award full credit if the answer is bash."
+  "type": "ExactMatch",
+  "tags": ["bash","filesystem","process-management"],
+  "choices": ["bash","ls","another"],
+  "answer": "bash"
 }
 ```
 
@@ -50,16 +50,16 @@ When you type the command ls > ls.log at a bash shell prompt, what process opens
 
 ## Question 3 [2 point(s)]
 
-When you typels -la at abashprompt,  what system call does bash use to receive user input? What system call does bash use to pass the -la argument to ls?
+When you typels -la at a bashprompt,  what system call does bash use to receive user input? What system call does bash use to pass the-laargument to ls?
 
 ```json
 {
   "problem_id": "3",
   "points": 2,
   "type": "Freeform",
-  "tags": ["operating-systems"],
+  "tags": ["system-calls","bash","process-management"],
   "answer": "read, execve",
-  "llm_judge_instructions": "Award full credit for identifying the read system call for input and execve for executing ls with arguments."
+  "llm_judge_instructions": "Award 2 points total: 1 point for correctly identifying read (to receive user input) and 1 point for execve (to pass the -la argument to ls). Partial credit if only one is correct."
 }
 ```
 
@@ -74,9 +74,9 @@ What system calls do the following C library functions make (on Ubuntu 18.04)? N
   "problem_id": "4",
   "points": 3,
   "type": "Freeform",
-  "tags": ["operating-systems"],
+  "tags": ["library-functions","system-calls"],
   "answer": "a) read, b) ioctl, c) none",
-  "llm_judge_instructions": "Award full credit for listing: (a) read, (b) ioctl, (c) none."
+  "llm_judge_instructions": "Award 1 point for each correct item: (a) fgets -> read, (b) ioctl -> ioctl, (c) snprintf -> none. Provide 0 points for incorrect items."
 }
 ```
 
@@ -91,9 +91,9 @@ Process A creates a child process B to open and write data to a file (and then t
   "problem_id": "5",
   "points": 2,
   "type": "Freeform",
-  "tags": ["operating-systems"],
+  "tags": ["process-management","ipc","exit-status"],
   "answer": "B calls exit with a return code indicating failure. A calls wait to get B’s exit code.",
-  "llm_judge_instructions": "Award full credit for describing that the child can signal failure via exit status and the parent can retrieve it via wait."
+  "llm_judge_instructions": "Award 2 points for stating that the child exits with a status and the parent collects it with wait; 0 points otherwise."
 }
 ```
 
@@ -106,11 +106,11 @@ If you decided you didn’t want to run any pre-installed binaries and instead j
 ```json
 {
   "problem_id": "6",
- "points": 2,
- "type": "Freeform",
- "tags": ["operating-systems"],
- "answer": "You would change your PATH environment variable (by changing your shell configuration files, e.g., .bashrc, .bashprofile, .profile) to only list your directories, excluding /bin, /usr/bin, etc. This change wouldn’t affect any other users on the system.",
- "llm_judge_instructions": "Award full credit for describing updating PATH to prioritize user-owned binaries and noting it does not prevent other users from using system binaries."
+  "points": 2,
+  "type": "Freeform",
+  "tags": ["environment","PATH","shell-configuration"],
+  "answer": "You would change your PATH environment variable (by changing your shell configuration files, e.g., .bashrc, .bashprofile, .profile) to only list your directories, excluding /bin, /usr/bin, etc. This change wouldn’t affect any other users on the system.",
+  "llm_judge_instructions": "Award 2 points for describing modifying PATH to prioritize user directories and remove system bin paths; 0 points otherwise."
 }
 ```
 
@@ -125,9 +125,9 @@ If a sleeping process receives a signal, will the signal handler run immediately
   "problem_id": "7",
   "points": 2,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "The signal handler runs immediately, and then the sleep system call returns early (unless SA_RESTART is set, which may restart the sleep).",
-  "llm_judge_instructions": "Award full credit for stating that the signal is delivered immediately and can interrupt the sleep; mention SA_RESTART caveat as applicable."
+  "tags": ["signals","scheduling"],
+  "answer": "The signal handler will run immediately, and then once the signal finishes the sleep system call will return without having finished the sleep. If the SA_RESTART flag is not set, the sleep may terminate early.",
+  "llm_judge_instructions": "Award 2 points for stating that the handler runs immediately and the sleep may be interrupted; partial credit 1 point for mentioning immediate handling but not the interrupting effect."
 }
 ```
 
@@ -135,16 +135,16 @@ If a sleeping process receives a signal, will the signal handler run immediately
 
 ## Question 8 [2 point(s)]
 
-SIGPIPE is sent to process to indicate a broken pipe, i.e., a write to a pipe that has no readers (but did previously). Alice, upon learning about SIGPIPE, says this is stupid, because the write would just return an error. Bob replies that SIGPIPE is useful just like SIGCHLD is. Is Alice right or is Bob? Explain how the signals are similar and a situation when SIGPIPE would be useful.
+SIGPIPE is sent to process to indicate a broken pipe, i.e., a write to a pipe that has no readers (but did previously).  Alice, upon learning about SIGPIPE, says this is stupid, because the write would just return an error.  Bob replies that SIGPIPE is useful just like SIGCHLD is.  Is Alice right or is Bob? Explain how the signals are similar and a situation when SIGPIPE would be useful.
 
 ```json
 {
   "problem_id": "8",
   "points": 2,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "The key benefit of SIGPIPE is informing a process that a pipe is broken even if it isn’t in the middle of doing a write. In producer/consumer scenarios, SIGPIPE can immediately alert the producer to the broken consumer, allowing prompt handling (or termination). This is similar to SIGCHLD notifying a parent when a child terminates, whereas wait introduces delay.",
-  "llm_judge_instructions": "Award full credit for explaining SIGPIPE's immediate notification role and its usefulness in broken-pipe scenarios, analogous to SIGCHLD notification."
+  "tags": ["signals","sigpipe","sigchild"],
+  "answer": "The key benefit of SIGPIPE is informing a process that a pipe is broken even if it isn’t in the middle of doing a write. In a producer/consumer situation using a pipe, the producer could be spending a considerable amount of time producing, assuming that the consumer is waiting; with SIGPIPE it will be immediately informed that something has gone wrong with the consumer and can take corrective action (or just terminate). This is similar to SIGCHLD, in that SIGCHLD tells the parent immediately that its child has terminated, while a call to wait would result in a significant delay in getting this information to the parent.",
+  "llm_judge_instructions": "Award 2 points for recognizing SIGPIPE's immediate notification benefit and its similarity to SIGCHLD; 0 points otherwise."
 }
 ```
 
@@ -159,9 +159,9 @@ If a process has a uid=1000, euid=1000, gid=1021, and egid=1021, what files can 
   "problem_id": "9",
   "points": 2,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "The process can read files owned by uid 1000 with owner read bit set, files with group 1021 and with group read bit set, and any files not owned by 1021 and not with group 1021 that have the other read bit set. Directory paths must be readable/executable for the relevant owner/group/other. Access checks consider owner, then group, then other.",
-  "llm_judge_instructions": "Award full credit for describing UNIX permission checks across user (owner), group, and other, and noting directory traversal requirements."
+  "tags": ["permissions","uid","gid"],
+  "answer": "The process can read files owned by uid 1000 with owner read bit set, files in group 1021 with group read bit set, and files with other read bit set. Access also requires traversable directories with execute permissions and readable paths.",
+  "llm_judge_instructions": "Award 2 points for mentioning owner, group, and other read permissions and the need to traverse directories with appropriate execute permissions. Partial credit 1 point for mentioning a subset correctly."
 }
 ```
 
@@ -176,9 +176,9 @@ With ssh, what is the purpose of the id_rsa file? What about id_rsa.pub file? Wh
   "problem_id": "10",
   "points": 2,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "The id_rsa file contains the user's private key, and id_rsa.pub contains the public key. They are used to authenticate to a remote system by placing the contents of id_rsa.pub in the remote system’s authorized_keys file.",
-  "llm_judge_instructions": "Award full credit for correctly describing private vs public key roles and the use in SSH authentication."
+  "tags": ["ssh","keys","authentication"],
+  "answer": "The id_rsa file contains a user’s private key, and id_rsa.pub contains the public key. They are used to authenticate to a remote system by copying the contents of id_rsa.pub to the remote system’s authorized_keys file.",
+  "llm_judge_instructions": "Award 2 points for correctly describing private vs public keys and their use in SSH authentication; 0 points otherwise."
 }
 ```
 
@@ -193,9 +193,9 @@ In a filesystem, can two files share the same inode? Explain briefly.
   "problem_id": "11",
   "points": 2,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "Yes. Two filenames can be hard links to the same inode; they are different directory entries pointing to the same file contents.",
-  "llm_judge_instructions": "Award full credit for describing hard links and the inode-sharing concept."
+  "tags": ["inode","hard-links"],
+  "answer": "Two filenames can both be hard links to the same inode. They are just names for the same file, sharing the same inode.",
+  "llm_judge_instructions": "Award 2 points for explaining hard links share the same inode; 0 otherwise."
 }
 ```
 
@@ -210,9 +210,9 @@ Can you easily recover from erasing the primary and all backup superblocks of an
   "problem_id": "12",
   "points": 2,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "No. The primary and backup superblocks are essential for mounting. Without them, recovery requires reconstructing the superblock parameters or forensic data recovery; it is non-trivial.",
-  "llm_judge_instructions": "Award full credit for recognizing the importance of superblocks and the difficulty of recovery."
+  "tags": ["filesystem","superblock","ext4"],
+  "answer": "You cannot easily recover from erasing the primary and backup superblocks of a filesystem, as these are essential to mounting a filesystem. Recovery would involve reconstructing the superblock or forensic data recovery, which is non-trivial.",
+  "llm_judge_instructions": "Award 2 points for noting the essential role of superblocks and the difficulty of recovery; 0 otherwise."
 }
 ```
 
@@ -227,9 +227,9 @@ If you want the standard output of one program to be fed to the standard input o
   "problem_id": "13",
   "points": 1,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "Create a named pipe (FIFO) and redirect programs to use it for stdout/stdin (e.g., mkfifo mypipe; (ls > mypipe &); wc < mypipe).",
-  "llm_judge_instructions": "Award full credit for describing a named pipe method to connect program I/O without intermediate disk storage."
+  "tags": ["pipes","ipc","named-pipe"],
+  "answer": "You would create a named pipe, and have one program use the pipe for standard out and the other for standard in. For example: mkfifo mypipe; (ls > mypipe &); wc < mypipe",
+  "llm_judge_instructions": "Award 1 point for describing a named pipe (FIFO) solution and a minimal example; 0 otherwise."
 }
 ```
 
@@ -237,7 +237,7 @@ If you want the standard output of one program to be fed to the standard input o
 
 ## Question 14 [2 point(s)]
 
-Below is an implementaiton ofsem wait(). Does this version cause the process to sleep while waiting for the lock to be freed? Do you expect this implementation to work reliably in practice? Explain briefly.
+Below is an implementaiton ofsem_wait(). Does this version cause the process to sleep while waiting for the lock to be freed? Do you expect this implementation to work reliably in practice? Explain briefly.
 
 ```c
 void sem_wait(int *lock)
@@ -256,9 +256,9 @@ void sem_wait(int *lock)
   "problem_id": "14",
   "points": 2,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "This version busy-waits; it does not sleep while waiting for the lock. It will not work reliably in practice due to a race between checking *lock and clearing it, so another process could modify the lock between the check and the assignment.",
-  "llm_judge_instructions": "Award full credit for identifying busy-waiting and the race condition; note that proper atomic operations or sleeping synchronization are required."
+  "tags": ["concurrency","semaphore","locking"],
+  "answer": "This version does not cause the process to sleep if the lock is currently taken; instead, it busy waits. It will not work reliably in practice because the check and assignment are not atomic, allowing a race to modify *lock between checks.",
+  "llm_judge_instructions": "Award 2 points for identifying busy-waiting and lack of atomicity; 0 points otherwise."
 }
 ```
 
@@ -273,9 +273,9 @@ From an API perspective, which is simpler to create, a thread or a process? Whic
   "problem_id": "15",
   "points": 2,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "A process is simpler to create via API (fork) than a thread (pthread_create). The kernel does more work for processes because it must copy the (logical) address space; threads share the address space, requiring less kernel work.",
-  "llm_judge_instructions": "Award full credit for comparing fork vs pthread_create and describing kernel work differences."
+  "tags": ["processes","threads","kernel"],
+  "answer": "A process is simpler to create from an API perspective than a thread, as a process can be created using fork, while threads are created using pthread_create. Process creation involves more kernel work to copy address space; threads share address space.",
+  "llm_judge_instructions": "Award 2 points for the comparison and rationale about kernel work; 0 otherwise."
 }
 ```
 
@@ -290,9 +290,9 @@ How could you add support for lseek operations to a character device module? Spe
   "problem_id": "16",
   "points": 2,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "Add an llseek function (e.g., mymodule_llseek) with the same signature as lseek, register it in the file_operations structure (e.g., via .llseek), so the kernel calls it when a process uses lseek on the device.",
-  "llm_judge_instructions": "Award full credit for indicating adding an llseek handler and wiring it in via struct file_operations."
+  "tags": ["linux-kernel","device-driver","lseek"],
+  "answer": "Add an llseek function (e.g., mymodule_llseek) with the same arguments as lseek, and register it in the file_operations struct for the device so that it is called when lseek is invoked.",
+  "llm_judge_instructions": "Award 2 points for mentioning llseek handler and registering it in the file_operations; 0 otherwise."
 }
 ```
 
@@ -307,9 +307,9 @@ What is the difference between a process’s uid and euid? Specifically, what do
   "problem_id": "17",
   "points": 2,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "uid identifies process ownership for STOP/KILL permissions; euid determines what resources the process can access (e.g., file access) by comparing against file owners.",
-  "llm_judge_instructions": "Award full credit for distinguishing owner vs effective user IDs and their use in permissions."
+  "tags": ["permissions","security","uid"],
+  "answer": "The kernel uses the uid to determine process ownership (control of signals, etc.), while the euid is used to determine which resources (files, etc.) the process can access.",
+  "llm_judge_instructions": "Award 2 points for distinguishing ownership versus access checks; 0 otherwise."
 }
 ```
 
@@ -324,9 +324,9 @@ Does the kernel know the names of the groups a user belongs to? How do you know?
   "problem_id": "18",
   "points": 2,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "The kernel does not know the human-readable group names; it only knows gids. Changing active groups is done via setgid-related mechanisms (e.g., newgrp) which can affect the process's effective gid.",
-  "llm_judge_instructions": "Award full credit for noting that the kernel tracks gids, not group names, and how groups are changed."
+  "tags": ["groups","kernel"],
+  "answer": "The kernel doesn’t know the group names directly; it only knows the GIDs. Changing the active group is handled by user-space utilities (e.g., newgrp) which can escalate privileges to change gid.",
+  "llm_judge_instructions": "Award 2 points for noting the kernel knows GIDs rather than group names and mentioning user-space tools for changing groups; 0 otherwise."
 }
 ```
 
@@ -341,9 +341,9 @@ When a process mmap’s a file, can it (mostly) control where the file will be p
   "problem_id": "19",
   "points": 2,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "A process can largely control the virtual address where the mapping appears. The kernel largely controls which physical memory is used, so the process has little control over the physical placement.",
-  "llm_judge_instructions": "Award full credit for distinguishing virtual address control by the process from limited control over physical memory placement."
+  "tags": ["mmap","virtual-memory","physical-memory"],
+  "answer": "A process can mostly control where a file is mmap’d into virtual memory, but has almost no control over where it is mapped into physical memory; the kernel decides physical placement.",
+  "llm_judge_instructions": "Award 2 points for distinguishing virtual address control and limited control over physical memory; 0 otherwise."
 }
 ```
 
@@ -351,16 +351,16 @@ When a process mmap’s a file, can it (mostly) control where the file will be p
 
 ## Question 20 [2 point(s)]
 
-Can two processes have data at the same virtual address?  What about at the same physical address? Explain.
+Can two processes have data at the same virtual address? What about at the same physical address? Explain.
 
 ```json
 {
   "problem_id": "20",
   "points": 2,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "Two processes can have the same virtual address, but they reference different data (separate address spaces). They can share data at the same physical address via shared memory or mmap of the same file; otherwise, physical addresses are unique per process.",
-  "llm_judge_instructions": "Award full credit for explaining virtual address space isolation and shared memory/physical address sharing."
+  "tags": ["virtual-memory","shared-memory"],
+  "answer": "Two processes can have data at the same virtual address, but they refer to different memory spaces. They can share data at the same physical address if they mmap the same file or use a shared memory segment.",
+  "llm_judge_instructions": "Award 2 points for explaining virtual address isolation and shared physical pages; partial credit 1 point for mentioning either virtual isolation or shared physical memory correctly."
 }
 ```
 
@@ -368,16 +368,16 @@ Can two processes have data at the same virtual address?  What about at the same
 
 ## Question 21 [3 point(s)]
 
-For each of the following, state and explain whether they support lseek operations always, sometimes, or never: regular files, pipes, character devices
+For each of the following, state and explain whether they support lseek operations always, some­times, or never: regular files, pipes, character devices
 
 ```json
 {
   "problem_id": "21",
   "points": 3,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "Regular files: always. Pipes: never. Character devices: sometimes (if the driver implements lseek in its file_operations).",
-  "llm_judge_instructions": "Award full credit for the standard rules and caveat about character devices potentially supporting lseek."
+  "tags": ["lseek","files","pipes","devices"],
+  "answer": "Regular files always support lseek operations. Pipes never support lseek. Character devices sometimes support lseek if they implement lseek in their file_operations.",
+  "llm_judge_instructions": "Award 2 points for correct classification of regular files and pipes; award 1 point for correctly stating character devices sometimes support lseek and mentioning that this depends on their implementing an llseek handler. Total 3 points. 0 points otherwise."
 }
 ```
 
@@ -392,9 +392,9 @@ At each level of the page table, we look up an entry which contains (the upper b
   "problem_id": "22",
   "points": 2,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "These pointers contain physical addresses, because using virtual addresses inside the page table would require further address translation and could lead to recursion; the CPU uses physical frame addresses in the page table.",
-  "llm_judge_instructions": "Award full credit for stating that page-table entries hold physical addresses and explaining the rationale."
+  "tags": ["page-table","addressing"],
+  "answer": "These pointers contain physical addresses, because looking up virtual addresses would require further virtual-to-physical translations at each level.",
+  "llm_judge_instructions": "Award 2 points for stating the pointers are physical addresses and providing a rationale; 0 otherwise."
 }
 ```
 
@@ -409,9 +409,9 @@ Is the size of a page consistent on all platforms that Linux runs on, or does it
   "problem_id": "23",
   "points": 2,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "The page size varies between architectures; PAGE_SIZE is architecture-dependent, defined via PAGE_SHIFT/PAGESIZE per architecture.",
-  "llm_judge_instructions": "Award full credit for noting architecture dependence of page size."
+  "tags": ["page-size","architecture"],
+  "answer": "The page size is not consistent because PAGE_SIZE varies between different architectures. This is reflected in architecture-specific definitions like PAGE_SHIFT and PAGESIZE.",
+  "llm_judge_instructions": "Award 2 points for noting architecture-dependent page size and referencing architecture-specific constants; 0 otherwise."
 }
 ```
 
@@ -435,9 +435,9 @@ rw-rwxr–
   "problem_id": "24",
   "points": 3,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "(a) 0666 -> rw-rw-rw-; (b) 0674 -> rw-rwxr--; (c) 0775 -> rwxrwxr-x; (d) 0544 -> r-xr--r--; (e) 0511 -> r-x--x--x; (f) 0222 -> -w--w--w-",
-  "llm_judge_instructions": "Award full credit for the correct octal-to-symbolic mappings listed above."
+  "tags": ["permissions","octal","symbolic"],
+  "answer": "(a) rw-rw-rw-; (b) rw-rwxr--; (c) rwxrwxr-x; (d) r-xr--r--; (e) r-x--x--x; (f) ----w--w-",
+  "llm_judge_instructions": "Award 0.5 points for each correct entry (a) through (f). There are six items; each correct item receives 0.5 points for a total of 3 points. Award 0 points for incorrect items."
 }
 ```
 
@@ -451,17 +451,17 @@ int main(int argc, char *argv[])
 {
   printf("Hello!  The number is %d!\n", NUMBER);
 }
-(a) How can you compile this so, when run, it outputs “Hello!  The number is 42!” (rather than reporting a compilation error)?
-(b) What is one situation in which the technique you used in a) is useful (beyond those shown in class tutorials)?
+(a)  How can you compile this so, when run, it outputs “Hello!  The number is 42!”  (rather than reporting a compilation error)?
+(b)  What is one situation in which the technique you used in a) is useful (beyond those shown in class tutorials)?
 
 ```json
 {
   "problem_id": "25",
   "points": 2,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "a) Compile with -DNUMBER=42. b) Useful for changing constants at compile time or for conditional compilation (e.g., #ifdef).",
-  "llm_judge_instructions": "Award full credit for describing the -DNUMBER=42 compile-time definition and a valid use-case for compile-time constants."
+  "tags": ["compile-time-constants","macros","preprocessor"],
+  "answer": "a) Use -DNUMBER=42 on the compiler command line. b) Useful for changing constants or system parameters at compile time, e.g., to enable conditional compilation.",
+  "llm_judge_instructions": "Award 2 points total: 1 point for each part; partial credit if only one part is correct."
 }
 ```
 
@@ -469,16 +469,16 @@ int main(int argc, char *argv[])
 
 ## Question 26 [2 point(s)]
 
-Python scripts importing from the bcc library can monitor all system calls on a system and arbitrary function calls in any process and in the kernel. Can regular python scripts or other userspace programs do this? Why or why not? Explain.
+Python scripts importing from the bcc library can monitor all system calls on a system and arbi­trary function calls in any process and in the kernel.  Can regular python scripts or other userspace programs do this? Why or why not? Explain.
 
 ```json
 {
   "problem_id": "26",
   "points": 2,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "Regular Python scripts cannot monitor arbitrary kernel and user-space events. Such monitoring requires BPF; ptrace can monitor a single process, but broad kernel-space monitoring requires BPF (or specialized tooling).",
-  "llm_judge_instructions": "Award full credit for recognizing the need for BPF or kernel-space facilities and the limitations of regular userspace tools."
+  "tags": ["ebpf","kernel","monitoring"],
+  "answer": "Regular python scripts, or any non-BPF userspace program, cannot monitor arbitrarily. Processes are isolated; to monitor across processes you need BPF; root alone is not sufficient without BPF.",
+  "llm_judge_instructions": "Award 2 points for explaining limitation and need for BPF; 0 points otherwise."
 }
 ```
 
@@ -493,9 +493,9 @@ Give an example of how an eBPF program can access a field in a task struct. What
   "problem_id": "27",
   "points": 2,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "An example is accessing the current task's task_struct using current in eBPF programs, such as bpfgetcurrentpidtgid() to obtain the user-visible PID of the current task.",
-  "llm_judge_instructions": "Award full credit for describing accessing current task’s task_struct (task data) via BPF helpers like bpfgetcurrentpidtgid()."
+  "tags": ["ebpf","taskstruct","current"],
+  "answer": "There are many examples in BPF code; one is accessing current->pid or current->tgid via bpf_get_current_pid_tgid() which reads from the task_struct of the current task.",
+  "llm_judge_instructions": "Award 2 points for identifying access to fields like current->pid/tgid and naming current task's task_struct; 0 otherwise."
 }
 ```
 
@@ -510,9 +510,9 @@ How often is thefilter()function called in (the original version of) bpfprogram.
   "problem_id": "28",
   "points": 3,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "It runs for every system call made on the system. This is visible via a tracepoint probe of every system call exit in the code; removing the filter() call yields system calls from every process. Experiments include removing lines that call filter() and observing system call output.",
-  "llm_judge_instructions": "Award full credit for describing the global system-call tracing behavior and how code changes reveal it."
+  "tags": ["ebpf","tracing","syscalls"],
+  "answer": "It runs for every system call made on the system. This is visible in bpfprogram.c with a tracepoint probe of every system call exit. If you remove the filter() call, you see system calls from every process.",
+  "llm_judge_instructions": "Award 3 points for correctly describing the global system-wide tracing and providing the code-based justification plus the experimental verification concept. 0 otherwise."
 }
 ```
 
@@ -527,8 +527,10 @@ What is a way to load code into the kernel without it being verified for safety?
   "problem_id": "29",
   "points": 2,
   "type": "Freeform",
-  "tags": ["operating-systems"],
-  "answer": "You can load code as a kernel module (insmod). Kernel modules can do essentially anything and are not subject to the same safety verification as core kernel code.",
-  "llm_judge_instructions": "Award full credit for describing kernel modules as an unsafe-loading mechanism and noting the relative lack of verification compared to core kernel code."
+  "tags": ["kernel-module","insmod","safety"],
+  "answer": "You can load code using a kernel module (i.e., insmod). No special safety checks limit such code relative to built-in kernel code; modules can do anything",
+  "llm_judge_instructions": "Award 2 points for recognizing kernel modules as a means to load unsigned code and noting it has similar privileges to built-in code; 0 points otherwise."
 }
 ```
+
+---
