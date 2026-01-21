@@ -2,6 +2,15 @@
 
 System Intelligence Benchmark is a comprehensive benchmark suite for evaluating the performance of Large Language Models (LLMs) and AI systems across critical system capabilities. It features tutorial, example benchmarks and offers both CLI tools and an SDK for further development.
 
+
+> [!Note]  
+> ## Private Contributions
+> This repository contains the public portion of the benchmark dataset. We also maintain a private fork that is not publicly accessible. If you would like to contribute exams or labs to the benchmark while keeping them private and confidential, please contribute via our private repository instead.
+>
+> The private repository is access-controlled. To gain access, please reach out on our [Slack channel](https://join.slack.com/t/sys-intelligence/shared_invite/zt-3hpkgr2aa-NnuPxUbyHr45S89DFi_N1A).
+
+
+
 ## Benchmark Overview
 A benchmark is a standard or point of reference against which things may be compared or assessed. In the context of AI and LLMs, benchmarks are essential for evaluating model capabilities, guiding research directions, and measuring progress. 
 
