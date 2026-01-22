@@ -3,9 +3,9 @@
   "course_id": "mit_6_5840_2024",
   "timeout_minutes": 30,
   "artifacts": [
-    "src/src/mr/coordinator.go",
-    "src/src/mr/rpc.go",
-    "src/src/mr/worker.go",
-    "src/src/main/test_output.txt"
+    "src/mr/coordinator.go",
+    "src/mr/rpc.go",
+    "src/mr/worker.go",
+    "src/main/test_output.txt"
   ]
 }
