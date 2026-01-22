@@ -3,6 +3,7 @@ from pathlib import Path
 
 from inspect_ai import Task, task
 from inspect_ai.agent import Agent
+from inspect_ai.solver import Solver
 
 from courselab.dataset import load_dataset, load_courses_metadata
 from courselab.scorer import lab_scorer
@@ -13,7 +14,7 @@ from courselab.solver import lab_agent
 def courselab(
     task_dir: Path | str | None = None,
     task_ids: str | list[str] | None = None,
-    agent: Agent | None = None,
+    agent: Agent | Solver | None = None,
     max_turns: int = 30,
 ) -> Task:
     dataset = load_dataset(task_dir=task_dir, task_ids=task_ids)
