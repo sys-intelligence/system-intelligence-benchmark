@@ -78,6 +78,43 @@ async def run_eval_in_env(deployment, project_path, task_id, task, model, agent_
     logger.info(await runtime.run_in_session(BashAction(command='ls /agent/runner.sh')))
     logger.info('Agent runner script uploaded.')
 
+    # 对于 claude_sdk，创建 ~/.claude/settings.json 配置文件
+    if is_claude_sdk:
+        logger.info('Setting up Claude Agent SDK configuration...')
+        # 创建临时的 settings.json 文件
+        import tempfile
+        import json
+        
+        settings_content = {
+            "env": {
+                "BASH_MAX_TIMEOUT_MS": "86400000",
+                "BASH_DEFAULT_TIMEOUT_MS": "86400000"
+            }
+        }
+        
+        # 创建临时目录和文件
+        with tempfile.TemporaryDirectory() as tmpdir:
+            settings_file = os.path.join(tmpdir, 'settings.json')
+            with open(settings_file, 'w') as f:
+                json.dump(settings_content, f, indent=2)
+            
+            # 先在容器内创建 ~/.claude 目录
+            await runtime.run_in_session(BashAction(command='mkdir -p /root/.claude', timeout=10.0))
+            
+            # 上传 settings.json 到 ~/.claude/ 目录
+            logger.info('Uploading Claude Agent SDK settings.json...')
+            await runtime.upload(
+                UploadRequest(
+                    source_path=tmpdir,
+                    target_path='/root/.claude',
+                )
+            )
+            logger.info('Claude Agent SDK settings.json uploaded to /root/.claude/')
+            
+            # 验证文件是否上传成功
+            verify_res = await runtime.run_in_session(BashAction(command='cat /root/.claude/settings.json', timeout=10.0))
+            logger.info(f'Verified settings.json content:\n{verify_res}')
+
     logger.info('Setup the agent running environment...')
     logger.info(await runtime.run_in_session(BashAction(command='chmod +x /agent/runner.sh /agent/install.sh')))
     logger.info(await runtime.run_in_session(BashAction(command='cat /agent/runner.sh')))
