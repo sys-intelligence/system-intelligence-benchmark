@@ -190,16 +190,16 @@ def main():
         print("Please ensure the API key is properly configured.", file=sys.stderr)
         sys.exit(1)
     
-    # 运行异步主函数，添加超时控制（30分钟 = 1800秒）
+    # 运行异步主函数，添加超时控制（24小时 = 86400秒）
     try:
         exit_code = asyncio.run(
             asyncio.wait_for(
                 run_agent(model_name, task_description),
-                timeout=3600.0  # 30分钟超时
+                timeout=86400.0  # 24小时超时
             )
         )
     except asyncio.TimeoutError:
-        print("ERROR: Agent execution exceeded 30 minute timeout.", file=sys.stderr, flush=True)
+        print("ERROR: Agent execution exceeded 24 hour timeout.", file=sys.stderr, flush=True)
         sys.exit(1)
     except Exception as e:
         print(f"ERROR: Failed to run agent: {e}", file=sys.stderr, flush=True)
