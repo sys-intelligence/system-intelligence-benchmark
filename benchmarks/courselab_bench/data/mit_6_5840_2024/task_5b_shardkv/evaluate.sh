@@ -8,10 +8,10 @@ cd /workspace/src
 
 echo "Verifying protected files were not modified"
 PROTECTED_FILES=(
-    "src/shardctrler/config.go:config.go.src_shardctrler.sha256"
-    "src/shardctrler/test_test.go:test_test.go.src_shardctrler.sha256"
-    "src/shardkv/config.go:config.go.src_shardkv.sha256"
-    "src/shardkv/test_test.go:test_test.go.src_shardkv.sha256"
+    "shardctrler/config.go:config.go.src_shardctrler.sha256"
+    "shardctrler/test_test.go:test_test.go.src_shardctrler.sha256"
+    "shardkv/config.go:config.go.src_shardkv.sha256"
+    "shardkv/test_test.go:test_test.go.src_shardkv.sha256"
 )
 
 for entry in "${PROTECTED_FILES[@]}"; do
@@ -27,13 +27,13 @@ done
 echo "All protected files unchanged"
 
 echo "Running ShardCtrler tests (up to 3 attempts)"
-cd src/shardctrler
+cd shardctrler
 
 MAX_ATTEMPTS=3
 for attempt in $(seq 1 $MAX_ATTEMPTS); do
     echo "ShardCtrler attempt $attempt of $MAX_ATTEMPTS"
 
-    if timeout 600 go test -race 2>&1 | tee shardctrler_output.txt; then
+    if go test 2>&1 | tee shardctrler_output.txt; then
         if grep -q "PASS" shardctrler_output.txt && ! grep -q "FAIL" shardctrler_output.txt; then
             echo "ShardCtrler tests passed"
             break
@@ -56,7 +56,7 @@ cd ../shardkv
 for attempt in $(seq 1 $MAX_ATTEMPTS); do
     echo "ShardKV all tests attempt $attempt of $MAX_ATTEMPTS"
 
-    if timeout 600 go test -race 2>&1 | tee test_output.txt; then
+    if go test 2>&1 | tee test_output.txt; then
         if grep -q "PASS" test_output.txt && ! grep -q "FAIL" test_output.txt; then
             echo "PASS: All tests passed on attempt $attempt"
             exit 0

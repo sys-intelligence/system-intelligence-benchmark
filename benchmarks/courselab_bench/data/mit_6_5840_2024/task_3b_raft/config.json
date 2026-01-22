@@ -3,10 +3,10 @@
   "course_id": "mit_6_5840_2024",
   "timeout_minutes": 30,
   "artifacts": [
-    "src/src/raft/append_entries.go",
-    "src/src/raft/election.go",
-    "src/src/raft/install_snapshot.go",
-    "src/src/raft/raft.go",
-    "src/src/raft/util.go"
+    "src/raft/append_entries.go",
+    "src/raft/election.go",
+    "src/raft/install_snapshot.go",
+    "src/raft/raft.go",
+    "src/raft/util.go"
   ]
 }
