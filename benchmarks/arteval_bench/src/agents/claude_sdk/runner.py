@@ -190,6 +190,13 @@ def main():
         print("Please ensure the API key is properly configured.", file=sys.stderr)
         sys.exit(1)
     
+    # 配置 Claude Agent SDK Bash 超时参数（如果未通过 shell 脚本设置的话）
+    # 24小时 = 86400000 毫秒
+    if not os.environ.get('BASH_MAX_TIMEOUT_MS'):
+        os.environ['BASH_MAX_TIMEOUT_MS'] = '86400000'
+    if not os.environ.get('BASH_DEFAULT_TIMEOUT_MS'):
+        os.environ['BASH_DEFAULT_TIMEOUT_MS'] = '86400000'
+    
     # 运行异步主函数，添加超时控制（24小时 = 86400秒）
     try:
         exit_code = asyncio.run(
