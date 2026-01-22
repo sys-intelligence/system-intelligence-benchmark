@@ -4,6 +4,6 @@
   "timeout_minutes": 20,
   "tags": ["operating-systems", "processes", "shell", "c"],
   "artifacts": [
-    "processes-shell/wish.c"
+    "ostep-projects/processes-shell/wish.c"
   ]
 }

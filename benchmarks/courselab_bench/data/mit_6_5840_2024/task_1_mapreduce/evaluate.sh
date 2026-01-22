@@ -8,10 +8,10 @@ cd /workspace/src
 
 echo "Verifying protected files were not modified"
 PROTECTED_FILES=(
-    "src/main/mrcoordinator.go"
-    "src/main/mrworker.go"
-    "src/main/mrsequential.go"
-    "src/main/test-mr.sh"
+    "main/mrcoordinator.go"
+    "main/mrworker.go"
+    "main/mrsequential.go"
+    "main/test-mr.sh"
 )
 
 for file in "${PROTECTED_FILES[@]}"; do
@@ -25,7 +25,7 @@ done
 echo "All protected files unchanged"
 
 echo "Running MapReduce tests (up to 3 attempts to handle timeouts)"
-cd src/main
+cd main
 
 MAX_ATTEMPTS=3
 for attempt in $(seq 1 $MAX_ATTEMPTS); do

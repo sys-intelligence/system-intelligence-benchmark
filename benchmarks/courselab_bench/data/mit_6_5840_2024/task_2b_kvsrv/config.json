@@ -3,8 +3,8 @@
   "course_id": "mit_6_5840_2024",
   "timeout_minutes": 30,
   "artifacts": [
-    "src/src/kvsrv/client.go",
-    "src/src/kvsrv/common.go",
-    "src/src/kvsrv/server.go"
+    "src/kvsrv/client.go",
+    "src/kvsrv/common.go",
+    "src/kvsrv/server.go"
   ]
 }

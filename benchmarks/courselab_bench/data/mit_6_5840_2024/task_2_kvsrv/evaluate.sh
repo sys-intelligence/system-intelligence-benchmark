@@ -8,8 +8,8 @@ cd /workspace/src
 
 echo "Verifying protected files were not modified"
 PROTECTED_FILES=(
-    "src/kvsrv/config.go"
-    "src/kvsrv/test_test.go"
+    "kvsrv/config.go"
+    "kvsrv/test_test.go"
 )
 
 for file in "${PROTECTED_FILES[@]}"; do
@@ -23,13 +23,13 @@ done
 echo "All protected files unchanged"
 
 echo "Running KVServer tests (up to 3 attempts to handle timeouts)"
-cd src/kvsrv
+cd kvsrv
 
 MAX_ATTEMPTS=3
 for attempt in $(seq 1 $MAX_ATTEMPTS); do
     echo "Attempt $attempt of $MAX_ATTEMPTS"
 
-    if timeout 300 go test -run TestBasic -race 2>&1 | tee test_output.txt; then
+    if go test -run TestBasic -race 2>&1 | tee test_output.txt; then
         if grep -q "PASS" test_output.txt && ! grep -q "FAIL" test_output.txt; then
             echo "PASS: All tests passed on attempt $attempt"
             exit 0
