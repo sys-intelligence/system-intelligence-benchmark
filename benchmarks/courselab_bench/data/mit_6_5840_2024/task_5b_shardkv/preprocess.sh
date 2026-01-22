@@ -9,35 +9,36 @@ echo "Installing git"
 apt-get update > /dev/null 2>&1
 apt-get install -y git > /dev/null 2>&1
 
-echo "Backing up starter files (previous lab solutions)"
-if [ -d "raft" ] || [ -d "kvraft" ] || [ -d "kvsrv" ] || [ -d "mr" ]; then
-    mkdir -p /tmp/starter_backup
-    [ -d "raft" ] && cp -r raft /tmp/starter_backup/
-    [ -d "kvraft" ] && cp -r kvraft /tmp/starter_backup/
-    [ -d "kvsrv" ] && cp -r kvsrv /tmp/starter_backup/
-    [ -d "mr" ] && cp -r mr /tmp/starter_backup/
-else
-    echo "ERROR: Starter files not found in /workspace"
-    exit 1
-fi
-
 echo "Cloning 6.5840 lab repository"
-git clone git://g.csail.mit.edu/6.5840-golabs-2024 src > /dev/null 2>&1
+git clone git://g.csail.mit.edu/6.5840-golabs-2024 /tmp/lab-repo > /dev/null 2>&1
+
+echo "Moving src directory to workspace"
+mv /tmp/lab-repo/src ./src
+
 
 echo "Removing git history"
-rm -rf src/.git
+rm -rf /tmp/lab-repo
 
-echo "Copying starter files into repository"
-cp -r /tmp/starter_backup/* src/src/
+echo "Cloning reference solutions"
+git clone --depth 1 https://github.com/GaryHo34/MIT-6.5840-distributed-systems-labs.git /tmp/reference-solutions > /dev/null 2>&1
+
+echo "Copying starter files from reference solutions"
+cp -r /tmp/reference-solutions/src/mr src/
+cp -r /tmp/reference-solutions/src/kvsrv src/
+cp -r /tmp/reference-solutions/src/raft src/
+cp -r /tmp/reference-solutions/src/kvraft src/
+
+echo "Cleaning up reference solutions"
+rm -rf /tmp/reference-solutions
 
 cd src
 
 echo "Verifying starter files were copied correctly"
 STARTER_FILES=(
-    "src/raft/raft.go"
-    "src/kvraft/server.go"
-    "src/kvsrv/server.go"
-    "src/mr/coordinator.go"
+    "raft/raft.go"
+    "kvraft/server.go"
+    "kvsrv/server.go"
+    "mr/coordinator.go"
 )
 for file in "${STARTER_FILES[@]}"; do
     if [ ! -f "$file" ]; then
@@ -49,10 +50,10 @@ done
 
 echo "Creating checksums for protected files"
 PROTECTED_FILES=(
-    "src/shardctrler/config.go"
-    "src/shardctrler/test_test.go"
-    "src/shardkv/config.go"
-    "src/shardkv/test_test.go"
+    "shardctrler/config.go"
+    "shardctrler/test_test.go"
+    "shardkv/config.go"
+    "shardkv/test_test.go"
 )
 
 mkdir -p /tmp/checksums

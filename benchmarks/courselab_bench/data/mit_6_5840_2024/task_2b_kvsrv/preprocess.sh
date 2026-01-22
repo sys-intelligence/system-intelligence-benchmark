@@ -10,17 +10,21 @@ apt-get update > /dev/null 2>&1
 apt-get install -y git > /dev/null 2>&1
 
 echo "Cloning 6.5840 lab repository"
-git clone git://g.csail.mit.edu/6.5840-golabs-2024 src > /dev/null 2>&1
+git clone git://g.csail.mit.edu/6.5840-golabs-2024 /tmp/lab-repo > /dev/null 2>&1
+
+echo "Moving src directory to workspace"
+mv /tmp/lab-repo/src ./src
+
 
 echo "Removing git history"
-rm -rf src/.git
+rm -rf /tmp/lab-repo
 
 cd src
 
 echo "Creating checksums for protected files"
 PROTECTED_FILES=(
-    "src/kvsrv/config.go"
-    "src/kvsrv/test_test.go"
+    "kvsrv/config.go"
+    "kvsrv/test_test.go"
 )
 
 mkdir -p /tmp/checksums
