@@ -31,4 +31,16 @@ SHELL ["/bin/bash", "-c"]
 
 RUN chmod +x install.sh test.sh && ./install.sh
 
+# 配置 Claude Agent SDK Bash 超时参数到 ~/.claude/settings.json
+# 24小时 = 86400000 毫秒
+RUN mkdir -p /root/.claude && \
+    cat > /root/.claude/settings.json << 'EOF'
+{
+  "env": {
+    "BASH_MAX_TIMEOUT_MS": "86400000",
+    "BASH_DEFAULT_TIMEOUT_MS": "86400000"
+  }
+}
+EOF
+
 CMD ["bash"]
