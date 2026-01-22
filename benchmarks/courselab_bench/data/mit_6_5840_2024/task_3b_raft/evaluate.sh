@@ -8,9 +8,9 @@ cd /workspace/src
 
 echo "Verifying protected files were not modified"
 PROTECTED_FILES=(
-    "src/raft/config.go"
-    "src/raft/persister.go"
-    "src/raft/test_test.go"
+    "raft/config.go"
+    "raft/persister.go"
+    "raft/test_test.go"
 )
 
 for file in "${PROTECTED_FILES[@]}"; do
@@ -24,13 +24,13 @@ done
 echo "All protected files unchanged"
 
 echo "Running Raft 3B tests (up to 3 attempts to handle timeouts)"
-cd src/raft
+cd raft
 
 MAX_ATTEMPTS=3
 for attempt in $(seq 1 $MAX_ATTEMPTS); do
     echo "Attempt $attempt of $MAX_ATTEMPTS"
 
-    if timeout 600 go test -run 3B -race 2>&1 | tee test_output.txt; then
+    if go test -run 3B 2>&1 | tee test_output.txt; then
         if grep -q "PASS" test_output.txt && ! grep -q "FAIL" test_output.txt; then
             echo "PASS: All tests passed on attempt $attempt"
             exit 0

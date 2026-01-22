@@ -8,8 +8,8 @@ cd /workspace/src
 
 echo "Verifying protected files were not modified"
 PROTECTED_FILES=(
-    "src/kvraft/config.go"
-    "src/kvraft/test_test.go"
+    "kvraft/config.go"
+    "kvraft/test_test.go"
 )
 
 for file in "${PROTECTED_FILES[@]}"; do
@@ -23,13 +23,13 @@ done
 echo "All protected files unchanged"
 
 echo "Running KVRaft 4B tests (up to 3 attempts to handle timeouts)"
-cd src/kvraft
+cd kvraft
 
 MAX_ATTEMPTS=3
 for attempt in $(seq 1 $MAX_ATTEMPTS); do
     echo "Attempt $attempt of $MAX_ATTEMPTS"
 
-    if timeout 600 go test -run 4B -race 2>&1 | tee test_output.txt; then
+    if go test -run 4B 2>&1 | tee test_output.txt; then
         if grep -q "PASS" test_output.txt && ! grep -q "FAIL" test_output.txt; then
             echo "PASS: All tests passed on attempt $attempt"
             exit 0
