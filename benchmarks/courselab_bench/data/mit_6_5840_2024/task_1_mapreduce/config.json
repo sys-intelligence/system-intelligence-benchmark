@@ -2,6 +2,7 @@
   "instance_id": "mit_6_5840_2024__mapreduce",
   "course_id": "mit_6_5840_2024",
   "timeout_minutes": 30,
+  "tags": ["distributed-systems", "go", "mapreduce", "concurrency"],
   "artifacts": [
     "src/mr/coordinator.go",
     "src/mr/rpc.go",
