@@ -2,6 +2,7 @@
   "instance_id": "mit_6_5840_2024__raft_3d",
   "course_id": "mit_6_5840_2024",
   "timeout_minutes": 30,
+  "tags": ["distributed-systems", "go", "raft", "consensus", "fault-tolerance"],
   "artifacts": [
     "src/raft/append_entries.go",
     "src/raft/election.go",

@@ -64,6 +64,7 @@ def load_dataset(
                     "task_folder": str(task_folder.absolute()),
                     "course_id": config.get("course_id"),
                     "artifacts": config.get("artifacts", []),
+                    "tags": config.get("tags", []),
                 },
                 sandbox=SandboxEnvironmentSpec(
                     type="docker",

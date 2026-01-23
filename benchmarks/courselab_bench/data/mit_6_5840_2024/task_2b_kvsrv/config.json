@@ -2,6 +2,7 @@
   "instance_id": "mit_6_5840_2024__kvsrv_2b",
   "course_id": "mit_6_5840_2024",
   "timeout_minutes": 30,
+  "tags": ["distributed-systems", "go", "key-value-store", "rpc", "concurrency"],
   "artifacts": [
     "src/kvsrv/client.go",
     "src/kvsrv/common.go",
