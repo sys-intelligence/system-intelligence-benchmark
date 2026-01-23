@@ -2,6 +2,7 @@
   "instance_id": "mit_6_5840_2024__shardkv_5b",
   "course_id": "mit_6_5840_2024",
   "timeout_minutes": 40,
+  "tags": ["distributed-systems", "go", "sharding", "key-value-store", "raft"],
   "artifacts": [
     "src/shardctrler/client.go",
     "src/shardctrler/common.go",
