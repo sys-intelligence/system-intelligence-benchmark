@@ -240,3 +240,7 @@ The agent should implement the solution by modifying the following files:
 - `src/shardkv/server.go`
 
 **Important**: Do not modify test files, configuration files, or other infrastructure files.
+
+## Notes
+
+- The go binary is located at `/usr/local/go/bin`
