@@ -2,7 +2,8 @@
 set -e
 
 # Clone the reference solution repository
-git clone --depth 1 https://github.com/GaryHo34/MIT-6.5840-distributed-systems-labs.git /tmp/mit-solution
+git clone https://github.com/GaryHo34/MIT-6.5840-distributed-systems-labs.git /tmp/mit-solution
+git -C /tmp/mit-solution checkout 95318f79101581ec37d04471e7c4d50d9cb2db3a
 
 # Copy the solution files to the task directory
 cp /tmp/mit-solution/src/mr/coordinator.go src/mr/coordinator.go
