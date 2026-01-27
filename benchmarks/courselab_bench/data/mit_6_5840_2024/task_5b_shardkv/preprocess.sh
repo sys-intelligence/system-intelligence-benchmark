@@ -20,7 +20,8 @@ echo "Removing git history"
 rm -rf /tmp/lab-repo
 
 echo "Cloning reference solutions"
-git clone --depth 1 https://github.com/GaryHo34/MIT-6.5840-distributed-systems-labs.git /tmp/reference-solutions > /dev/null 2>&1
+git clone https://github.com/GaryHo34/MIT-6.5840-distributed-systems-labs.git /tmp/reference-solutions > /dev/null 2>&1
+git -C /tmp/reference-solutions checkout 95318f79101581ec37d04471e7c4d50d9cb2db3a > /dev/null 2>&1
 
 echo "Copying starter files from reference solutions"
 cp -r /tmp/reference-solutions/src/mr src/
