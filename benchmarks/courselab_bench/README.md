@@ -62,6 +62,14 @@ See [`data/distributed_systems/task_1_echo_server/`](data/distributed_systems/ta
 
 > Note on Sandboxing: Inspect AI offers multiple sandbox environments (Docker, Kubernetes, local, etc.). For simplicity, and because the majority of tasks won't require more than that, we currently expose a streamlined way to include tasks that use Docker sandboxing via `compose.yaml`. For more information regarding sandboxing and available environments in Inspect AI, see the [Sandboxing documentation](https://inspect.aisi.org.uk/sandboxing.html#environment-binding). If the lab you are adding requires a different sandboxing environment (e.g., Kubernetes), refer to the Inspect AI documentation.
 
+## Best Practices
+
+Tasks should be designed carefully and responsibly to ensure they are fair. Here are some best practices:
+
+- Write a validation script: It's highly recommended to write a reference solution script (`sol.sh`) to verify that there are actions an agent can take to pass the task. This gives confidence that the environment and task are set up correctly.
+- Test with at least one agent: If you test with multiple agents and LLMs and no agent solves the task, it's likely the task needs revision. Review the trajectories to understand whether failures have something in common.
+- Pin git commits for reproducibility: When cloning a git repository, specify the exact commit, then delete the `.git` directory to remove the full history.
+
 ## Using Custom Agents
 
 To use a different agent, pass it to the `courselab()` function:
