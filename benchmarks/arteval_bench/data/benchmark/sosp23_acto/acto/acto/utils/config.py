@@ -31,7 +31,7 @@ class OperatorConfig:
                  k8s_fields: str = None,
                  example_dir: str = None,
                  analysis: dict = None,
-                 num_nodes: int = 4,
+                 num_nodes: int = 1,  # Changed from 4 to 1 for Docker-in-Docker compatibility
                  wait_time: int = 60,
                  context: str = None,
                  custom_oracle: str = None,

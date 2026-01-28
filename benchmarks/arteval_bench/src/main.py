@@ -35,8 +35,11 @@ def main(file_path, model, agent, save_path):
             task_file = item.get('artifact_readme', None)
             task_id = item.get('artifact_id', None)
             test_method = item.get('evaluator', None)
+            run_on_host = item.get('run_on_host', False)  # New: run on host instead of Docker
 
             task = get_task(task_file)
+            
+            logger.info(f"Task {task_id}: run_on_host={run_on_host}")
 
             result = run_eval(
                 deployment=deployment,
@@ -47,6 +50,7 @@ def main(file_path, model, agent, save_path):
                 agent_path=agent,
                 test_method=test_method,
                 save_path=save_path,
+                run_on_host=run_on_host,  # Pass the flag
             )
 
             result['expected_score'] = item.get('expected_score', -1)

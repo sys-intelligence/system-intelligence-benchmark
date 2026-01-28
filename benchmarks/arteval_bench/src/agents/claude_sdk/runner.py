@@ -70,6 +70,12 @@ ENVIRONMENT SETUP:
 YOUR TASK:
 {task_description}
 
+TIMEOUT CONFIGURATION (CRITICAL):
+- The system has been configured with a 48-hour (172800000 ms) default Bash timeout.
+- DO NOT specify timeout parameters in your Bash commands - the system default will be used automatically.
+- Long-running commands (builds, tests, benchmarks) can take hours - this is normal and expected.
+- If a command seems to be running long, DO NOT cancel or re-run it. Wait for completion.
+
 IMPORTANT GUIDELINES:
 1. First, explore the current directory structure to understand where you are and where the artifact is located.
 2. Navigate to the artifact repository root directory.
@@ -78,15 +84,19 @@ IMPORTANT GUIDELINES:
 5. Follow the README instructions step by step.
 6. Use the Bash tool to run commands, Read tool to inspect files, and Write tool to create/modify files.
 7. Work systematically through environment setup, build/install, benchmark preparation, and experiment execution.
-8. If you encounter errors, try to debug and resolve them using the available tools."""
+8. If you encounter errors, try to debug and resolve them using the available tools.
+9. For long-running commands, let them complete naturally. Do NOT set short timeouts or interrupt them."""
     
     # 不在 agent 侧提示评估流程，避免泄露答案
     system_prompt = base_prompt
 
     # 配置 Claude Agent 选项
+    # 注意：必须设置 setting_sources 才能让 SDK 加载 ~/.claude/settings.json 中的超时配置
+    # 参考：https://platform.claude.com/docs/en/agent-sdk/python#types
     options = ClaudeAgentOptions(
         system_prompt=system_prompt,
         allowed_tools=["Read", "Write", "Bash"],  # 使用标准工具
+        setting_sources=["user"],  # 加载用户设置 (~/.claude/settings.json) 以获取超时配置
     )
     
     # 使用 message_formatter 打印美化输出（如果可用）
@@ -191,22 +201,22 @@ def main():
         sys.exit(1)
     
     # 配置 Claude Agent SDK Bash 超时参数（如果未通过 shell 脚本设置的话）
-    # 24小时 = 86400000 毫秒
+    # 48小时 = 172800000 毫秒
     if not os.environ.get('BASH_MAX_TIMEOUT_MS'):
-        os.environ['BASH_MAX_TIMEOUT_MS'] = '86400000'
+        os.environ['BASH_MAX_TIMEOUT_MS'] = '172800000'
     if not os.environ.get('BASH_DEFAULT_TIMEOUT_MS'):
-        os.environ['BASH_DEFAULT_TIMEOUT_MS'] = '86400000'
+        os.environ['BASH_DEFAULT_TIMEOUT_MS'] = '172800000'
     
-    # 运行异步主函数，添加超时控制（24小时 = 86400秒）
+    # 运行异步主函数，添加超时控制（48小时 = 172800秒）
     try:
         exit_code = asyncio.run(
             asyncio.wait_for(
                 run_agent(model_name, task_description),
-                timeout=86400.0  # 24小时超时
+                timeout=172800.0  # 48小时超时
             )
         )
     except asyncio.TimeoutError:
-        print("ERROR: Agent execution exceeded 24 hour timeout.", file=sys.stderr, flush=True)
+        print("ERROR: Agent execution exceeded 48 hour timeout.", file=sys.stderr, flush=True)
         sys.exit(1)
     except Exception as e:
         print(f"ERROR: Failed to run agent: {e}", file=sys.stderr, flush=True)

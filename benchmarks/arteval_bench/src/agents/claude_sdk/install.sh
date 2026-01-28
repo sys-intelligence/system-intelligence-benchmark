@@ -21,16 +21,16 @@ if [ -d "/agent/sdk" ]; then
 fi
 
 # 配置 Claude Agent SDK Bash 超时参数
-# 创建 ~/.claude/settings.json，24小时超时 = 86400000 毫秒
+# 创建 ~/.claude/settings.json，48小时超时 = 172800000 毫秒
 mkdir -p ~/.claude
 cat > ~/.claude/settings.json << 'EOF'
 {
   "env": {
-    "BASH_MAX_TIMEOUT_MS": "86400000",
-    "BASH_DEFAULT_TIMEOUT_MS": "86400000"
+    "BASH_MAX_TIMEOUT_MS": "172800000",
+    "BASH_DEFAULT_TIMEOUT_MS": "172800000"
   }
 }
 EOF
-echo "Created ~/.claude/settings.json with Bash timeout configuration (24 hours)."
+echo "Created ~/.claude/settings.json with Bash timeout configuration (48 hours)."
 
 echo "Claude Agent SDK installation completed successfully."

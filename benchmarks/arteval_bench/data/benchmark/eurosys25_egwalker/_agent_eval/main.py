@@ -2,10 +2,10 @@
 import sys
 from typing import Dict
 
-# from oracle_artifact_build import OracleArtifactBuild
+from oracle_artifact_build import OracleArtifactBuild
 from oracle_env_setup import OracleEnvSetup
-# from oracle_benchmark_prep import OracleBenchmarkPrep
-# from oracle_experiment_runs import OracleExperimentRuns
+from oracle_benchmark_prep import OracleBenchmarkPrep
+from oracle_experiment_runs import OracleExperimentRuns
 
 from utils import logger
 

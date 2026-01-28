@@ -22,6 +22,21 @@ class Kind(base.KubernetesEngine):
         config_dict = {}
         config_dict['kind'] = 'Cluster'
         config_dict['apiVersion'] = 'kind.x-k8s.io/v1alpha4'
+        # Add containerdConfigPatches for cgroups v2 compatibility
+        # This fixes the "could not find a log line that matches Reached target Multi-User System" error
+        # when running Kind inside Docker containers on systems with cgroups v2
+        config_dict['containerdConfigPatches'] = [
+            '''[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+  [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+    SystemdCgroup = true'''
+        ]
+        # Add kubeadmConfigPatches to configure kubelet to use systemd cgroup driver
+        config_dict['kubeadmConfigPatches'] = [
+            '''kind: InitConfiguration
+nodeRegistration:
+  kubeletExtraArgs:
+    cgroup-driver: systemd'''
+        ]
         config_dict['nodes'] = []
         extra_mounts = []
         extra_mounts.append({'hostPath': 'profile/data', 'containerPath': '/tmp/profile'})
@@ -81,6 +96,10 @@ class Kind(base.KubernetesEngine):
 
         if version:
             cmd.extend(['--image', f"kindest/node:v{version}"])
+
+        # Increase wait timeout for multi-node clusters in Docker-in-Docker environments
+        # Default is 5m which may not be enough for 4-node clusters
+        cmd.extend(['--wait', '10m'])
 
         p = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         while p.returncode != 0:

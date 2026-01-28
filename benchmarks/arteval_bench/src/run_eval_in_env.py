@@ -1,8 +1,11 @@
 """Patch evaluator for running tests in a deployment."""
 
 import asyncio
+import json
 import os
+import subprocess
 import sys
+from pathlib import Path
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
 
@@ -18,6 +21,180 @@ def write_to_file(file_path, content):
         f.write(content)
 
 
+def setup_claude_settings_on_host():
+    """Set up ~/.claude/settings.json with timeout configuration on host."""
+    claude_dir = Path.home() / ".claude"
+    settings_file = claude_dir / "settings.json"
+    
+    claude_dir.mkdir(exist_ok=True)
+    
+    settings = {
+        "env": {
+            "BASH_MAX_TIMEOUT_MS": "172800000",  # 48 hours
+            "BASH_DEFAULT_TIMEOUT_MS": "172800000"
+        }
+    }
+    
+    with open(settings_file, 'w') as f:
+        json.dump(settings, f, indent=2)
+    
+    logger.info(f"Created {settings_file} with 48-hour timeout configuration.")
+
+
+async def run_eval_on_host(project_path, task_id, task, model, agent_path, test_method, save_path):
+    """Run evaluation directly on host machine (no Docker container).
+    
+    This is useful for tasks that require Kind clusters or other Docker-in-Docker
+    scenarios that don't work well in nested containers.
+    """
+    logger.info("=" * 80)
+    logger.info("Running evaluation directly on HOST MACHINE (not in Docker)")
+    logger.info("=" * 80)
+    
+    # Check prerequisites
+    import shutil
+    
+    if not shutil.which("docker"):
+        raise RuntimeError("Docker is not installed on host")
+    
+    # Check if Docker is running
+    result = subprocess.run(["docker", "ps"], capture_output=True, timeout=10)
+    if result.returncode != 0:
+        raise RuntimeError("Docker is not running on host")
+    
+    # Check API key
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        raise RuntimeError("ANTHROPIC_API_KEY environment variable is not set")
+    
+    # Setup Claude settings
+    setup_claude_settings_on_host()
+    
+    # Ensure project path is absolute
+    project_path = os.path.abspath(project_path)
+    if not os.path.isdir(project_path):
+        raise RuntimeError(f"Project path does not exist: {project_path}")
+    
+    logger.info(f"Project path: {project_path}")
+    logger.info(f"Task ID: {task_id}")
+    logger.info(f"Model: {model}")
+    
+    # Import Claude Agent SDK
+    try:
+        from claude_agent_sdk import query, ClaudeAgentOptions
+    except ImportError as e:
+        raise RuntimeError(f"claude_agent_sdk not installed: {e}. Install with: pip install claude-agent-sdk")
+    
+    # Build system prompt for host execution
+    system_prompt = f"""You are an experienced software engineer completing an artifact evaluation task.
+
+ENVIRONMENT SETUP (HOST MACHINE - NOT DOCKER):
+- You are running DIRECTLY on the host machine (NOT inside a Docker container)
+- Docker daemon is already running on this host
+- When you use Kind to create Kubernetes clusters, they will be created using the host's Docker
+- This avoids Docker-in-Docker compatibility issues
+- You may need sudo for some operations
+
+ARTIFACT LOCATION:
+- The artifact repository is located at: {project_path}
+- Start by changing to this directory: cd {project_path}
+
+YOUR TASK:
+{task}
+
+TIMEOUT CONFIGURATION (CRITICAL):
+- Long-running commands (builds, tests, Kind cluster creation) are expected
+- DO NOT set short timeouts - let commands complete naturally
+- Kind cluster creation can take 5-10 minutes
+- Full benchmark runs can take hours
+
+IMPORTANT GUIDELINES:
+1. First, cd to {project_path} and examine the directory structure
+2. Follow the README instructions step by step
+3. If you see 'sudo' in instructions, you can use it (or skip if already root)
+4. Use the Bash tool to run commands, Read tool to inspect files
+5. Work systematically through setup, build, and experiment execution
+6. If you encounter errors, debug and resolve them using available tools
+7. For Kind clusters, they will work properly since you're on the host (not DinD)"""
+
+    options = ClaudeAgentOptions(
+        system_prompt=system_prompt,
+        allowed_tools=["Read", "Write", "Bash"],
+        setting_sources=["user"],  # Load ~/.claude/settings.json for timeout config
+    )
+    
+    # Set environment variables
+    os.environ['BASH_MAX_TIMEOUT_MS'] = '172800000'
+    os.environ['BASH_DEFAULT_TIMEOUT_MS'] = '172800000'
+    
+    logger.info("Starting Claude Agent SDK (Host Mode)...")
+    
+    message_count = 0
+    run_results_output = ""
+    
+    try:
+        async for message in query(
+            prompt=f"Please start the artifact evaluation task. Begin by changing to the artifact directory at {project_path} and examining its contents.",
+            options=options
+        ):
+            message_count += 1
+            
+            if message_count % 10 == 0:
+                logger.info(f"[Progress] Processed {message_count} messages...")
+            
+            # Log each message
+            msg_str = str(message)
+            logger.info(msg_str)
+            
+            if 'ResultMessage' in msg_str or 'TextBlock' in msg_str:
+                run_results_output = msg_str
+        
+        logger.info(f"Claude Agent SDK execution completed. Total messages: {message_count}")
+        
+    except Exception as e:
+        logger.error(f"Claude Agent SDK execution failed: {e}")
+        import traceback
+        traceback.print_exc()
+        run_results_output = f"Error: {e}"
+    
+    # Run evaluation (test_method)
+    logger.info("Running evaluation script...")
+    try:
+        # Change to project directory and run test
+        eval_cmd = f"cd {project_path} && {test_method}"
+        eval_result = subprocess.run(
+            eval_cmd,
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=300  # 5 minute timeout for evaluation
+        )
+        test_output = eval_result.stdout.strip()
+        logger.info(f"Evaluation output: {test_output}")
+        
+        result = {
+            'task': task,
+            'project_path': project_path,
+            'agent_run_results': run_results_output,
+            'test_method': test_method,
+            'score': int(test_output) if test_output.isdigit() else 0,
+            'status': 'success',
+            'run_on_host': True,
+        }
+    except Exception as e:
+        logger.error(f"Error running test method: {e}")
+        result = {
+            'task': task,
+            'project_path': project_path,
+            'agent_run_results': run_results_output,
+            'test_method': test_method,
+            'score': 0,
+            'status': f'error: {str(e)}',
+            'run_on_host': True,
+        }
+    
+    return result
+
+
 async def run_eval_in_env(deployment, project_path, task_id, task, model, agent_path, test_method, save_path):
     """Spoiler: This function will work with any deployment."""
     await deployment.start()
@@ -25,8 +202,9 @@ async def run_eval_in_env(deployment, project_path, task_id, task, model, agent_
 
     if hasattr(runtime, "_config"):
         logger.info(f"Current RemoteRuntime timeout: {runtime._config.timeout}s")
-        runtime._config.timeout = 1800.0
-        logger.info(f"Overriding RemoteRuntime timeout to {runtime._config.timeout}s")
+        # 48小时 = 172800 秒（与 Bash 命令超时保持一致）
+        runtime._config.timeout = 172800.0
+        logger.info(f"Overriding RemoteRuntime timeout to {runtime._config.timeout}s (48 hours)")
 
     # Issue a few one-off commands, similar to `subprocess.run()`
     logger.info(await runtime.execute(Command(command=['echo', 'Hello, world!'])))
@@ -82,10 +260,28 @@ async def run_eval_in_env(deployment, project_path, task_id, task, model, agent_
     logger.info(await runtime.run_in_session(BashAction(command='chmod +x /agent/runner.sh /agent/install.sh')))
     logger.info(await runtime.run_in_session(BashAction(command='cat /agent/runner.sh')))
     logger.info(await runtime.run_in_session(BashAction(command='/agent/install.sh')))
+    
+    # 为 claude_sdk 设置必要的环境变量（从主进程传递到容器）
+    if is_claude_sdk:
+        anthropic_api_key = os.environ.get('ANTHROPIC_API_KEY')
+        if anthropic_api_key:
+            # 在容器的 bash session 中设置环境变量
+            # 使用单引号避免 shell 转义问题，但需要处理单引号本身
+            escaped_key = anthropic_api_key.replace("'", "'\"'\"'")
+            set_env_cmd = f"export ANTHROPIC_API_KEY='{escaped_key}'"
+            logger.info('Setting ANTHROPIC_API_KEY in container...')
+            logger.info(await runtime.run_in_session(BashAction(command=set_env_cmd)))
+            # 验证环境变量已设置
+            verify_cmd = 'echo "ANTHROPIC_API_KEY is set: $([ -n "$ANTHROPIC_API_KEY" ] && echo yes || echo no)"'
+            verify_res = await runtime.run_in_session(BashAction(command=verify_cmd))
+            logger.info(f'Environment variable verification: {verify_res}')
+        else:
+            logger.warning('ANTHROPIC_API_KEY not found in host environment. Runner may fail.')
 
     logger.info('Running runner script...')
     # 为 claude_sdk 提供更长超时和实时输出（不影响其他 agent）
-    runner_timeout = 3600.0 if is_claude_sdk else 1200.0
+    # claude_sdk 需要 48 小时超时（172800 秒）
+    runner_timeout = 172800.0 if is_claude_sdk else 1200.0
 
     if is_claude_sdk:
         # 为 claude_sdk 使用实时日志监控：后台运行 runner，定期读取日志文件
@@ -126,17 +322,30 @@ async def run_eval_in_env(deployment, project_path, task_id, task, model, agent_
         elapsed = 0.0
         poll_interval = 10.0  # 每10秒轮询一次，更频繁地获取日志
         run_results = None
-        last_log_size = 0
+        last_log_content = ""  # 记录上次读取的日志内容，避免重复输出
 
         while elapsed < runner_timeout:
             try:
-                # 读取日志文件的最后50行（实时输出）
-                tail_res = await runtime.run_in_session(
-                    BashAction(command='tail -n 50 /agent/runner.live.log 2>/dev/null || echo ""', timeout=15.0)
+                # 读取完整的日志文件内容（用于比较是否有新内容）
+                log_res = await runtime.run_in_session(
+                    BashAction(command='cat /agent/runner.live.log 2>/dev/null || echo ""', timeout=30.0)
                 )
-                tail_output = str(getattr(tail_res, "output", "")).strip()
-                if tail_output:
-                    logger.info(f'[claude_sdk live log @ {elapsed:.0f}s]\n{tail_output}')
+                current_log_content = str(getattr(log_res, "output", "")).strip()
+                
+                # 只输出新增的内容，避免重复
+                if current_log_content and current_log_content != last_log_content:
+                    if last_log_content and current_log_content.startswith(last_log_content):
+                        # 只有新增内容，输出增量
+                        new_content = current_log_content[len(last_log_content):].strip()
+                        if new_content:
+                            logger.info(f'[claude_sdk live log @ {elapsed:.0f}s ({elapsed/60:.1f} min)]\n{new_content}')
+                    else:
+                        # 内容完全不同（可能是日志被清空重写），输出全部
+                        logger.info(f'[claude_sdk live log @ {elapsed:.0f}s ({elapsed/60:.1f} min)]\n{current_log_content}')
+                    last_log_content = current_log_content
+                elif elapsed % 300 == 0 and elapsed > 0:
+                    # 每5分钟输出一次进度，即使没有新日志
+                    logger.info(f'[claude_sdk still running @ {elapsed:.0f}s ({elapsed/60:.1f} min), no new output]')
             except Exception as e:
                 logger.info(f'Failed to read claude_sdk live log: {e}')
 
@@ -316,12 +525,44 @@ async def run_eval_in_env(deployment, project_path, task_id, task, model, agent_
     return result
 
 
-def run_eval(deployment, project_path, task_id, task, model, agent_path, test_method, save_path):
+def run_eval(deployment, project_path, task_id, task, model, agent_path, test_method, save_path, run_on_host=False):
+    """Run evaluation either on host or in Docker container.
+    
+    Args:
+        deployment: Docker image to use (ignored if run_on_host=True)
+        project_path: Path to the artifact project
+        task_id: Task identifier
+        task: Task description
+        model: Model name
+        agent_path: Path to agent scripts
+        test_method: Evaluation command
+        save_path: Path to save results
+        run_on_host: If True, run directly on host machine instead of Docker
+    """
+    
+    if run_on_host:
+        # Run directly on host machine (no Docker container)
+        logger.info(f"Task {task_id} configured to run on HOST machine (run_on_host=True)")
+        return asyncio.run(
+            run_eval_on_host(project_path, task_id, task, model, agent_path, test_method, save_path)
+        )
+    
+    # Run in Docker container (original behavior)
     image = deployment or 'bastoica/ae-agent-ubuntu24.04:latest'
 
+    # Enable privileged mode for Docker-in-Docker scenarios (e.g., Kind clusters)
+    # This is required for Kubernetes-based artifact evaluations like Acto
+    # Additional args for cgroups v2 compatibility:
+    # - --cgroupns=host: Share cgroup namespace with host (required for Kind in cgroups v2)
+    # - Environment variables for Kind cgroups v2 compatibility
     config = DockerDeploymentConfig(
         image=image,
         startup_timeout=1200.0,
+        docker_args=[
+            '--privileged',  # Required for Kind cluster creation
+            '--cgroupns=host',  # Required for Kind nodes to start with cgroups v2
+            '-e', 'KIND_EXPERIMENTAL_CONTAINERD_SNAPSHOTTER=native',  # Better cgroups v2 support
+        ],
     )
     deployment_obj = config.get_deployment()
 

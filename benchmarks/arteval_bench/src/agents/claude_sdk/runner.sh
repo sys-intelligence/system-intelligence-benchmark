@@ -18,9 +18,9 @@ export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY}"
 export PYTHONUNBUFFERED=1
 
 # 配置 Claude Agent SDK Bash 超时参数
-# 24小时 = 86400000 毫秒
-export BASH_MAX_TIMEOUT_MS=86400000
-export BASH_DEFAULT_TIMEOUT_MS=86400000
+# 48小时 = 172800000 毫秒
+export BASH_MAX_TIMEOUT_MS=172800000
+export BASH_DEFAULT_TIMEOUT_MS=172800000
 
 # 调用 Python runner 脚本（-u 确保无缓冲输出）
 # 注意：输出重定向由调用方处理（在 run_eval_in_env.py 中）
