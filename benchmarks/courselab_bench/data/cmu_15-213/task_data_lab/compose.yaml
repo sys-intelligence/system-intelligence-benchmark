@@ -1,6 +1,6 @@
 services:
   default:
-    image: gcc:12
+    image: xuafeng/swe-go-python:latest
     command: sleep infinity
     working_dir: /workspace
     x-init:
