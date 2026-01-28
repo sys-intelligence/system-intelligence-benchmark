@@ -11,7 +11,24 @@ set -e
 
 echo "=== Evaluating CountMinSketch Task ==="
 
-cd /workspace/src
+cd /workspace
+
+echo "Verifying protected files were not modified"
+PROTECTED_FILES=(
+    "test/primer/count_min_sketch_test.cpp:count_min_sketch_test.cpp.sha256"
+)
+
+for entry in "${PROTECTED_FILES[@]}"; do
+    file="${entry%%:*}"
+    checksum_name="${entry##*:}"
+    if [ -f "$file" ] && [ -f "/tmp/checksums/${checksum_name}" ]; then
+        if ! sha256sum -c "/tmp/checksums/${checksum_name}" > /dev/null 2>&1; then
+            echo "FAIL: $file was modified"
+            exit 1
+        fi
+    fi
+done
+echo "All protected files unchanged"
 
 # Initialize scores
 BUILD_SCORE=0
@@ -32,10 +49,10 @@ echo "Creating build directory and building..."
 if mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug .. && make -j$(nproc); then
     echo "Build successful"
     BUILD_SCORE=0  # Build is a prerequisite, not scored
-    cd /workspace/src
+    cd /workspace
 else
     echo "FAIL: Build failed"
-    cd /workspace/src
+    cd /workspace
     exit 1
 fi
 
@@ -50,7 +67,7 @@ echo "Building count_min_sketch_test..."
 if ! make -j$(nproc) count_min_sketch_test > test_build_output.txt 2>&1; then
     echo "FAIL: Failed to build count_min_sketch_test"
     cat test_build_output.txt
-    cd /workspace/src
+    cd /workspace
     exit 1
 fi
 
@@ -125,7 +142,7 @@ else
     TEST_SCORE=0
 fi
 
-cd /workspace/src/build
+# Already in build directory from step 2
 
 # Step 3: Format Check (20% of total score)
 echo ""

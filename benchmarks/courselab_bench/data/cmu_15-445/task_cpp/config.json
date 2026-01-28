@@ -10,6 +10,6 @@
   ],
   "artifacts": [
     "src/primer/count_min_sketch.cpp",
-    "src/primer/count_min_sketch.h"
+    "src/include/primer/count_min_sketch.h"
   ]
 }

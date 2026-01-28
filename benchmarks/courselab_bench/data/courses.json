@@ -27,6 +27,13 @@
       "institution": "CMU",
       "year": 2024,
       "num_tasks": 1
+    },
+    {
+      "course_id": "cmu_15-445",
+      "name": "CMU 15-445: Database Systems",
+      "institution": "CMU",
+      "year": 2025,
+      "num_tasks": 1
     }
   ]
 }
