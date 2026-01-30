@@ -1,0 +1,21 @@
+{
+  "instance_id": "pku_pintos__mmap",
+  "course_id": "pku_pintos",
+  "timeout_minutes": 120,
+  "tags": ["operating-systems", "c", "virtual-memory", "memory-mapped-files", "stack-growth", "pintos"],
+  "artifacts": [
+    "src/vm/frame.c",
+    "src/vm/frame.h",
+    "src/vm/page.c",
+    "src/vm/page.h",
+    "src/vm/swap.c",
+    "src/vm/swap.h",
+    "src/userprog/process.c",
+    "src/userprog/process.h",
+    "src/userprog/syscall.c",
+    "src/userprog/syscall.h",
+    "src/userprog/exception.c",
+    "src/threads/thread.c",
+    "src/threads/thread.h"
+  ]
+}

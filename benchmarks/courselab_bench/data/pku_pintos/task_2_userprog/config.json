@@ -1,0 +1,15 @@
+{
+  "instance_id": "pku_pintos__userprog",
+  "course_id": "pku_pintos",
+  "timeout_minutes": 90,
+  "tags": ["operating-systems", "c", "system-calls", "processes", "user-programs", "pintos"],
+  "artifacts": [
+    "src/userprog/process.c",
+    "src/userprog/process.h",
+    "src/userprog/syscall.c",
+    "src/userprog/syscall.h",
+    "src/userprog/exception.c",
+    "src/threads/thread.c",
+    "src/threads/thread.h"
+  ]
+}
