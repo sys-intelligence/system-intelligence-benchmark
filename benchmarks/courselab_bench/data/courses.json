@@ -34,6 +34,13 @@
       "institution": "CMU",
       "year": 2024,
       "num_tasks": 1
+    },
+    {
+      "course_id": "pku_pintos",
+      "name": "PKU Operating Systems: Pintos Labs",
+      "institution": "Peking University",
+      "year": 2024,
+      "num_tasks": 4
     }
   ]
 }

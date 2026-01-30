@@ -1,0 +1,9 @@
+services:
+  default:
+    image: pkuflyingpig/pintos
+    init: true
+    command: tail -f /dev/null
+    working_dir: /home/PKUOS/pintos
+    network_mode: bridge
+    cpus: '2.0'
+    mem_limit: 4gb
