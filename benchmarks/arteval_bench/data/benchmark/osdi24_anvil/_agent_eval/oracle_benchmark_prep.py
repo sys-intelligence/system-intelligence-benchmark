@@ -18,7 +18,7 @@ class OracleBenchmarkPrep:
     Run a command and return (rc, stdout, stderr) tuple.
     """
     try:
-      cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+      cp = subprocess.run(cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE, text = True)
       return cp.returncode, (cp.stdout or "").strip(), (cp.stderr or "").strip()
     except FileNotFoundError as e:
       return 127, "", str(e)

@@ -1,86 +1,90 @@
-import os
-import subprocess
-from dataclasses import dataclass
-from typing import Iterable, Optional, Tuple
+#!/usr/bin/env python3
+"""Artifact build oracle for the OSDI '24 ANVIL artifact.
+
+Validates:
+  - The ACTO dependency repository can build its required library target.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, field
+import logging
 from pathlib import Path
 
-from utils import REPO_DIRS
-from utils import logger
+from evaluator.oracle_artifact_build_primitives import (
+    BuildCommandRequirement,
+    BuildRequirement,
+    OracleArtifactBuildBase,
+)
+from evaluator.utils import EntryConfig
 
 
-@dataclass(frozen=True)
+@dataclass(frozen = True, slots = True, kw_only = True)
 class BuildTarget:
+  """Declarative description of one build command to run."""
+
   name: str
-  repo_key: str
-  cmd: list[str]
+  cwd: Path
+  command: Sequence[str]
+  cwd_relative: Path | None = None
+  optional: bool = False
+  timeout_seconds: float = 60.0
+  env_overrides: Mapping[str, str] = field(default_factory = dict)
+
+  def __post_init__(self) -> None:
+    if not self.name:
+      raise ValueError("BuildTarget.name must be non-empty")
+    if not self.command:
+      raise ValueError(f"{self.name}: command must be non-empty")
+    if self.timeout_seconds <= 0:
+      raise ValueError(f"{self.name}: timeout_seconds must be > 0")
+
+    object.__setattr__(self, "command", tuple(self.command))
 
 
-BUILD_TARGETS: list[BuildTarget] = [
-  BuildTarget(
-    name="acto",
-    repo_key="acto",
-    cmd=["make", "lib"],
-  ),
-]
+class OracleArtifactBuild(OracleArtifactBuildBase):
+  """Artifact build oracle for ANVIL."""
 
+  def __init__(
+      self,
+      *,
+      config: EntryConfig,
+      logger: logging.Logger,
+      targets: Sequence[BuildTarget] | None = None,
+  ) -> None:
+    super().__init__(logger = logger)
+    self._config = config
 
-class OracleArtifactBuild:
+    if targets is None:
+      targets = self._default_targets()
+    self._targets = tuple(targets)
 
-  def __init__(self) -> None:
-    self.repo_dirs = REPO_DIRS
+    names = [t.name for t in self._targets]
+    if len(names) != len(set(names)):
+      raise ValueError(f"Duplicate build target names: {names!r}")
 
-  def run_shell_command(
-    self,
-    cmd: Iterable[str],
-    cwd: Optional[Path] = None,
-  ) -> Tuple[int, str, str]:
-    """
-    Run a command and return (rc, stdout, stderr) tuple.
-    """
-    try:
-      cp = subprocess.run(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        cwd=str(cwd) if cwd is not None else None,
-      )
-      return cp.returncode, cp.stdout or "", cp.stderr or ""
-    except FileNotFoundError:
-      return 127, "", ""
+  def _default_targets(self) -> tuple[BuildTarget, ...]:
+    acto_repo = self._config.repository_paths["osdi24-acto-dependency"]
+    return (
+        BuildTarget(
+            name = "acto: make lib",
+            cwd = acto_repo,
+            command = ("make", "lib"),
+            timeout_seconds = 60.0,
+        ),
+    )
 
-  def build_target(self, target: BuildTarget) -> Optional[str]:
-    """
-    Build a single target using its configured repository and command.
-    """
-    repo_dir = self.repo_dirs.get(target.repo_key, "")
-    if not repo_dir:
-      return f"{target.name} repo directory undefined"
-
-    repo_path = Path(os.path.expanduser(repo_dir))
-    if not repo_path.exists():
-      return f"{target.name} repo directory missing"
-
-    rc, out, err = self.run_shell_command(target.cmd, cwd=repo_path)
-    if rc != 0:
-      return f"{target.name} build failed (rc={rc})"
-
-    return None
-
-  def build_check(self):
-    """
-    Run builds for all configured targets and collect failures.
-    """
-    problems: list[str] = []
-    for target in BUILD_TARGETS:
-      msg = self.build_target(target)
-      if msg:
-        problems.append(msg)
-    if problems:
-      return False, "; ".join(problems)
-    return True, ""
-
-  def run(self):
-    ok, why = self.build_check()
-    logger.info(f"Build: {'PASS' if ok else 'FAIL' + (' - ' + why if why else '')}")
-    return ok
+  def requirements(self) -> Sequence[BuildRequirement]:
+    return tuple(
+        BuildCommandRequirement(
+            name = t.name,
+            optional = t.optional,
+            cwd = t.cwd,
+            command = t.command,
+            cwd_relative = t.cwd_relative,
+            timeout_seconds = t.timeout_seconds,
+            env_overrides = t.env_overrides,
+        )
+        for t in self._targets
+    )
