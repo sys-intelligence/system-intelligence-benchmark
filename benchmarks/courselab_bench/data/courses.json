@@ -1,0 +1,32 @@
+{
+  "courses": [
+    {
+      "course_id": "distributed_systems",
+      "name": "Distributed Systems Lab",
+      "institution": "Demo University",
+      "year": 2024,
+      "num_tasks": 1
+    },
+    {
+      "course_id": "mit_6_5840_2024",
+      "name": "MIT 6.5840: Distributed Systems",
+      "institution": "MIT",
+      "year": 2024,
+      "num_tasks": 11
+    },
+    {
+      "course_id": "cs537-projects-spring-2019",
+      "name": "UW-Madison CS537: Operating Systems",
+      "institution": "UW-Madison",
+      "year": 2019,
+      "num_tasks": 1
+    },
+    {
+      "course_id": "cmu_15-213",
+      "name": "CMU 15-213: Introduction to Computer Systems",
+      "institution": "CMU",
+      "year": 2024,
+      "num_tasks": 1
+    }
+  ]
+}

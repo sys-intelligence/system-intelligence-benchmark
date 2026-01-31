@@ -1,0 +1,109 @@
+name: Experimental courseexam benchmark run
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to validate'
+        required: true
+        type: number
+
+jobs:
+  validate-exam:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ inputs.pr_number }}/merge
+          fetch-depth: 0
+
+      - name: Verify PR targets main branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BASE_BRANCH=$(gh pr view ${{ inputs.pr_number }} --json baseRefName --jq '.baseRefName')
+          if [ "$BASE_BRANCH" != "main" ]; then
+            echo "This workflow only runs for PRs targeting main (current: $BASE_BRANCH)"
+            exit 1
+          fi
+
+      - name: Detect new or modified exams
+        id: detect_exams
+        run: |
+          git fetch origin main
+          EXAM_DIRS=$(git diff --name-only origin/main...HEAD | \
+            grep -E '^benchmarks/courseexam_bench/data/raw/[^/]+/exam\.md$' | \
+            sed 's|/exam\.md||' | sed 's|benchmarks/courseexam_bench/data/raw/||' | sort -u)
+
+          if [ -z "$EXAM_DIRS" ]; then
+            echo "No new or modified exams detected"
+            echo "has_exams=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          EXAM_IDS=$(echo "$EXAM_DIRS" | tr '\n' ',' | sed 's/,$//')
+          echo "exam_ids=$EXAM_IDS" >> $GITHUB_OUTPUT
+          echo "has_exams=true" >> $GITHUB_OUTPUT
+
+      - name: Set up Python
+        if: steps.detect_exams.outputs.has_exams == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        if: steps.detect_exams.outputs.has_exams == 'true'
+        working-directory: benchmarks/courseexam_bench
+        run: pip install -e . inspect-ai anthropic
+
+      - name: Prepare dataset and run evaluation
+        if: steps.detect_exams.outputs.has_exams == 'true'
+        working-directory: benchmarks/courseexam_bench
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          EXAM_IDS: ${{ steps.detect_exams.outputs.exam_ids }}
+        # I think it's simpler to have a single script block here
+        run: |
+          python prepare_dataset.py
+
+          python << 'EOF'
+          import os
+          from inspect_ai import eval
+          from courseexam.courseexam import courseexam
+
+          exam_ids = [x.strip() for x in os.environ['EXAM_IDS'].split(',') if x.strip()]
+
+          task = courseexam(exam_ids=exam_ids, judge_model="anthropic/claude-haiku-4-5")
+          eval(tasks=task, model="anthropic/claude-haiku-4-5")
+          EOF
+
+      - name: Upload evaluation results
+        if: steps.detect_exams.outputs.has_exams == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-results
+          path: benchmarks/courseexam_bench/logs/*.eval
+          retention-days: 30
+
+      - name: Comment on PR
+        if: steps.detect_exams.outputs.has_exams == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > comment.md << EOF
+          ## Experimental courseexam benchmark run
+
+          **Exams tested:**
+          $(echo "${{ steps.detect_exams.outputs.exam_ids }}" | tr ',' '\n' | sed 's/^/- `/' | sed 's/$/`/')
+
+          **Evaluation file:** Download the \`evaluation-results\` artifact from [this workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) and inspect it using \`inspect view <file>.eval\` or the [Inspect VS Code extension](https://marketplace.visualstudio.com/items?itemName=UKGovernmentAISafetyInstitute.inspect-ai). For more details on how to use the web-based log viewer, see [Inspect Log Viewer documentation](https://inspect.aisi.org.uk/log-viewer.html)
+
+          This experimental run helps you verify that questions have enough context for the LLM to answer and that grading rubrics are appropriate.
+          EOF
+
+          gh pr comment ${{ inputs.pr_number }} --body-file comment.md

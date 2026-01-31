@@ -1,0 +1,10 @@
+services:
+  default:
+    image: python:3.11-slim
+    init: true
+    command: tail -f /dev/null
+    working_dir: /workspace
+    network_mode: bridge
+    cpus: '0.5'
+    mem_limit: 256mb
+
