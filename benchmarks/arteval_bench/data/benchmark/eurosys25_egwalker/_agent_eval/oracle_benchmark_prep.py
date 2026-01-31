@@ -1,125 +1,177 @@
 #!/usr/bin/env python3
+"""Benchmark preparation oracle for _agent_eval bundles.
+
+Validates:
+  - Dataset manifest JSON is readable and well-formed.
+  - Each referenced dataset file is within the repo root (no traversal).
+  - Each referenced dataset file exists and matches the expected size in bytes.
+"""
+
+from __future__ import annotations
+
 import json
-import os
-from dataclasses import dataclass
+import logging
+import sys
 from pathlib import Path
-from typing import Any, List, Optional, Tuple
+from typing import Mapping, Sequence
 
-from utils import HOME
-from utils import REPO_DIR
-from utils import REFERENCE_BENCHMARK_FILE
-from utils import logger
-
-
-@dataclass(frozen=True)
-class DatasetRef:
-  filepath: str
-  sizeinbytes: int
+from evaluator.utils import EntryConfig
+from evaluator.oracle_benchmark_prep_primitives import (
+    BenchmarkRequirement,
+    FailRequirement,
+    OracleBenchmarkPrepBase,
+    Requirement,
+)
 
 
-class OracleBenchmarkPrep:
+def _required_path(paths: Mapping[str, Path], key: str, *, label: str) -> Path:
+  """Returns a required path from a mapping with a clear error."""
+  try:
+    return paths[key]
+  except KeyError as e:
+    raise ValueError(f"Missing {label}[{key!r}] in EntryConfig") from e
 
-  def __init__(self) -> None:
-    self.home = Path(os.path.expanduser(str(HOME)))
-    self.repo_path = Path(os.path.expanduser(str(REPO_DIR)))
-    self.ref_json = Path(os.path.expanduser(str(REFERENCE_BENCHMARK_FILE)))
 
-  def load_json(self, path: Path) -> Tuple[Optional[Any], str]:
-    """
-    Load JSON from disk and return (obj, err).
-    """
-    if not path.exists():
-      return None, f"ref json missing: {path}"
-    try:
-      with path.open("r", encoding="utf-8") as f:
-        return json.load(f), ""
-    except Exception as e:
-      return None, f"ref json unreadable: {e}"
+def _resolve_nonstrict(path: Path) -> Path:
+  """Resolves a path without requiring it to exist."""
+  return path.resolve(strict = False)
 
-  def iter_ref_entries(self, obj: Any) -> List[dict]:
-    """
-    Extract benchmark entries from a reference JSON.
-    """
-    if isinstance(obj, list):
-      return [x for x in obj if isinstance(x, dict)]
-    if isinstance(obj, dict):
-      for v in obj.values():
-        if isinstance(v, list) and v and all(isinstance(x, dict) for x in v):
-          return v
-    return []
 
-  def parse_entry(self, d: dict) -> Tuple[Optional[DatasetRef], str]:
-    """
-    Parse a single JSON entry into DatasetRef.
-    """
-    if "filepath" not in d:
-      return None, "missing filepath"
-    if "sizeinbytes" not in d:
-      return None, "missing sizeinbytes"
+def _is_within(root: Path, candidate: Path) -> bool:
+  """Returns True iff candidate is within root after resolution."""
+  root_resolved = _resolve_nonstrict(root)
+  cand_resolved = _resolve_nonstrict(candidate)
+  return cand_resolved == root_resolved or root_resolved in cand_resolved.parents
 
-    fp = d.get("filepath", "")
-    sz = d.get("sizeinbytes", None)
 
-    if not isinstance(fp, str) or not fp:
-      return None, "invalid filepath"
-    if not isinstance(sz, int) or sz < 0:
-      return None, "invalid sizeinbytes"
+class OracleBenchmarkPrep(OracleBenchmarkPrepBase):
+  """Validates dataset prerequisites for _agent_eval bundles."""
 
-    return DatasetRef(filepath=fp, sizeinbytes=sz), ""
+  def __init__(
+      self,
+      *,
+      config: EntryConfig,
+      logger: logging.Logger,
+      manifest_key: str = "datasets",
+  ) -> None:
+    super().__init__(logger = logger)
+    self._config = config
+    self._manifest_key = manifest_key
 
-  def check_entry(self, ref: DatasetRef) -> Optional[str]:
-    """
-    Validate that dataset files exist and matche the expected sizes (in bytes).
-    """
-    rel = Path(ref.filepath)
+  def requirements(self) -> Sequence[Requirement]:
+    repo_root = _required_path(
+      self._config.repository_paths,
+      self._config.name,
+      label = "repository_paths",
+    )
+    manifest_path = _required_path(
+      self._config.ground_truth_paths,
+      self._manifest_key,
+      label = "ground_truth_paths",
+    )
 
-    if rel.is_absolute():
-      return f"{ref.filepath}: absolute paths not allowed"
+    reqs: list[Requirement] = [
+      BenchmarkRequirement(
+        name = "repo_root_exists",
+        filepath = repo_root,
+      ),
+      BenchmarkRequirement(
+        name = "dataset_manifest_exists",
+        filepath = manifest_path,
+      ),
+    ]
 
-    p = self.repo_path / rel
-    if not p.exists():
-      return f"{ref.filepath}: missing"
-    if not p.is_file():
-      return f"{ref.filepath}: not a file"
+    if not manifest_path.exists():
+      return reqs
 
     try:
-      actual = p.stat().st_size
-    except OSError as e:
-      return f"{ref.filepath}: stat failed ({e})"
+      obj = json.loads(manifest_path.read_text(encoding = "utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+      reqs.append(
+        FailRequirement(
+          name = "dataset_manifest_readable",
+          message = f"manifest unreadable: {exc}",
+        )
+      )
+      return reqs
 
-    if actual != ref.sizeinbytes:
-      return f"{ref.filepath}: size mismatch (expected {ref.sizeinbytes}, got {actual})"
+    if not isinstance(obj, list):
+      reqs.append(
+        FailRequirement(
+          name = "dataset_manifest_format",
+          message = "manifest JSON must be a list of objects",
+        )
+      )
+      return reqs
 
-    return None
+    # Print a stable marker so signature matching is robust
+    # and portable across different platforms
+    size_script = (
+      "import os, sys\n"
+      "p = sys.argv[1]\n"
+      "print(f'OK size = {os.path.getsize(p)}')\n"
+    )
 
-  def datasets_check(self) -> Tuple[bool, str]:
-    """
-    Check all referenced dataset files are present and match expected sizes.
-    """
-    obj, err = self.load_json(self.ref_json)
-    if err:
-      return False, err
+    for i, entry in enumerate(obj):
+      entry_name = f"entry[{i}]"
 
-    entries = self.iter_ref_entries(obj)
-    if not entries:
-      return False, "no entries found in ref json"
-
-    problems: List[str] = []
-    for d in entries:
-      ref, perr = self.parse_entry(d)
-      if perr or ref is None:
-        problems.append(perr or "invalid entry")
+      if not isinstance(entry, dict):
+        reqs.append(
+          FailRequirement(
+            name = entry_name,
+            message = "entry must be an object",
+          )
+        )
         continue
 
-      msg = self.check_entry(ref)
-      if msg:
-        problems.append(msg)
+      filepath = entry.get("filepath")
+      size = entry.get("sizeinbytes")
 
-    if problems:
-      return False, "; ".join(problems)
-    return True, ""
+      if not isinstance(filepath, str) or not filepath.strip():
+        reqs.append(
+          FailRequirement(
+            name = entry_name,
+            message = "missing/invalid filepath",
+          )
+        )
+        continue
+      if not isinstance(size, int) or size < 0:
+        reqs.append(
+          FailRequirement(
+            name = entry_name,
+            message = f"{filepath!r}: missing/invalid sizeinbytes",
+          )
+        )
+        continue
 
-  def run(self) -> bool:
-    ok, why = self.datasets_check()
-    logger.info(f"Datasets: {'PASS' if ok else 'FAIL' + (' - ' + why if why else '')}")
-    return ok
+      rel = Path(filepath)
+      if rel.is_absolute():
+        reqs.append(
+          FailRequirement(
+            name = f"dataset:{filepath}",
+            message = "absolute paths not allowed",
+          )
+        )
+        continue
+
+      full_path = repo_root / rel
+      if not _is_within(repo_root, full_path):
+        reqs.append(
+          FailRequirement(
+            name = f"dataset:{filepath}",
+            message = "path escapes repo root (.. traversal not allowed)",
+          )
+        )
+        continue
+
+      reqs.append(
+        BenchmarkRequirement(
+          name = f"dataset:{filepath}",
+          filepath = full_path,
+          cmd = (sys.executable, "-c", size_script, str(full_path)),
+          signature = f"OK size = {size}",
+          timeout_seconds = 30.0,
+        )
+      )
+
+    return reqs

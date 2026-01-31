@@ -1,135 +1,199 @@
 #!/usr/bin/env python3
+"""Experiment runs oracle for the EuroSys'25 EGWALKER artifact.
+
+This oracle compares experiment-produced timings against reference timings.
+"""
+
+from __future__ import annotations
+
 import json
-import os
+from collections.abc import Iterable, Mapping, Sequence
+from functools import partial
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+import logging
 
-from utils import REPO_DIR
-from utils import REFERENCE_RESULTS_FILE
-from utils import SIMILARITY_RATIO
-from utils import logger
+from evaluator.oracle_experiment_runs_primitives import (
+  ExperimentRunsRequirement,
+  LabeledSequenceSimilarityThresholdRequirement,
+  OracleExperimentRunsBase,
+)
+from evaluator.utils import EntryConfig
 
 
-class OracleExperimentRuns:
-  def __init__(self) -> None:
-    self.repo_dir = Path(os.path.expanduser(str(REPO_DIR)))
-    self.timings_file = self.repo_dir / "results" / "timings.json"
-    self.reference_file = Path(os.path.expanduser(str(REFERENCE_RESULTS_FILE)))
-    self.max_mismatches_to_report = (1 - SIMILARITY_RATIO)
+def _required_path(paths: Mapping[str, Path], key: str, *, label: str) -> Path:
+  """Returns a required path from a mapping with a clear error message."""
+  try:
+    return paths[key]
+  except KeyError as exc:
+    raise ValueError(f"Missing {label}[{key!r}] in EntryConfig") from exc
 
-  def load_json(self, path: Path) -> Tuple[Optional[Any], str]:
-    """
-    Load JSON from disk and return (obj, err).
-    """
-    if not path.exists():
-      return None, f"missing json: {path}"
+
+def _loads_json_from_lines(lines: Sequence[str], *, label: str) -> object:
+  """Parses JSON content from already-read file lines."""
+  text = "\n".join(lines).strip()
+  if not text:
+    raise ValueError(f"{label}: empty JSON content")
+  try:
+    return json.loads(text)
+  except json.JSONDecodeError as exc:
+    raise ValueError(f"{label}: invalid JSON: {exc}") from exc
+
+
+def _load_json_file(path: Path, *, label: str) -> object:
+  """Loads JSON from a file path."""
+  try:
+    text = path.read_text(encoding="utf-8")
+  except OSError as exc:
+    raise ValueError(f"{label}: failed to read {path}: {exc}") from exc
+  try:
+    return json.loads(text)
+  except json.JSONDecodeError as exc:
+    raise ValueError(f"{label}: invalid JSON: {exc}") from exc
+
+
+def _as_float(v: object, *, label: str) -> float:
+  """Converts numeric values to float; raises on non-numeric."""
+  if isinstance(v, (int, float)):
+    return float(v)
+  raise ValueError(f"{label}: non-numeric value {v!r}")
+
+
+def _iter_metric_tag_rows(obj: object, *, label: str) -> Iterable[tuple[str, Mapping[str, object]]]:
+  """Yields (row_key, stats_dict) where row_key is '<metric>.<tag>'."""
+  if not isinstance(obj, dict):
+    raise ValueError(f"{label}: timings JSON must be an object at top-level")
+
+  for metric_name, metric in obj.items():
+    if not isinstance(metric, dict):
+      raise ValueError(f"{label}: {metric_name!r} must map to an object")
+    for tag, stats in metric.items():
+      if not isinstance(stats, dict):
+        raise ValueError(f"{label}: {metric_name}.{tag} must map to an object")
+      row_key = f"{metric_name}.{tag}"
+      yield row_key, stats
+
+
+def _discover_reference_fields(reference_obj: object, *, label: str) -> tuple[str, ...]:
+  """Returns unique stats fields in order of first appearance in the reference."""
+  seen: set[str] = set()
+  ordered: list[str] = []
+  for _row_key, stats in _iter_metric_tag_rows(reference_obj, label=label):
+    for field in stats.keys():
+      if not isinstance(field, str):
+        raise ValueError(f"{label}: non-string field name {field!r}")
+      if field not in seen:
+        seen.add(field)
+        ordered.append(field)
+  return tuple(ordered)
+
+
+def _pairs_for_field_from_obj(
+    obj: object,
+    *,
+    field: str,
+    label: str,
+) -> list[tuple[str, float]]:
+  """Builds (row_key, value) pairs for a given stats field."""
+  out: list[tuple[str, float]] = []
+  for row_key, stats in _iter_metric_tag_rows(obj, label=label):
+    if field not in stats:
+      # Skip: the primitives will treat this as "missing label" if reference
+      # expected it for this field (i.e., if reference includes row_key here).
+      continue
+    out.append((row_key, _as_float(stats[field], label=f"{label}: {row_key}.{field}")))
+  return out
+
+
+def _pairs_flatten_all_fields(obj: object, *, label: str) -> list[tuple[str, float]]:
+  """Fallback: flattens all fields into '<metric>.<tag>.<field>' labels."""
+  out: list[tuple[str, float]] = []
+  for row_key, stats in _iter_metric_tag_rows(obj, label=label):
+    for field, raw in stats.items():
+      if not isinstance(field, str):
+        raise ValueError(f"{label}: non-string field name {field!r}")
+      full = f"{row_key}.{field}"
+      out.append((full, _as_float(raw, label=f"{label}: {full}")))
+  return out
+
+
+def _parse_results_pairs_for_field(lines: Sequence[str], *, field: str) -> list[tuple[str, float]]:
+  obj = _loads_json_from_lines(lines, label="timings results")
+  return _pairs_for_field_from_obj(obj, field=field, label="timings results")
+
+
+def _parse_reference_pairs_for_field(path: Path, *, field: str) -> list[tuple[str, float]]:
+  obj = _load_json_file(path, label="timings reference")
+  return _pairs_for_field_from_obj(obj, field=field, label="timings reference")
+
+
+def _parse_results_pairs_flat(lines: Sequence[str]) -> list[tuple[str, float]]:
+  obj = _loads_json_from_lines(lines, label="timings results")
+  return _pairs_flatten_all_fields(obj, label="timings results")
+
+
+def _parse_reference_pairs_flat(path: Path) -> list[tuple[str, float]]:
+  obj = _load_json_file(path, label="timings reference")
+  return _pairs_flatten_all_fields(obj, label="timings reference")
+
+
+class OracleExperimentRuns(OracleExperimentRunsBase):
+  """Validates experiment run timings for EGWALKER."""
+
+  _NAME = "ExperimentRuns"
+
+  def __init__(self, *, config: EntryConfig, logger: logging.Logger) -> None:
+    super().__init__(logger=logger)
+    self._config = config
+
+  def requirements(self) -> Sequence[ExperimentRunsRequirement]:
+    if not self._config.results_paths:
+      raise ValueError("EntryConfig.results_paths must be non-empty")
+    if not self._config.ground_truth_paths:
+      raise ValueError("EntryConfig.ground_truth_paths must be non-empty")
+
+    results_path = _required_path(
+      self._config.results_paths, "timings", label="results_paths"
+    )
+    reference_path = _required_path(
+      self._config.ground_truth_paths, "timings", label="ground_truth_paths"
+    )
+
+    threshold = self._config.similarity_ratio
+
+    # Discover which "types" (fields) to check from the reference.
+    # If discovery fails (missing/invalid JSON), fall back to a single requirement
+    # that will report the real failure via the primitives.
     try:
-      with path.open("r", encoding="utf-8") as f:
-        return json.load(f), ""
-    except Exception as e:
-      return None, f"unreadable json: {path} ({e})"
+      ref_obj = _load_json_file(reference_path, label="timings reference")
+      fields = _discover_reference_fields(ref_obj, label="timings reference")
+    except ValueError:
+      fields = ()
 
-  def as_float(self, v: Any) -> Optional[float]:
-    if isinstance(v, (int, float)):
-      return float(v)
-    return None
+    if not fields:
+      # Fallback or "no fields": compare all qualified fields as one sequence.
+      return (
+        LabeledSequenceSimilarityThresholdRequirement(
+          name="timings",
+          label="Timings",
+          results_path=results_path,
+          reference_path=reference_path,
+          threshold=threshold,
+          parse_results_fn=_parse_results_pairs_flat,
+          parse_reference_fn=_parse_reference_pairs_flat,
+        ),
+      )
 
-  def ratios_within_tolerance(self, actual: float, ref: float) -> Tuple[bool, float]:
-    """
-    Check whether two measurements are within tolerance.
-    """
-    if abs(ref) < 1e-12:
-      if abs(actual) < 1e-12:
-        return True, 0.0
-      return False, float("inf")
-
-    rel_diff = abs(actual - ref) / abs(ref)
-    return rel_diff <= (1.0 - float(SIMILARITY_RATIO)), rel_diff
-
-  def compare_timings(
-      self,
-      actual: Dict[str, Any],
-      reference: Dict[str, Any],
-    ) -> Tuple[bool, str]:
-      """
-      Compare current timings with the original, reference timings.
-      """
-      if not isinstance(actual, dict) or not isinstance(reference, dict):
-        return False, "timings json invalid format (expected object at top-level)"
-
-      missing: List[str] = []
-      mismatches: List[str] = []
-      total = 0
-      ok_count = 0
-
-      for metric_name, ref_metric in reference.items():
-        if not isinstance(ref_metric, dict):
-          missing.append(f"{metric_name}: invalid reference section (expected object)")
-          continue
-
-        act_metric = actual.get(metric_name)
-        if not isinstance(act_metric, dict):
-          missing.append(f"{metric_name}: missing metric")
-          continue
-
-        for tag, ref_stats in ref_metric.items():
-          if not isinstance(ref_stats, dict):
-            missing.append(f"{metric_name}.{tag}: invalid reference tag (expected object)")
-            continue
-
-          act_stats = act_metric.get(tag)
-          if not isinstance(act_stats, dict):
-            missing.append(f"{metric_name}.{tag}: missing tag")
-            continue
-
-          for field, ref_val_raw in ref_stats.items():
-            total += 1
-
-            if field not in act_stats:
-              missing.append(f"{metric_name}.{tag}.{field}: missing field")
-              continue
-
-            ref_val = self.as_float(ref_val_raw)
-            act_val = self.as_float(act_stats.get(field))
-
-            if ref_val is None:
-              missing.append(f"{metric_name}.{tag}.{field}: non-numeric reference value")
-              continue
-            if act_val is None:
-              missing.append(f"{metric_name}.{tag}.{field}: non-numeric actual value")
-              continue
-
-            ok, sim = self.ratios_within_tolerance(act_val, ref_val)
-            if ok:
-              ok_count += 1
-            else:
-              mismatches.append(
-                f"{metric_name}.{tag}.{field}: {act_val} vs {ref_val} (similarity {sim:.3f} < {SIMILARITY_RATIO})"
-              )
-
-      if missing or mismatches:
-        parts: List[str] = []
-        summary = f"{ok_count}/{total} fields meet similarity ratio" if total else "0 fields compared"
-        if missing:
-          parts.append("missing/invalid: " + "; ".join(missing))
-        if mismatches:
-          parts.append("measurement difference: " + "; ".join(mismatches))
-        return False, summary + " - " + " | ".join(parts)
-
-      summary = f"{ok_count}/{total} fields meet similarity ratio" if total else "no reference fields to compare"
-      return True, summary
-
-  def run(self) -> bool:
-    actual_obj, err = self.load_json(self.timings_file)
-    if err:
-      logger.info(f"Timings: FAIL - {err}")
-      return False
-
-    ref_obj, err = self.load_json(self.reference_file)
-    if err:
-      logger.info(f"Timings: FAIL - {err}")
-      return False
-
-    ok, why = self.compare_timings(actual_obj, ref_obj)
-    logger.info(f"Timings: {'PASS' if ok else 'FAIL' + (' - ' + why if why else '')}")
-    return ok
+    reqs: list[ExperimentRunsRequirement] = []
+    for field in fields:
+      reqs.append(
+        LabeledSequenceSimilarityThresholdRequirement(
+          name=f"timings_{field}",
+          label=f"Timings {field}",
+          results_path=results_path,
+          reference_path=reference_path,
+          threshold=threshold,
+          parse_results_fn=partial(_parse_results_pairs_for_field, field=field),
+          parse_reference_fn=partial(_parse_reference_pairs_for_field, field=field),
+        )
+      )
+    return tuple(reqs)
