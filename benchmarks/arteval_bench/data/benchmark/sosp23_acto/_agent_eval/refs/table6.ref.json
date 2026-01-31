@@ -2,11 +2,11 @@
   "symptoms": [
     {
       "symptom": "System failure",
-      "bugs": 5
+      "bugs": 2
     },
     {
       "symptom": "Reliability issue",
-      "bugs": 15
+      "bugs": 6
     },
     {
       "symptom": "Security issue",
@@ -14,15 +14,15 @@
     },
     {
       "symptom": "Resource issue",
-      "bugs": 9
+      "bugs": 5
     },
     {
       "symptom": "Operation outage",
-      "bugs": 18
+      "bugs": 10
     },
     {
       "symptom": "Misconfiguration",
-      "bugs": 15
+      "bugs": 11
     }
   ]
 }

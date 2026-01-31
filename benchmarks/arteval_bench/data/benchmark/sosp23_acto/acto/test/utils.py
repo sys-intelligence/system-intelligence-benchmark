@@ -100,37 +100,6 @@ operator_pretty_name_mapping = {
 }
 
 all_bugs = {
-    'cass-operator': {
-        'cassop-315':
-            BugConfig(
-                category=BugCateogry.RECOVERY_FAILURE,
-                dir='test/cassop-315/inputs',
-                recovery=True,
-                consequences=[BugConsequence.OPERATION_OUTAGE]
-            ),
-        'cassop-330':
-            BugConfig(
-                category=BugCateogry.UNDESIRED_STATE,
-                dir='test/cassop-330/trial-demo',
-                declaration=True,
-                difftest=True,
-                consequences=[BugConsequence.MISCONFIGURATION]
-            ),
-        'cassop-334':
-            BugConfig(
-                category=BugCateogry.RECOVERY_FAILURE,
-                dir='test/cassop-334',
-                recovery=True,
-                consequences=[BugConsequence.RELIABILITY_ISSUE, BugConsequence.OPERATION_OUTAGE]
-            ),
-        'cassop-471':
-            BugConfig(
-                category=BugCateogry.UNDESIRED_STATE,
-                dir='test/cassop-471',
-                declaration=True,
-                consequences=[BugConsequence.RELIABILITY_ISSUE]
-            ),
-    },
     'cockroach-operator': {
         'crdbop-918':
             BugConfig(
