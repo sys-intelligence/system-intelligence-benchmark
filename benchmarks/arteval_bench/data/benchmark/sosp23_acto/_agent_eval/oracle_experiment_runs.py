@@ -1,740 +1,615 @@
+"""Experiment runs oracle for TABLE-5..TABLE-8 (elementwise sequence checks).
+
+This oracle validates that the tables produced by running the full set of 
+experiments match reference JSON values elementwise (aligned by label) 
+within a configurable  similarity threshold.
+"""
+
+from __future__ import annotations
+
+import abc
+import dataclasses
 import json
-from dataclasses import dataclass
+import math
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Tuple
 
 from utils import RESULTS_PATH_TABLES, REFERENCE_PATH_TABLES, SIMILARITY_RATIO, logger
 
-
-@dataclass(frozen=True)
-class Table5Row:
-  operator: str
-  undesired_state: int
-  system_error: int
-  operator_error: int
-  recovery_failure: int
-  total: int
+# Update this import path to wherever you placed the base primitives module.
+from evaluator.oracles.experiment_runs_oracle_primitives import (  # pylint: disable=g-import-not-at-top
+  ElementwiseMetrics,
+  ExperimentRunRequirement,
+  ExperimentRunsContext,
+  OracleExperimentRunsBase,
+)
 
 
-@dataclass(frozen=True)
-class Table6Row:
-  symptom: str
-  bugs: int
+# ---------------------------------------------------------------------------
+# Helper functions
+# ---------------------------------------------------------------------------
 
 
-@dataclass(frozen=True)
-class Table7Row:
-  test_oracle: str
-  bugs: int
+_LabeledIntPairs = list[tuple[str, int]]
 
 
-@dataclass(frozen=True)
-class Table8Row:
-  operator: str
-  operations: int
+def _normalize_label(label: str) -> str:
+  """Canonicalizes labels for alignment (keeps case; collapses whitespace)."""
+  return " ".join(label.split()).strip()
 
 
-class OracleExperimentRuns:
+def _is_separator_line(line: str) -> bool:
+  """Returns True if this is a header separator line (Markdown spaces/dashes)."""
+  stripped = line.strip()
+  if not stripped:
+    return False
+  return all(ch in "- " for ch in stripped)
 
-  def __init__(self) -> None:
-    # File paths for each table
-    self.table5_results_path = Path(RESULTS_PATH_TABLES["table5"])
-    self.table5_reference_path = Path(REFERENCE_PATH_TABLES["table5"])
-    self.table6_results_path = Path(RESULTS_PATH_TABLES["table6"])
-    self.table6_reference_path = Path(REFERENCE_PATH_TABLES["table6"])
-    self.table7_results_path = Path(RESULTS_PATH_TABLES["table7"])
-    self.table7_reference_path = Path(REFERENCE_PATH_TABLES["table7"])
-    self.table8_results_path = Path(RESULTS_PATH_TABLES["table8"])
-    self.table8_reference_path = Path(REFERENCE_PATH_TABLES["table8"])
 
-    # Parsed rows for tables
-    self.table5_rows: list[Table5Row] = []
-    self.table6_rows: list[Table6Row] = []
-    self.table7_rows: list[Table7Row] = []
-    self.table8_rows: list[Table8Row] = []
+def _read_nonempty_lines(path: Path) -> list[str]:
+  """Reads file and returns non-empty lines with trailing newlines stripped."""
+  text = path.read_text(encoding = "utf-8")
+  return [line.rstrip("\n") for line in text.splitlines() if line.strip()]
 
-    # Totals
-    self.table5_exp_total: int | None = None
-    self.table5_ref_total: int | None = None
-    self.table6_exp_total: int | None = None
-    self.table6_ref_total: int | None = None
-    self.table7_exp_total: int | None = None
-    self.table7_ref_total: int | None = None
-    self.table8_exp_total: int | None = None
-    self.table8_ref_total: int | None = None
 
-    # Raw non-empty lines from result files
-    self._table5_raw_lines: list[str] = []
-    self._table6_raw_lines: list[str] = []
-    self._table7_raw_lines: list[str] = []
-    self._table8_raw_lines: list[str] = []
+def _parse_int_token(text: str, *, label: str) -> int:
+  """Parses an integer allowing commas."""
+  try:
+    return int(text.replace(",", ""))
+  except ValueError as exc:
+    raise ValueError(f"{label}: unparseable int: {text!r}") from exc
 
-  def is_separator_line(self, line: str) -> bool:
-    """
-    Return True if this is a header separator line (Markdown spaces and dashes).
-    """
-    stripped = line.strip()
-    if not stripped:
-      return False
-    return all(ch in "- " for ch in stripped)
 
-  def parse_int(self, text: str) -> Tuple[bool, int]:
-    """
-    Parse a numeric string into an int.
-    """
-    try:
-      return True, int(text.replace(",", ""))
-    except ValueError:
-      return False, 0
+def _extract_table_body(lines: Sequence[str], *, label: str) -> tuple[str, list[str]]:
+  """Splits raw lines into (header_line, data_lines) after separator."""
+  if not lines:
+    raise ValueError(f"{label}: table is empty")
 
-  # -----------------------
-  # TABLE-5 helpers
-  # -----------------------
+  header_line = lines[0]
+  saw_separator = False
+  data_lines: list[str] = []
 
-  def load_table5(self) -> Tuple[bool, str]:
-    """
-    Load raw TABLE-5 file into memory.
-    """
-    if not self.table5_reference_path.exists():
-      return False, f"{self.table5_reference_path} (TABLE-5 reference) not found"
+  for line in lines[1:]:
+    if not saw_separator and _is_separator_line(line):
+      saw_separator = True
+      continue
+    if saw_separator:
+      data_lines.append(line)
 
-    if not self.table5_results_path.exists():
-      return False, f"{self.table5_results_path} (TABLE-5 results) not found"
+  if not saw_separator:
+    raise ValueError(f"{label}: missing header separator line")
 
-    text = self.table5_results_path.read_text(encoding="utf-8")
-    lines = [line.rstrip("\n") for line in text.splitlines() if line.strip()]
-    if not lines:
-      return False, f"{self.table5_results_path} is empty"
+  return header_line, data_lines
 
-    self._table5_raw_lines = lines
-    return True, ""
 
-  def parse_table5(self) -> Tuple[bool, str]:
-    """
-    Parse TABLE-5 and extract the bottom-right 'Total' cell.
-    """
-    EXPECTED_HEADERS: list[str] = [
-      "Operator",
-      "Undesired State",
-      "System Error",
-      "Operator Error",
-      "Recovery Failure",
-      "Total",
-    ]
+def _load_json_object(path: Path, *, label: str) -> dict:
+  """Loads a JSON file expected to contain an object."""
+  try:
+    raw = json.loads(path.read_text(encoding = "utf-8"))
+  except json.JSONDecodeError as exc:
+    raise ValueError(f"{label}: invalid JSON: {exc}") from exc
 
-    header_line: str | None = None
-    data_lines: list[str] = []
-    saw_separator = False
+  if not isinstance(raw, dict):
+    raise ValueError(f"{label}: must contain a JSON object")
+  return raw
 
-    for line in self._table5_raw_lines:
-      if header_line is None:
-        header_line = line
-        continue
 
-      if not saw_separator and self.is_separator_line(line):
-        saw_separator = True
-        continue
+def _get_first_str_field(
+    obj: dict,
+    *,
+    keys: Sequence[str],
+    label: str,
+) -> str:
+  """Returns the first present string field among keys."""
+  for k in keys:
+    if k in obj:
+      v = obj[k]
+      if isinstance(v, str) and v.strip():
+        return v
+      raise ValueError(f"{label}: field {k!r} must be a non-empty string")
+  raise ValueError(f"{label}: missing any of fields {list(keys)!r}")
 
-      if saw_separator:
-        data_lines.append(line)
 
-    if header_line is None:
-      return False, "TABLE-5: no table header found"
+def _get_first_int_field(
+    obj: dict,
+    *,
+    keys: Sequence[str],
+    label: str,
+) -> int:
+  """Returns the first present int-ish field among keys."""
+  for k in keys:
+    if k in obj:
+      v = obj[k]
+      try:
+        return int(v)
+      except (TypeError, ValueError) as exc:
+        raise ValueError(f"{label}: field {k!r} must be an integer") from exc
+  raise ValueError(f"{label}: missing any of fields {list(keys)!r}")
 
-    if any(h not in header_line for h in EXPECTED_HEADERS):
-      return False, f"TABLE-5: unexpected headers: {header_line!r}"
 
-    self.table5_rows = []
-    self.table5_exp_total = None
+def _pairs_to_unique_map(
+    pairs: _LabeledIntPairs,
+    *,
+    label: str,
+) -> tuple[dict[str, int], list[str]]:
+  """Builds a label->value map and preserves the (normalized) order from pairs."""
+  mapping: dict[str, int] = {}
+  order: list[str] = []
+  for raw_label, value in pairs:
+    key = _normalize_label(raw_label)
+    if key in mapping:
+      raise ValueError(f"{label}: duplicate label: {raw_label!r}")
+    mapping[key] = value
+    order.append(key)
+  return mapping, order
 
-    for line in data_lines:
-      parts = line.split()
-      if len(parts) != 6:
-        return False, f"TABLE-5: row has {len(parts)} fields, expected 6: {line!r}"
 
-      operator = parts[0]
+def _summarize_labels(items: Sequence[str], *, max_items: int = 10) -> str:
+  shown = list(items[:max_items])
+  suffix = f", ... ({len(items) - len(shown)} more)" if len(items) > len(shown) else ""
+  return ", ".join(shown) + suffix
 
-      ok, undesired = self.parse_int(parts[1])
-      if not ok:
-        return False, f"TABLE-5: unparseable int in 'Undesired State': {parts[1]!r}"
 
-      ok, system_err = self.parse_int(parts[2])
-      if not ok:
-        return False, f"TABLE-5: unparseable int in 'System Error': {parts[2]!r}"
+def _align_by_reference(
+    observed: _LabeledIntPairs,
+    reference: _LabeledIntPairs,
+    *,
+    label: str,
+) -> tuple[list[str], list[float], list[float]]:
+  """Aligns observed/reference by label using reference order."""
+  obs_map, _ = _pairs_to_unique_map(observed, label = f"{label}: observed")
+  ref_map, ref_order = _pairs_to_unique_map(reference, label = f"{label}: reference")
 
-      ok, operator_err = self.parse_int(parts[3])
-      if not ok:
-        return False, f"TABLE-5: unparseable int in 'Operator Error': {parts[3]!r}"
+  obs_keys = set(obs_map.keys())
+  ref_keys = set(ref_map.keys())
 
-      ok, recovery_fail = self.parse_int(parts[4])
-      if not ok:
-        return False, f"TABLE-5: unparseable int in 'Recovery Failure': {parts[4]!r}"
+  missing = sorted(ref_keys - obs_keys)
+  extra = sorted(obs_keys - ref_keys)
 
-      ok, total = self.parse_int(parts[5])
-      if not ok:
-        return False, f"TABLE-5: unparseable int in 'Total': {parts[5]!r}"
+  if missing:
+    raise ValueError(
+      f"{label}: missing labels in observed: {_summarize_labels(missing)}"
+    )
+  if extra:
+    raise ValueError(
+      f"{label}: extra labels in observed: {_summarize_labels(extra)}"
+    )
 
-      row = Table5Row(
-        operator=operator,
-        undesired_state=undesired,
-        system_error=system_err,
-        operator_error=operator_err,
-        recovery_failure=recovery_fail,
-        total=total,
+  observed_values: list[float] = []
+  reference_values: list[float] = []
+  for key in ref_order:
+    observed_values.append(float(obs_map[key]))
+    reference_values.append(float(ref_map[key]))
+
+  return ref_order, observed_values, reference_values
+
+
+def _collect_threshold_mismatches(
+    labels: Sequence[str],
+    observed_values: Sequence[float],
+    reference_values: Sequence[float],
+    *,
+    threshold: float,
+    max_items: int,
+) -> tuple[int, list[str]]:
+  """Returns (num_failed, mismatch_lines) with score diagnostics."""
+  scores = ElementwiseMetrics.similarity_scores(observed_values, reference_values)
+  failures = 0
+  lines: list[str] = []
+  for i, s in enumerate(scores):
+    if s.cmp < threshold:
+      failures += 1
+      if len(lines) < max_items:
+        lines.append(
+          f"[{labels[i]}] score={s.cmp:.6f} observed={s.observed!r} reference={s.reference!r}"
+        )
+  return failures, lines
+
+
+# ---------------------------------------------------------------------------
+# Experiment results parsing (Markdown-style)
+# ---------------------------------------------------------------------------
+
+_TABLE5_FIELDS: tuple[str, ...] = (
+  "undesired_state",
+  "system_error",
+  "operator_error",
+  "recovery_failure",
+)
+
+
+def _parse_table5_results_pairs(lines: Sequence[str], *, field: str) -> _LabeledIntPairs:
+  """Parses TABLE-5 results and returns (operator, value) for one field."""
+  if field not in _TABLE5_FIELDS:
+    raise ValueError(f"TABLE-5: unsupported field: {field!r}")
+
+  expected_headers = [
+    "Operator",
+    "Undesired State",
+    "System Error",
+    "Operator Error",
+    "Recovery Failure",
+    "Total",
+  ]
+  header_line, data_lines = _extract_table_body(lines, label = "TABLE-5")
+  if any(h not in header_line for h in expected_headers):
+    raise ValueError(f"TABLE-5: unexpected headers: {header_line!r}")
+
+  out: _LabeledIntPairs = []
+  for line in data_lines:
+    parts = line.split()
+    if len(parts) != 6:
+      raise ValueError(
+        f"TABLE-5: row has {len(parts)} fields, expected 6: {line!r}"
       )
-      self.table5_rows.append(row)
 
-      if operator == "Total":
-        self.table5_exp_total = total
+    operator = parts[0]
+    if operator == "Total":
+      # Ignore aggregate totals row.
+      continue
 
-    if self.table5_exp_total is None:
-      return False, "TABLE-5: missing 'Total' row"
+    undesired = _parse_int_token(parts[1], label = "TABLE-5 undesired_state")
+    system_err = _parse_int_token(parts[2], label = "TABLE-5 system_error")
+    operator_err = _parse_int_token(parts[3], label = "TABLE-5 operator_error")
+    recovery_fail = _parse_int_token(parts[4], label = "TABLE-5 recovery_failure")
+    # parts[5] is the per-operator "Total" column; ignore by design.
 
-    return True, ""
+    if field == "undesired_state":
+      out.append((operator, undesired))
+    elif field == "system_error":
+      out.append((operator, system_err))
+    elif field == "operator_error":
+      out.append((operator, operator_err))
+    else:
+      out.append((operator, recovery_fail))
 
-  def load_table5_reference(self) -> Tuple[bool, str]:
-    """
-    Load TABLE-5 reference JSON.
-    """
-    path = self.table5_reference_path
+  return out
 
-    if not path.exists():
-      return False, f"{path} not found"
 
-    try:
-      raw = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as e:
-      return False, f"{path} invalid JSON: {e}"
+def _parse_table6_results_pairs(lines: Sequence[str]) -> _LabeledIntPairs:
+  """Parses TABLE-6 results and returns (label, bugs) pairs."""
+  expected_headers = ["Consequence", "# Bugs"]
+  header_line, data_lines = _extract_table_body(lines, label = "TABLE-6")
+  if any(h not in header_line for h in expected_headers):
+    raise ValueError(f"TABLE-6: unexpected headers: {header_line!r}")
 
-    if not isinstance(raw, dict):
-      return False, f"{path} must contain a JSON object"
+  out: _LabeledIntPairs = []
+  for line in data_lines:
+    parts = line.split()
+    if len(parts) < 2:
+      raise ValueError(
+        f"TABLE-6: row has {len(parts)} fields, expected at least 2: {line!r}"
+      )
+    label = " ".join(parts[:-1])
+    bugs = _parse_int_token(parts[-1], label = "TABLE-6 bugs")
+    out.append((label, bugs))
+  return out
 
-    totals = raw.get("totals")
-    if not isinstance(totals, dict):
-      return False, f"{path} missing 'totals' object"
 
-    if "total_all" not in totals:
-      return False, f"{path} missing 'total_all' field in 'totals'"
+def _parse_table7_results_pairs(lines: Sequence[str]) -> _LabeledIntPairs:
+  """Parses TABLE-7 results and returns (label, bugs) pairs (ignores % token)."""
+  expected_headers = ["Test Oracle", "# Bugs (Percentage)"]
+  header_line, data_lines = _extract_table_body(lines, label = "TABLE-7")
+  if any(h not in header_line for h in expected_headers):
+    raise ValueError(f"TABLE-7: unexpected headers: {header_line!r}")
 
-    try:
-      self.table5_ref_total = int(totals["total_all"])
-    except (TypeError, ValueError):
-      return False, f"{path} field 'totals.total_all' must be an integer"
+  out: _LabeledIntPairs = []
+  for line in data_lines:
+    parts = line.split()
+    if len(parts) < 2:
+      raise ValueError(
+        f"TABLE-7: row has {len(parts)} fields, expected at least 2: {line!r}"
+      )
 
-    return True, ""
-
-  # -----------------------
-  # TABLE-6 helpers
-  # -----------------------
-
-  def load_table6(self) -> Tuple[bool, str]:
-    """
-    Load raw TABLE-6 file into memory.
-    """
-    if not self.table6_reference_path.exists():
-      return False, f"{self.table6_reference_path} (TABLE-6 reference) not found"
-
-    if not self.table6_results_path.exists():
-      return False, f"{self.table6_results_path} (TABLE-6 results) not found"
-
-    text = self.table6_results_path.read_text(encoding="utf-8")
-    lines = [line.rstrip("\n") for line in text.splitlines() if line.strip()]
-    if not lines:
-      return False, f"{self.table6_results_path} is empty"
-
-    self._table6_raw_lines = lines
-    return True, ""
-
-  def parse_table6(self) -> Tuple[bool, str]:
-    """
-    Parse TABLE-6 and compute the sum of all '# Bugs' values.
-    """
-    EXPECTED_HEADERS: list[str] = [
-      "Consequence",
-      "# Bugs",
-    ]
-
-    header_line: str | None = None
-    data_lines: list[str] = []
-    saw_separator = False
-
-    for line in self._table6_raw_lines:
-      if header_line is None:
-        header_line = line
-        continue
-
-      if not saw_separator and self.is_separator_line(line):
-        saw_separator = True
-        continue
-
-      if saw_separator:
-        data_lines.append(line)
-
-    if header_line is None:
-      return False, "TABLE-6: no table header found"
-
-    if any(h not in header_line for h in EXPECTED_HEADERS):
-      return False, f"TABLE-6: unexpected headers: {header_line!r}"
-
-    self.table6_rows = []
-    self.table6_exp_total = 0
-
-    for line in data_lines:
-      parts = line.split()
-      if len(parts) < 2:
-        return False, f"TABLE-6: row has {len(parts)} fields, expected at least 2: {line!r}"
-
-      label = " ".join(parts[:-1])
+    last = parts[-1]
+    if last.startswith("(") and last.endswith("%)"):
+      if len(parts) < 3:
+        raise ValueError(
+          f"TABLE-7: malformed row with percentage but no integer: {line!r}"
+        )
+      bugs_str = parts[-2]
+      label = " ".join(parts[:-2])
+    else:
       bugs_str = parts[-1]
+      label = " ".join(parts[:-1])
 
-      ok, bugs = self.parse_int(bugs_str)
-      if not ok:
-        return False, f"TABLE-6: unparseable int in '# Bugs': {bugs_str!r}"
+    bugs = _parse_int_token(bugs_str, label = "TABLE-7 bugs")
+    out.append((label, bugs))
 
-      row = Table6Row(
-        symptom=label,
-        bugs=bugs,
+  return out
+
+
+def _parse_table8_results_pairs(lines: Sequence[str]) -> _LabeledIntPairs:
+  """Parses TABLE-8 results and returns (operator, operations) pairs."""
+  expected_headers = ["Operator", "# Operations"]
+  header_line, data_lines = _extract_table_body(lines, label = "TABLE-8")
+  if any(h not in header_line for h in expected_headers):
+    raise ValueError(f"TABLE-8: unexpected headers: {header_line!r}")
+
+  out: _LabeledIntPairs = []
+  for line in data_lines:
+    parts = line.split()
+    if len(parts) != 2:
+      raise ValueError(
+        f"TABLE-8: row has {len(parts)} fields, expected 2: {line!r}"
       )
-      self.table6_rows.append(row)
-      self.table6_exp_total += bugs
+    operator = parts[0]
+    ops = _parse_int_token(parts[1], label = "TABLE-8 operations")
+    out.append((operator, ops))
 
-    return True, ""
+  return out
 
-  def load_table6_reference(self) -> Tuple[bool, str]:
-    """
-    Load TABLE-6 reference JSON.
-    """
-    path = self.table6_reference_path
 
-    if not path.exists():
-      return False, f"{path} not found"
+# ---------------------------------------------------------------------------
+# Reference results parsing (JSON)
+# ---------------------------------------------------------------------------
+
+def _parse_table5_reference_pairs(path: Path, *, field: str) -> _LabeledIntPairs:
+  """Parses TABLE-5 reference JSON and returns (operator, value) for one field."""
+  if field not in _TABLE5_FIELDS:
+    raise ValueError(f"TABLE-5 reference: unsupported field: {field!r}")
+
+  raw = _load_json_object(path, label = "TABLE-5 reference")
+  ops = raw.get("operators")
+  if not isinstance(ops, list):
+    raise ValueError("TABLE-5 reference: missing 'operators' list")
+
+  out: _LabeledIntPairs = []
+  for idx, obj in enumerate(ops):
+    if not isinstance(obj, dict):
+      raise ValueError(f"TABLE-5 reference: entry #{idx} is not an object")
+
+    operator = _get_first_str_field(
+      obj,
+      keys = ("operator", "label"),
+      label = f"TABLE-5 reference: entry #{idx}",
+    )
+    value = _get_first_int_field(
+      obj,
+      keys = (field, "value"),
+      label = f"TABLE-5 reference: entry #{idx}",
+    )
+    # Ignore obj["total"] by design.
+    out.append((operator, value))
+
+  return out
+
+
+def _parse_table6_reference_pairs(path: Path) -> _LabeledIntPairs:
+  raw = _load_json_object(path, label = "TABLE-6 reference")
+  items = raw.get("symptoms")
+  if not isinstance(items, list):
+    raise ValueError("TABLE-6 reference: missing 'symptoms' list")
+
+  out: _LabeledIntPairs = []
+  for idx, obj in enumerate(items):
+    if not isinstance(obj, dict):
+      raise ValueError(f"TABLE-6 reference: entry #{idx} is not an object")
+
+    label = _get_first_str_field(
+      obj,
+      keys = ("symptom", "consequence", "label"),
+      label = f"TABLE-6 reference: entry #{idx}",
+    )
+    value = _get_first_int_field(
+      obj,
+      keys = ("bugs", "value"),
+      label = f"TABLE-6 reference: entry #{idx}",
+    )
+    out.append((label, value))
+
+  return out
+
+
+def _parse_table7_reference_pairs(path: Path) -> _LabeledIntPairs:
+  raw = _load_json_object(path, label = "TABLE-7 reference")
+  items = raw.get("test_oracles")
+  if not isinstance(items, list):
+    raise ValueError("TABLE-7 reference: missing 'test_oracles' list")
+
+  out: _LabeledIntPairs = []
+  for idx, obj in enumerate(items):
+    if not isinstance(obj, dict):
+      raise ValueError(f"TABLE-7 reference: entry #{idx} is not an object")
+
+    label = _get_first_str_field(
+      obj,
+      keys = ("test_oracle", "oracle", "label"),
+      label = f"TABLE-7 reference: entry #{idx}",
+    )
+    value = _get_first_int_field(
+      obj,
+      keys = ("bugs", "value"),
+      label = f"TABLE-7 reference: entry #{idx}",
+    )
+    out.append((label, value))
+
+  return out
+
+
+def _parse_table8_reference_pairs(path: Path) -> _LabeledIntPairs:
+  raw = _load_json_object(path, label = "TABLE-8 reference")
+  items = raw.get("operators")
+  if not isinstance(items, list):
+    raise ValueError("TABLE-8 reference: missing 'operators' list")
+
+  out: _LabeledIntPairs = []
+  for idx, obj in enumerate(items):
+    if not isinstance(obj, dict):
+      raise ValueError(f"TABLE-8 reference: entry #{idx} is not an object")
+
+    label = _get_first_str_field(
+      obj,
+      keys = ("operator", "label"),
+      label = f"TABLE-8 reference: entry #{idx}",
+    )
+    value = _get_first_int_field(
+      obj,
+      keys = ("operations", "value"),
+      label = f"TABLE-8 reference: entry #{idx}",
+    )
+    out.append((label, value))
+
+  return out
+
+
+# ---------------------------------------------------------------------------
+# Similarity metadata
+# ---------------------------------------------------------------------------
+
+@dataclasses.dataclass(frozen = True, slots = True, kw_only = True)
+class SimilarityRequirement(ExperimentRunRequirement):
+  """Compares two labeled sequences elementwise under a similarity threshold."""
+
+  label: str
+  results_path: Path
+  reference_path: Path
+  threshold: float
+  parse_results_fn: Callable[[Sequence[str]], _LabeledIntPairs]
+  parse_reference_fn: Callable[[Path], _LabeledIntPairs]
+  max_mismatches_to_report: int = 10
+
+  def __post_init__(self) -> None:
+    if not math.isfinite(self.threshold):
+      raise ValueError(f"{self.name}: threshold must be finite")
+    if self.threshold < 0.0 or self.threshold > 1.0:
+      raise ValueError(f"{self.name}: threshold must be in [0, 1]")
+    if self.max_mismatches_to_report <= 0:
+      raise ValueError(f"{self.name}: max_mismatches_to_report must be > 0")
+    object.__setattr__(self, "results_path", Path(self.results_path))
+    object.__setattr__(self, "reference_path", Path(self.reference_path))
+
+  def check(self, ctx: ExperimentRunsContext) -> "CheckResult":
+    del ctx  # Reserved for shared policies/logging.
+
+    # Match legacy behavior: check reference existence first.
+    if not self.reference_path.exists():
+      return CheckResult.failure(
+        f"{self.reference_path} ({self.label} reference) not found"
+      )
+    if not self.results_path.exists():
+      return CheckResult.failure(
+        f"{self.results_path} ({self.label} results) not found"
+      )
 
     try:
-      raw = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as e:
-      return False, f"{path} invalid JSON: {e}"
-
-    if not isinstance(raw, dict):
-      return False, f"{path} must contain a JSON object"
-
-    symptoms = raw.get("symptoms")
-    if not isinstance(symptoms, list):
-      return False, f"{path} missing 'symptoms' list"
-
-    total = 0
-    for idx, obj in enumerate(symptoms):
-      if not isinstance(obj, dict):
-        return False, f"{path} entry #{idx} in 'symptoms' is not an object"
-      if "bugs" not in obj:
-        return False, f"{path} entry #{idx} in 'symptoms' missing 'bugs' tag"
-      try:
-        total += int(obj["bugs"])
-      except (TypeError, ValueError):
-        return False, f"{path} entry #{idx} in 'symptoms' has non-integer 'bugs' tag"
-
-    self.table6_ref_total = total
-    return True, ""
-
-  # -----------------------
-  # TABLE-7 helpers
-  # -----------------------
-
-  def load_table7(self) -> Tuple[bool, str]:
-    """
-    Load raw TABLE-7 file into memory.
-    """
-    if not self.table7_reference_path.exists():
-      return False, f"{self.table7_reference_path} (TABLE-7 reference) not found"
-
-    if not self.table7_results_path.exists():
-      return False, f"{self.table7_results_path} (TABLE-7 results) not found"
-
-    text = self.table7_results_path.read_text(encoding="utf-8")
-    lines = [line.rstrip("\n") for line in text.splitlines() if line.strip()]
+      lines = _read_nonempty_lines(self.results_path)
+    except OSError as exc:
+      return CheckResult.failure(f"{self.label}: failed to read results: {exc}")
     if not lines:
-      return False, f"{self.table7_results_path} is empty"
-
-    self._table7_raw_lines = lines
-    return True, ""
-
-  def parse_table7(self) -> Tuple[bool, str]:
-    """
-    Parse TABLE-7 and compute the sum of integer bug counts (ignoring percentages).
-    """
-    EXPECTED_HEADERS: list[str] = [
-      "Test Oracle",
-      "# Bugs (Percentage)",
-    ]
-
-    header_line: str | None = None
-    data_lines: list[str] = []
-    saw_separator = False
-
-    for line in self._table7_raw_lines:
-      if header_line is None:
-        header_line = line
-        continue
-
-      if not saw_separator and self.is_separator_line(line):
-        saw_separator = True
-        continue
-
-      if saw_separator:
-        data_lines.append(line)
-
-    if header_line is None:
-      return False, "TABLE-7: no table header found"
-
-    if any(h not in header_line for h in EXPECTED_HEADERS):
-      return False, f"TABLE-7: unexpected headers: {header_line!r}"
-
-    self.table7_rows = []
-    self.table7_exp_total = 0
-
-    for line in data_lines:
-      parts = line.split()
-      if len(parts) < 2:
-        return False, f"TABLE-7: row has {len(parts)} fields, expected at least 2: {line!r}"
-
-      # Ignore last token that is in "(xx.xx%)" format, the integer is second last.
-      last = parts[-1]
-      if last.startswith("(") and last.endswith("%)"):
-        if len(parts) < 3:
-          return False, f"TABLE-7: malformed row with percentage but no integer: {line!r}"
-        bugs_str = parts[-2]
-        label = " ".join(parts[:-2])
-      else:
-        bugs_str = parts[-1]
-        label = " ".join(parts[:-1])
-
-      ok, bugs = self.parse_int(bugs_str)
-      if not ok:
-        return False, f"TABLE-7: unparseable int in '# Bugs': {bugs_str!r}"
-
-      row = Table7Row(
-        test_oracle=label,
-        bugs=bugs,
-      )
-      self.table7_rows.append(row)
-      self.table7_exp_total += bugs
-
-    return True, ""
-
-  def load_table7_reference(self) -> Tuple[bool, str]:
-    """
-    Load TABLE-7 reference JSON.
-    """
-    path = self.table7_reference_path
-
-    if not path.exists():
-      return False, f"{path} not found"
+      return CheckResult.failure(f"{self.label}: results file is empty")
 
     try:
-      raw = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as e:
-      return False, f"{path} invalid JSON: {e}"
-
-    if not isinstance(raw, dict):
-      return False, f"{path} must contain a JSON object"
-
-    test_oracles = raw.get("test_oracles")
-    if not isinstance(test_oracles, list):
-      return False, f"{path} missing 'test_oracles' list"
-
-    total = 0
-    for idx, obj in enumerate(test_oracles):
-      if not isinstance(obj, dict):
-        return False, f"{path} entry #{idx} in 'test_oracles' is not an object"
-      if "bugs" not in obj:
-        return False, f"{path} entry #{idx} in 'test_oracles' missing 'bugs' tag"
-      try:
-        total += int(obj["bugs"])
-      except (TypeError, ValueError):
-        return False, f"{path} entry #{idx} in 'test_oracles' has non-integer 'bugs' tag"
-
-    self.table7_ref_total = total
-    return True, ""
-
-  # -----------------------
-  # TABLE-8 helpers
-  # -----------------------
-
-  def load_table8(self) -> Tuple[bool, str]:
-    """
-    Load raw TABLE-8 file into memory.
-    """
-    if not self.table8_reference_path.exists():
-      return False, f"{self.table8_reference_path} (TABLE-8 reference) not found"
-
-    if not self.table8_results_path.exists():
-      return False, f"{self.table8_results_path} (TABLE-8 results) not found"
-
-    text = self.table8_results_path.read_text(encoding="utf-8")
-    lines = [line.rstrip("\n") for line in text.splitlines() if line.strip()]
-    if not lines:
-      return False, f"{self.table8_results_path} is empty"
-
-    self._table8_raw_lines = lines
-    return True, ""
-
-  def parse_table8(self) -> Tuple[bool, str]:
-    """
-    Parse TABLE-8 and compute the sum of '# Operations'.
-    """
-    EXPECTED_HEADERS: list[str] = [
-      "Operator",
-      "# Operations",
-    ]
-
-    header_line: str | None = None
-    data_lines: list[str] = []
-    saw_separator = False
-
-    for line in self._table8_raw_lines:
-      if header_line is None:
-        header_line = line
-        continue
-
-      if not saw_separator and self.is_separator_line(line):
-        saw_separator = True
-        continue
-
-      if saw_separator:
-        data_lines.append(line)
-
-    if header_line is None:
-      return False, "TABLE-8: no table header found"
-
-    if any(h not in header_line for h in EXPECTED_HEADERS):
-      return False, f"TABLE-8: unexpected headers: {header_line!r}"
-
-    self.table8_rows = []
-    self.table8_exp_total = 0
-
-    for line in data_lines:
-      parts = line.split()
-      if len(parts) != 2:
-        return False, f"TABLE-8: row has {len(parts)} fields, expected 2: {line!r}"
-
-      operator = parts[0]
-      ops_str = parts[1]
-
-      ok, ops = self.parse_int(ops_str)
-      if not ok:
-        return False, f"TABLE-8: unparseable int in '# Operations': {ops_str!r}"
-
-      row = Table8Row(
-        operator=operator,
-        operations=ops,
-      )
-      self.table8_rows.append(row)
-      self.table8_exp_total += ops
-
-    return True, ""
-
-  def load_table8_reference(self) -> Tuple[bool, str]:
-    """
-    Load TABLE-8 reference JSON.
-    """
-    path = self.table8_reference_path
-
-    if not path.exists():
-      return False, f"{path} not found"
+      observed_pairs = self.parse_results_fn(lines)
+      reference_pairs = self.parse_reference_fn(self.reference_path)
+    except ValueError as exc:
+      return CheckResult.failure(str(exc))
 
     try:
-      raw = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as e:
-      return False, f"{path} invalid JSON: {e}"
-
-    if not isinstance(raw, dict):
-      return False, f"{path} must contain a JSON object"
-
-    operators = raw.get("operators")
-    if not isinstance(operators, list):
-      return False, f"{path} missing 'operators' list"
-
-    total = 0
-    for idx, obj in enumerate(operators):
-      if not isinstance(obj, dict):
-        return False, f"{path} entry #{idx} in 'operators' is not an object"
-      if "operations" not in obj:
-        return False, f"{path} entry #{idx} in 'operators' missing 'operations' tag"
-      try:
-        total += int(obj["operations"])
-      except (TypeError, ValueError):
-        return False, f"{path} entry #{idx} in 'operators' has non-integer 'operations'"
-
-    self.table8_ref_total = total
-    return True, ""
-
-  # -----------------------
-  # Shared comparison logic
-  # -----------------------
-
-  def totals_within_tolerance(self, found: int, ref: int) -> bool:
-    """
-    Check whether two values are within a given tolerance.
-    """
-    if ref == 0:
-      return False
-    return abs(found - ref) <= (1.0 - SIMILARITY_RATIO) * max(abs(found), abs(ref))
-
-  def compare_table5_against_reference(self) -> Tuple[bool, str]:
-    """
-    Compare TABLE-5 total with the reference total.
-    """
-    if self.table5_exp_total is None:
-      return False, "TABLE-5: bottom-right total not parsed"
-
-    if self.table5_ref_total is None:
-      return False, "TABLE-5: reference total_all not loaded"
-
-    found = self.table5_exp_total
-    ref = self.table5_ref_total
-
-    if not self.totals_within_tolerance(found, ref):
-      return False, (
-        "TABLE-5: bottom-right total differs too much "
-        f"(got {found}, ref {ref})"
+      aligned_labels, observed_values, reference_values = _align_by_reference(
+        observed_pairs,
+        reference_pairs,
+        label = self.label,
       )
+    except ValueError as exc:
+      return CheckResult.failure(str(exc))
 
-    return True, ""
-
-  def compare_table6_against_reference(self) -> Tuple[bool, str]:
-    """
-    Compare TABLE-6 total with the reference total.
-    """
-    if self.table6_exp_total is None:
-      return False, "TABLE6: sum of bugs not computed"
-
-    if self.table6_ref_total is None:
-      return False, "TABLE6: reference total_all not loaded"
-
-    found = self.table6_exp_total
-    ref = self.table6_ref_total
-
-    if not self.totals_within_tolerance(found, ref):
-      return False, (
-        "TABLE6: total bugs differs too much "
-        f"(got {found}, ref {ref})"
-      )
-
-    return True, ""
-
-  def compare_table7_against_reference(self) -> Tuple[bool, str]:
-    """
-    Compare TABLE-7 total with the reference total.
-    """
-    if self.table7_exp_total is None:
-      return False, "TABLE7: sum of bugs not computed"
-
-    if self.table7_exp_total is None:
-      return False, "TABLE7: reference total not loaded"
-
-    found = self.table7_exp_total
-    ref = self.table7_ref_total
-
-    if not self.totals_within_tolerance(found, ref):
-      return False, (
-        "TABLE7: total bugs differs too much "
-        f"(got {found}, ref {ref})"
-      )
-
-    return True, ""
-
-  def compare_table8_against_reference(self) -> Tuple[bool, str]:
-    """
-    Compare TABLE-8 total with the reference total.
-    """
-    if self.table8_exp_total is None:
-      return False, "TABLE8: sum of operations not computed"
-
-    if self.table8_ref_total is None:
-      return False, "TABLE8: reference total not loaded"
-
-    found = self.table8_exp_total
-    ref = self.table8_ref_total
-
-    if not self.totals_within_tolerance(found, ref):
-      return False, (
-        "TABLE8: total operations differs too much "
-        f"(got {found}, ref {ref})"
-      )
-
-    return True, ""
-
-  # -----------------------
-  # Invocations
-  # -----------------------
-
-  def _run_table(self, label: str, steps):
-    """
-    Run all steps for a single table, stopping on first failure.
-    """
-    for step in steps:
-      ok, why = step()
-      if not ok:
-        suffix = f" - {why}" if why else ""
-        logger.error(f"{label}: FAIL{suffix}")
-        return False
-
-    logger.info(f"{label}: PASS")
-    return True
-
-  def run_table5(self) -> bool:
-    return self._run_table(
-      "TABLE-5",
-      [
-        self.load_table5,
-        self.parse_table5,
-        self.load_table5_reference,
-        self.compare_table5_against_reference,
-      ],
+    failures, mismatch_lines = _collect_threshold_mismatches(
+      aligned_labels,
+      observed_values,
+      reference_values,
+      threshold = self.threshold,
+      max_items = self.max_mismatches_to_report,
     )
 
-  def run_table6(self) -> bool:
-    return self._run_table(
-      "TABLE-6",
+    if failures == 0:
+      return CheckResult.success()
+
+    msg = (
+      f"{self.label}: {failures} entries below threshold {self.threshold:.6f}\n"
+      "mismatches:\n" + "\n".join(mismatch_lines)
+    )
+    if failures > len(mismatch_lines):
+      msg = f"{msg}\n... ({failures - len(mismatch_lines)} more)"
+    return CheckResult.failure(msg)
+
+
+# ---------------------------------------------------------------------------
+# Oracle's main logic
+# ---------------------------------------------------------------------------
+
+class OracleExperimentRuns(OracleExperimentRunsBase):
+  """Derived oracle that validates TABLE-5..TABLE-8 outputs."""
+
+  _NAME = "ExperimentRuns"
+
+  def __init__(self, *, threshold: float = SIMILARITY_RATIO) -> None:
+    super().__init__(logger = logger)
+    self._threshold = threshold
+
+    self._table5_results_path = Path(RESULTS_PATH_TABLES["table5"])
+    self._table5_reference_path = Path(REFERENCE_PATH_TABLES["table5"])
+    self._table6_results_path = Path(RESULTS_PATH_TABLES["table6"])
+    self._table6_reference_path = Path(REFERENCE_PATH_TABLES["table6"])
+    self._table7_results_path = Path(RESULTS_PATH_TABLES["table7"])
+    self._table7_reference_path = Path(REFERENCE_PATH_TABLES["table7"])
+    self._table8_results_path = Path(RESULTS_PATH_TABLES["table8"])
+    self._table8_reference_path = Path(REFERENCE_PATH_TABLES["table8"])
+
+  def requirements(self) -> Sequence[ExperimentRunRequirement]:
+    reqs: list[ExperimentRunRequirement] = []
+
+    # TABLE-5 is parsed as 4 independent labeled sequences (by operator)
+    for field in _TABLE5_FIELDS:
+      def _make_results_fn(f: str) -> Callable[[Sequence[str]], _LabeledIntPairs]:
+        return lambda lines: _parse_table5_results_pairs(lines, field = f)
+
+      def _make_reference_fn(f: str) -> Callable[[Path], _LabeledIntPairs]:
+        return lambda path: _parse_table5_reference_pairs(path, field = f)
+
+      reqs.append(
+        SimilarityRequirement(
+          name = f"TABLE-5/{field}",
+          label = f"TABLE-5 {field}",
+          results_path = self._table5_results_path,
+          reference_path = self._table5_reference_path,
+          threshold = self._threshold,
+          parse_results_fn = _make_results_fn(field),
+          parse_reference_fn = _make_reference_fn(field),
+        )
+      )
+
+    # Tabels 6, 7, and 8 (with 8 being optional)
+    reqs.extend(
       [
-        self.load_table6,
-        self.parse_table6,
-        self.load_table6_reference,
-        self.compare_table6_against_reference,
-      ],
+        SimilarityRequirement(
+          name = "TABLE-6",
+          label = "TABLE-6",
+          results_path = self._table6_results_path,
+          reference_path = self._table6_reference_path,
+          threshold = self._threshold,
+          parse_results_fn = _parse_table6_results_pairs,
+          parse_reference_fn = _parse_table6_reference_pairs,
+        ),
+        SimilarityRequirement(
+          name = "TABLE-7",
+          label = "TABLE-7",
+          results_path = self._table7_results_path,
+          reference_path = self._table7_reference_path,
+          threshold = self._threshold,
+          parse_results_fn = _parse_table7_results_pairs,
+          parse_reference_fn = _parse_table7_reference_pairs,
+        ),
+        SimilarityRequirement(
+          name = "TABLE-8",
+          label = "TABLE-8",
+          results_path = self._table8_results_path,
+          reference_path = self._table8_reference_path,
+          threshold = self._threshold,
+          parse_results_fn = _parse_table8_results_pairs,
+          parse_reference_fn = _parse_table8_reference_pairs,
+        ),
+      ]
     )
 
-  def run_table7(self) -> bool:
-    return self._run_table(
-      "TABLE-7",
-      [
-        self.load_table7,
-        self.parse_table7,
-        self.load_table7_reference,
-        self.compare_table7_against_reference,
-      ],
-    )
-
-  def run_table8(self) -> bool:
-    return self._run_table(
-      "TABLE-8",
-      [
-        self.load_table8,
-        self.parse_table8,
-        self.load_table8_reference,
-        self.compare_table8_against_reference,
-      ],
-    )
-
-  def run(self):
-    """
-    Run all table checks and return True only if every table passes.
-    Each table logs exactly one line: PASS or the first failure.
-    """
-    results: list[bool] = []
-
-    results.append(self.run_table5())
-    results.append(self.run_table6())
-    results.append(self.run_table7())
-    results.append(self.run_table8())
-
-    return all(results)
+    return reqs
