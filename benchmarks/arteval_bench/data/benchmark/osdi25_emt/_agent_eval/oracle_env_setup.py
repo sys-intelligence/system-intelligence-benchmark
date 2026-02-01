@@ -204,10 +204,19 @@ class OracleEnvSetup:
 
     
   def run(self) -> bool:
-    code, _, _ = self.run_shell_command(["git", "submodule", "update", "--init", "--recursive"], cwd=REPO_DIRS["emt"])
-    if code != 0:
-      logger.error(f"Failed to update git submodules.")
-      return False
+    # DEBUG PERPOSES ONLY, WILL REMOVE LATER
+    # code, _, _ = self.run_shell_command(["git", "clone", "git@github.com:xlab-uiuc/emt-system-intelligence-benchmark.git", "emt"], cwd=REPO_DIRS["emt"].parent)
+    # if code != 0 and not Path(REPO_DIRS["emt"]).exists():
+    #   logger.error(f"Failed to clone EMT repository.")
+    #   return False
+    
+    # code, _, _ = self.run_shell_command(["git", "switch", "sib-port"], cwd=REPO_DIRS["emt"])
+    # code, _, _ = self.run_shell_command(["cp", "/home/escapist/emt-system-intelligence-benchmark/image_record_loading.ext4", f"{REPO_DIRS['emt']}/image_record_loading.ext4"], cwd=REPO_DIRS["emt"])
+
+    # code, _, _ = self.run_shell_command(["git", "submodule", "update", "--init", "--recursive"], cwd=REPO_DIRS["emt"])
+    # if code != 0:
+    #   logger.error(f"Failed to update git submodules.")
+    #   return False
     
     results = []
 
