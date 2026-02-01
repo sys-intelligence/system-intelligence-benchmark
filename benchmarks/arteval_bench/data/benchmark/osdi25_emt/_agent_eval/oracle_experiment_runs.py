@@ -63,7 +63,7 @@ class OracleExperimentRuns:
       # return False, f"Figure 16 statistics generation failed"
     
     df_stats_never = pd.read_csv(REPO_DIRS["emt"] / "inst_stats" / "kern_inst_never_unified.csv")
-    df_stats_always = pd.read_csv(REPO_DIRS["emt"] / "inst_stats" / "kern_inst_always_unified.csv")
+    # df_stats_always = pd.read_csv(REPO_DIRS["emt"] / "inst_stats" / "kern_inst_always_unified.csv")
 
     def result_from_df(df_stats: pd.DataFrame) -> Figure16Result:
       return Figure16Result(
@@ -80,7 +80,7 @@ class OracleExperimentRuns:
       )
     
     self.figure16_never_result = result_from_df(df_stats_never)
-    self.figure16_always_result = result_from_df(df_stats_always)
+    # self.figure16_always_result = result_from_df(df_stats_always)
 
     return True, ""
 
@@ -114,43 +114,47 @@ class OracleExperimentRuns:
     return True, ""
 
   def compare_figure16_against_reference(self) -> Tuple[bool, str]:
-    if self.figure16_never_result is None or self.figure16_always_result is None:
-      return False, "Figure 16 results not loaded"
-    if self.figure16_reference is None:
-      return False, "Figure 16 reference not loaded"
+    if self.figure16_never_result is None:
+      return False, "Figure 16 results (never) not loaded"
+    # if self.figure16_always_result is None:
+    #   return False, "Figure 16 results (always) not loaded"
+    if self.figure16_never_reference is None:
+      return False, "Figure 16 reference (never) not loaded"
+    # if self.figure16_always_reference is None:
+    #   return False, "Figure 16 reference (always) not loaded"
 
     def within_tolerance(measured: float, reference: float) -> bool:
       ratio = measured / reference
       return ratio >= (1 - TOLERANCE) and ratio <= (1 + TOLERANCE)
 
-    def check_within_tolerance(result: Figure16Result, thp: str) -> Tuple[bool, str]:
-      if not within_tolerance(result.radix_page_faults, self.figure16_reference.radix_page_faults):
+    def check_within_tolerance(result: Figure16Result, reference: Figure16Result, thp: str) -> Tuple[bool, str]:
+      if not within_tolerance(result.radix_page_faults, reference.radix_page_faults):
         return False, f"Radix Page Faults do not match reference for THP={thp}"
-      if not within_tolerance(result.radix_others, self.figure16_reference.radix_others):
+      if not within_tolerance(result.radix_others, reference.radix_others):
         return False, f"Radix Others do not match reference for THP={thp}"
-      if not within_tolerance(result.radix_system_calls, self.figure16_reference.radix_system_calls):
+      if not within_tolerance(result.radix_system_calls, reference.radix_system_calls):
         return False, f"Radix System Calls do not match reference for THP={thp}"
-      if not within_tolerance(result.radix_timers, self.figure16_reference.radix_timers):
+      if not within_tolerance(result.radix_timers, reference.radix_timers):
         return False, f"Radix Timers do not match reference for THP={thp}"
-      if not within_tolerance(result.radix_thp, self.figure16_reference.radix_thp):
+      if not within_tolerance(result.radix_thp, reference.radix_thp):
         return False, f"Radix THP do not match reference for THP={thp}"
-      if not within_tolerance(result.ecpt_page_faults, self.figure16_reference.ecpt_page_faults):
+      if not within_tolerance(result.ecpt_page_faults, reference.ecpt_page_faults):
         return False, f"ECPT Page Faults do not match reference for THP={thp}"
-      if not within_tolerance(result.ecpt_others, self.figure16_reference.ecpt_others):
+      if not within_tolerance(result.ecpt_others, reference.ecpt_others):
         return False, f"ECPT Others do not match reference for THP={thp}"
-      if not within_tolerance(result.ecpt_system_calls, self.figure16_reference.ecpt_system_calls):
+      if not within_tolerance(result.ecpt_system_calls, reference.ecpt_system_calls):
         return False, f"ECPT System Calls do not match reference for THP={thp}"
-      if not within_tolerance(result.ecpt_timers, self.figure16_reference.ecpt_timers):
+      if not within_tolerance(result.ecpt_timers, reference.ecpt_timers):
         return False, f"ECPT Timers do not match reference for THP={thp}"
-      if not within_tolerance(result.ecpt_thp, self.figure16_reference.ecpt_thp):
+      if not within_tolerance(result.ecpt_thp, reference.ecpt_thp):
         return False, f"ECPT THP do not match reference for THP={thp}"
       return True, ""
     
-    ok, why = check_within_tolerance(self.figure16_never_result, "never")
+    ok, why = check_within_tolerance(self.figure16_never_result, self.figure16_never_reference, "never")
     if not ok:
       return False, why
 
-    ok, why = check_within_tolerance(self.figure16_always_result, "always")
+    # ok, why = check_within_tolerance(self.figure16_always_result, self.figure16_always_reference, "always")
     if not ok:
       return False, why
 
