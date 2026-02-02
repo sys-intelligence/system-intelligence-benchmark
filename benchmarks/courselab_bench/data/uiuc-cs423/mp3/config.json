@@ -1,5 +1,5 @@
 {
-  "instance_id": "uiuc_cs_423_mp3",
+  "instance_id": "uiuc__cs__423__mp3",
   "course_id": "uiuc_cs_423",
   "timeout_minutes": 20,
   "tags": ["linux", "kernel", "proc_fs", "list", "cdev", "memory"],

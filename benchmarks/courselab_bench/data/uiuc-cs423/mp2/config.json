@@ -1,5 +1,5 @@
 {
-  "instance_id": "uiuc_cs_423_mp2",
+  "instance_id": "uiuc__cs__423__mp2",
   "course_id": "uiuc_cs_423",
   "timeout_minutes": 10,
   "tags": ["linux", "kernel", "proc_fs", "list", "scheduler", "workqueue"],
