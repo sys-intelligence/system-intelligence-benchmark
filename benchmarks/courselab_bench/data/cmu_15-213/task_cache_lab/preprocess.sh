@@ -7,12 +7,6 @@ export DEBCONF_NONINTERACTIVE_SEEN=true
 echo "=== Setting up CMU 15-213 Cache Lab ==="
 cd /workspace
 
-# 1. 更新 apt 源（可选：使用清华源加速）
-if [ -f /etc/apt/sources.list ]; then
-    sed -i 's/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list
-    sed -i 's/security.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list
-fi
-
 APT_OPTS=("-o" "Acquire::Retries=3" "-o" "Acquire::http::Timeout=20")
 if ! apt-get "${APT_OPTS[@]}" update -y >/tmp/apt-update.log 2>&1; then
     cat /tmp/apt-update.log
@@ -29,7 +23,7 @@ dpkg -s apt-utils >/dev/null 2>&1 || {
     exit 1
 }
 
-# 2. 核心依赖（精简加速安装）
+# 2. Installing dependencies
 if ! apt-get "${APT_OPTS[@]}" install -y --no-install-recommends \
     build-essential \
     make \
@@ -40,7 +34,7 @@ if ! apt-get "${APT_OPTS[@]}" install -y --no-install-recommends \
     exit 1
 fi
 
-# 3. 验证关键文件
+# 3. Verify files
 required_files=("csim.c" "trans.c" "cachelab.c" "cachelab.h" "csim-ref" "test-csim" "test-trans.c" "tracegen.c" "driver.py" "Makefile" "traces")
 for f in "${required_files[@]}"; do
     if [ ! -e "$f" ]; then
@@ -50,7 +44,7 @@ for f in "${required_files[@]}"; do
     echo "  ✓ $f"
 done
 
-# 4. 权限处理：确保可执行
+# 4. Authenticate protected files
 chmod +x csim-ref test-csim driver.py || true
 
 # Record checksums for protected infra (not student solution files csim.c/trans.c)
