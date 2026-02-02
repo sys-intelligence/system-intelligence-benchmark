@@ -3,4 +3,4 @@ services:
     image: sysintelligence/cs423-grader:v1
     working_dir: /workspace
     entrypoint: ["bash", "-lc"]
-    command: "sleep infinity"
+    command: ["sleep infinity"]

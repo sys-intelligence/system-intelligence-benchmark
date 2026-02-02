@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+WORKDIR="/workspace"
 ASSIGNMENT="MP3"
 GRADE_FILE_NAME="grade.txt"
 TIME_OUT=1200

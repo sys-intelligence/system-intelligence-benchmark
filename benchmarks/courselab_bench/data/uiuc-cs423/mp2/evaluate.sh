@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+WORKDIR="/workspace"
 ASSIGNMENT="MP2"
 GRADE_FILE_NAME="auto_grade.txt"
 TIME_OUT=600
