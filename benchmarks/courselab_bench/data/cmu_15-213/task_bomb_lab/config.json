@@ -1,0 +1,15 @@
+{
+  "instance_id": "cmu_15-213__bomb_lab",
+  "course_id": "cmu_15-213",
+  "timeout_minutes": 30,
+  "tags": [
+    "reverse-engineering",
+    "debugging",
+    "x86-64",
+    "binary-analysis"
+  ],
+  "artifacts": [
+    "solution.txt",
+    "bomb_output.txt"
+  ]
+}
