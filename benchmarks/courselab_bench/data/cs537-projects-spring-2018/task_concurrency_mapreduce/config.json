@@ -1,0 +1,9 @@
+{
+  "instance_id": "cs537-projects-spring-2018__concurrency_mapreduce",
+  "course_id": "cs537-projects-spring-2018",
+  "timeout_minutes": 20,
+  "tags": ["operating-systems", "concurrency", "mapreduce", "c", "threads"],
+  "artifacts": [
+    "ostep-projects/concurrency-mapreduce/mapreduce.c"
+  ]
+}
