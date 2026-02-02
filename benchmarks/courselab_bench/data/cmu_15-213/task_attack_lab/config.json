@@ -1,0 +1,20 @@
+{
+  "instance_id": "cmu_15-213__attack_lab",
+  "course_id": "cmu_15-213",
+  "timeout_minutes": 60,
+  "tags": [
+    "binary-exploitation",
+    "buffer-overflow",
+    "return-oriented-programming",
+    "x86-64",
+    "gdb",
+    "systems-programming"
+  ],
+  "artifacts": [
+    "phase1.txt",
+    "phase2.txt",
+    "phase3.txt",
+    "phase4.txt",
+    "phase5.txt"
+  ]
+}
