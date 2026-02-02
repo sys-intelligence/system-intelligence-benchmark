@@ -1,3 +1,9 @@
+<!--
+PR Title Convention:
+- Exams: [Exam] COURSE_ID - TITLE (e.g., [Exam] CS162 - Fall 2024 Midterm)
+- Labs: [Lab] COURSE_ID - TITLE (e.g., [Lab] CS537 - MapReduce)
+-->
+
 ## Description
 
 Brief description of what this PR does.
