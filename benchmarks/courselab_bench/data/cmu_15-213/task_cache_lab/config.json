@@ -1,0 +1,15 @@
+{
+  "instance_id": "cmu_15-213__cache_lab",
+  "course_id": "cmu_15-213",
+  "timeout_minutes": 60,
+  "tags": [
+    "cache",
+    "memory-hierarchy",
+    "c-programming",
+    "performance"
+  ],
+  "artifacts": [
+    "csim.c",
+    "trans.c"
+  ]
+}
