@@ -1,0 +1,7 @@
+{
+  "instance_id": "uiuc_cs_423_mp3",
+  "course_id": "uiuc_cs_423",
+  "timeout_minutes": 20,
+  "tags": ["linux", "kernel", "proc_fs", "list", "cdev", "memory"],
+  "artifacts": ["auto_grade.txt", "mp3.c"]
+}

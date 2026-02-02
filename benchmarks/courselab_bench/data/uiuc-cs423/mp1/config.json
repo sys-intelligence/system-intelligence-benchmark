@@ -1,0 +1,7 @@
+{
+  "instance_id": "uiuc_cs_423_mp1",
+  "course_id": "uiuc_cs_423",
+  "timeout_minutes": 10,
+  "tags": ["linux", "kernel", "proc_fs", "list", "timer"],
+  "artifacts": ["auto_grade.txt", "mp1.c", "userapp.c", "userapp.h"]
+}

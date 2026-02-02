@@ -27,6 +27,13 @@
       "institution": "CMU",
       "year": 2024,
       "num_tasks": 1
+    },
+    {
+      "course_id": "uiuc_cs_423",
+      "name": "UIUC CS 423: Operating Systems Design",
+      "institution": "UIUC",
+      "year": 2025,
+      "num_tasks": 3
     }
   ]
 }
