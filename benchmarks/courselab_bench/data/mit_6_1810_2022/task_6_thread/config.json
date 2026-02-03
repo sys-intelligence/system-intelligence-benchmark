@@ -1,0 +1,14 @@
+{
+  "instance_id": "mit_6_1810_2022__thread",
+  "course_id": "mit_6_1810_2022",
+  "timeout_minutes": 60,
+  "tags": ["operating-systems", "c", "threading", "context-switching", "synchronization", "xv6", "risc-v"],
+  "artifacts": [
+    "user/uthread.c",
+    "user/uthread_switch.S",
+    "notxv6/ph.c",
+    "notxv6/barrier.c",
+    "answers-thread.txt",
+    "time.txt"
+  ]
+}

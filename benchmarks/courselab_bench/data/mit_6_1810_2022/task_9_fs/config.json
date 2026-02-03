@@ -1,0 +1,20 @@
+{
+  "instance_id": "mit_6_1810_2022__fs",
+  "course_id": "mit_6_1810_2022",
+  "timeout_minutes": 60,
+  "tags": ["operating-systems", "c", "file-systems", "symbolic-links", "xv6", "risc-v", "kernel"],
+  "artifacts": [
+    "kernel/fcntl.h",
+    "kernel/file.h",
+    "kernel/fs.c",
+    "kernel/fs.h",
+    "kernel/stat.h",
+    "kernel/syscall.c",
+    "kernel/syscall.h",
+    "kernel/sysfile.c",
+    "user/user.h",
+    "user/usys.pl",
+    "Makefile",
+    "time.txt"
+  ]
+}
