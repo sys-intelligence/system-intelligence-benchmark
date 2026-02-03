@@ -36,8 +36,9 @@
       "num_tasks": 1
     },
     {
-      "course_id": "pku_pintos",
+      "course_id": "pku_pintos_2025",
       "name": "PKU Operating Systems: Pintos Labs",
+      "link": "https://pkuflyingpig.gitbook.io/pintos",
       "institution": "Peking University",
       "year": 2024,
       "num_tasks": 4

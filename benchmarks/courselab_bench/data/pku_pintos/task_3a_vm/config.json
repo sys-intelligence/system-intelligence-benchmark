@@ -1,6 +1,6 @@
 {
-  "instance_id": "pku_pintos__vm",
-  "course_id": "pku_pintos",
+  "instance_id": "pku_pintos_2025__vm",
+  "course_id": "pku_pintos_2025",
   "timeout_minutes": 120,
   "tags": ["operating-systems", "c", "virtual-memory", "demand-paging", "page-replacement", "pintos"],
   "artifacts": [
