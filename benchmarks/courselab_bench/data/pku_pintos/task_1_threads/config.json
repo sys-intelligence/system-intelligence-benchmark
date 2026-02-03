@@ -1,6 +1,6 @@
 {
-  "instance_id": "pku_pintos__threads",
-  "course_id": "pku_pintos",
+  "instance_id": "pku_pintos_2025__threads",
+  "course_id": "pku_pintos_2025",
   "timeout_minutes": 60,
   "tags": ["operating-systems", "c", "threads", "synchronization", "scheduling", "pintos"],
   "artifacts": [

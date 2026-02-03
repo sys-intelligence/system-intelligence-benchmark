@@ -67,7 +67,7 @@ Your answer should be either "True" or "False", followed by a brief explanation 
   "type": "Freeform",
   "tags": ["operating-systems", "virtual-memory", "page-faults"],
   "reference_materials": ["rust_reference.md"],
-  "answer": "False. FIFO and Belady's anomaly",
+  "answer": "False. FIFO and Belady's anomaly.",
   "llm_judge_instructions": "Award 1 point for correctly answering False. Award 1 point for a valid explanation. Longer explanations may get no credit."
 }
 ```
@@ -147,7 +147,7 @@ Your answer should be either "True" or "False", followed by a brief explanation 
   "type": "Freeform",
   "tags": ["distributed-systems", "idempotency"],
   "reference_materials": ["rust_reference.md"],
-  "answer": "False. f(f(x)) != f(x)",
+  "answer": "False. f(f(x)) != f(x).",
   "llm_judge_instructions": "Award 1 point for correctly answering False. Award 1 point for a valid explanation. Longer explanations may get no credit."
 }
 ```
@@ -188,7 +188,7 @@ D. LRU
 
 E. None of the above
 
-Your answer should list all correct letters (e.g., "A, B"), followed by a brief explanation. Longer explanations may get no credit.
+Your answer should list all correct letters (e.g., "A, B").
 
 
 ```json
@@ -198,8 +198,8 @@ Your answer should list all correct letters (e.g., "A, B"), followed by a brief 
   "type": "Freeform",
   "tags": ["operating-systems", "virtual-memory", "page-replacement"],
   "reference_materials": ["rust_reference.md"],
-  "answer": "A, B, D. LRU approximates MIN, and clock/second-chance approximate LRU.",
-  "llm_judge_instructions": "Award 1 point for listing exactly the correct letters that apply. Award 1 point for a valid explanation. Longer explanations may get no credit."
+  "answer": "A, B, D",
+  "llm_judge_instructions": "Award 2 points if and only if the selected letters exactly match the set of correct answers (no omissions or extras). Otherwise, award 1 point if the selection includes at least one correct letter, and 0 points if it includes none."
 }
 ```
 
@@ -219,7 +219,7 @@ D. In programmed I/O, the CPU programs an external controller to do I/O while th
 
 E. None of the above.
 
-Your answer should list all correct letters (e.g., "A, B"), followed by a brief explanation. Longer explanations may get no credit.
+Your answer should list all correct letters (e.g., "A, B").
 
 ```json
 {
@@ -228,8 +228,8 @@ Your answer should list all correct letters (e.g., "A, B"), followed by a brief 
   "type": "Freeform",
   "tags": ["operating-systems", "io"],
   "reference_materials": ["rust_reference.md"],
-  "answer": "E. None of the options are correct. A: Top half and bottom half refer to interrupt-driven I/O; polling is not used. B: Memory-mapped I/O actively involves the CPU; in DMA, an external device writes data to memory independently, then interrupts the CPU when the data is ready. C: Port-mapped I/O does not require involvement of the disk. D: Programmed I/O involves special CPU instructions (eg. in and out), not an external I/O controller.",
-  "llm_judge_instructions": "Award 1 point for listing exactly the correct letters that apply. Award 1 point for a valid explanation. Longer explanations may get no credit."
+  "answer": "E",
+  "llm_judge_instructions": "Award 2 points if and only if the selected letters exactly match the set of correct answers (no omissions or extras). Otherwise, award 1 point if the selection includes at least one correct letter, and 0 points if it includes none."
 }
 ```
 
@@ -249,7 +249,7 @@ D. Like RAM, storage devices are byte-addressed.
 
 E. None of the above.
 
-Your answer should list all correct letters (e.g., "A, B"), followed by a brief explanation. Longer explanations may get no credit.
+Your answer should list all correct letters (e.g., "A, B").
 
 ```json
 {
@@ -258,8 +258,8 @@ Your answer should list all correct letters (e.g., "A, B"), followed by a brief 
   "type": "Freeform",
   "tags": ["operating-systems", "storage"],
   "reference_materials": ["rust_reference.md"],
-  "answer": "A. A: Sequential reads on HDDs are usually faster than random reads because we only have to wait for the disk to spin under the head. B: SSD pages wear out when they are erased; HDDs do not wear out as quickly. C: SSDs are generally more expensive. D: Storage devices are addressed in units of sectors/pages/blocks.",
-  "llm_judge_instructions": "Award 1 point for listing exactly the correct letters that apply. Award 1 point for a valid explanation. Longer explanations may get no credit."
+  "answer": "A",
+  "llm_judge_instructions": "Award 2 points if and only if the selected letters exactly match the set of correct answers (no omissions or extras). Otherwise, award 1 point if the selection includes at least one correct letter, and 0 points if it includes none."
 }
 ```
 
@@ -279,7 +279,7 @@ D. Compulsory misses grow linearly with the size of the cache.
 
 E. None of the above.
 
-Your answer should list all correct letters (e.g., "A, B"), followed by a brief explanation. Longer explanations may get no credit.
+Your answer should list all correct letters (e.g., "A, B").
 
 ```json
 {
@@ -288,8 +288,8 @@ Your answer should list all correct letters (e.g., "A, B"), followed by a brief 
   "type": "Freeform",
   "tags": ["operating-systems", "caching"],
   "reference_materials": ["rust_reference.md"],
-  "answer": "A, B. A: In a multiprocessor system, actions by one processor can invalidate the cache entries for another processor, possibly resulting in a coherence miss. B: A cache with a higher associativity can reduce the number of conflict misses. C: Making a cache larger should decrease the number of capacity misses. D: Compulsory misses occur when a cache line is loaded for the first time; increasing the size of the cache has no effect on the number of compulsory misses.",
-  "llm_judge_instructions": "Award 1 point for listing exactly the correct letters that apply. Award 1 point for a valid explanation. Longer explanations may get no credit."
+  "answer": "A, B",
+  "llm_judge_instructions": "Award 2 points if and only if the selected letters exactly match the set of correct answers (no omissions or extras). Otherwise, award 1 point if the selection includes at least one correct letter, and 0 points if it includes none."
 }
 ```
 
@@ -324,7 +324,7 @@ D. The program will compile if we replace `kenobi(s: String)` and `kenobi(s)` wi
 
 E. None of the above.
 
-Your answer should list all correct letters (e.g., "A, B"), followed by a brief explanation. Longer explanations may get no credit.
+Your answer should list all correct letters (e.g., "A, B").
 
 ```json
 {
@@ -333,8 +333,8 @@ Your answer should list all correct letters (e.g., "A, B"), followed by a brief 
   "type": "Freeform",
   "tags": ["rust", "ownership"],
   "reference_materials": ["rust_reference.md"],
-  "answer": "C, D. A: The second s is a new variable due to the let declaration. It is not a reassignment of the original s. B: This program will result in compile-time, not run-time, errors. C: This solves the issue; s would no longer be used after being moved into kenobi. D: Passing a reference to s also fixes the problem, as ownership of s is not moved into kenobi",
-  "llm_judge_instructions": "Award 1 point for listing exactly the correct letters that apply. Award 1 point for a valid explanation. Longer explanations may get no credit."
+  "answer": "C, D",
+  "llm_judge_instructions": "Award 2 points if and only if the selected letters exactly match the set of correct answers (no omissions or extras). Otherwise, award 1 point if the selection includes at least one correct letter, and 0 points if it includes none."
 }
 ```
 
@@ -354,7 +354,7 @@ D. A program in a safe state can eventually deadlock.
 
 E. None of the above.
 
-Your answer should list all correct letters (e.g., "A, B"), followed by a brief explanation. Longer explanations may get no credit.
+Your answer should list all correct letters (e.g., "A, B").
 
 ```json
 {
@@ -363,8 +363,8 @@ Your answer should list all correct letters (e.g., "A, B"), followed by a brief 
   "type": "Freeform",
   "tags": ["operating-systems", "concurrency", "deadlock"],
   "reference_materials": ["rust_reference.md"],
-  "answer": "A, B, D. A: Circular wait is a necessary condition for deadlock. B: Circular wait is a necessary condition for deadlock. C: Priority donation prevents starvation of a high-priority thread; it does not prevent deadlock. D: A safe state means that there is a non-blocking order of threads that allows all threads to complete. Deadlock can still occur starting from a safe state (eg. if the non-blocking ordering is not followed).",
-  "llm_judge_instructions": "Award 1 point for listing exactly the correct letters that apply. Award 1 point for a valid explanation. Longer explanations may get no credit."
+  "answer": "A, B, D",
+  "llm_judge_instructions": "Award 2 points if and only if the selected letters exactly match the set of correct answers (no omissions or extras). Otherwise, award 1 point if the selection includes at least one correct letter, and 0 points if it includes none."
 }
 ```
 
@@ -384,7 +384,7 @@ D. In FFS, the file number is the index of an inode in the inode array.
 
 E. None of the above.
 
-Your answer should list all correct letters (e.g., "A, B"), followed by a brief explanation. Longer explanations may get no credit.
+Your answer should list all correct letters (e.g., "A, B").
 
 ```json
 {
@@ -393,8 +393,8 @@ Your answer should list all correct letters (e.g., "A, B"), followed by a brief 
   "type": "Freeform",
   "tags": ["operating-systems", "file-systems"],
   "reference_materials": ["rust_reference.md"],
-  "answer": "A, B, C, D. All statements are correct.",
-  "llm_judge_instructions": "Award 1 point for listing exactly the correct letters that apply. Award 1 point for a valid explanation. Longer explanations may get no credit."
+  "answer": "A, B, C, D",
+  "llm_judge_instructions": "Award 2 points if and only if the selected letters exactly match the set of correct answers (no omissions or extras). Otherwise, award 1 point if the selection includes at least one correct letter, and 0 points if it includes none."
 }
 ```
 
@@ -414,7 +414,7 @@ D. Putting a directory and its file into common block groups.
 
 E. None of the above.
 
-Your answer should list all correct letters (e.g., "A, B"), followed by a brief explanation. Longer explanations may get no credit.
+Your answer should list all correct letters (e.g., "A, B").
 
 ```json
 {
@@ -423,8 +423,8 @@ Your answer should list all correct letters (e.g., "A, B"), followed by a brief 
   "type": "Freeform",
   "tags": ["operating-systems", "file-systems", "ffs"],
   "reference_materials": ["rust_reference.md"],
-  "answer": "C, D. C: FFS uses first-free allocation for sequential block placement. D: FFS groups directories and their files in common cylinder groups.",
-  "llm_judge_instructions": "Award 1 point for listing exactly the correct letters that apply. Award 1 point for a valid explanation. Longer explanations may get no credit."
+  "answer": "C, D",
+  "llm_judge_instructions": "Award 2 points if and only if the selected letters exactly match the set of correct answers (no omissions or extras). Otherwise, award 1 point if the selection includes at least one correct letter, and 0 points if it includes none."
 }
 ```
 
@@ -503,7 +503,7 @@ Please answer in THREE SENTENCES OR LESS. Longer explanations may get no credit
   "type": "Freeform",
   "tags": ["operating-systems", "virtual-memory", "caching", "tlb"],
   "reference_materials": ["rust_reference.md"],
-  "answer": "Cache lookups can be overlapped when the page offset in the virtual address contains the cache index. See lecture 15, slide 26.",
+  "answer": "Cache lookups can be overlapped when the page offset in the virtual address contains the cache index.",
   "llm_judge_instructions": "Award full points for a fully correct explanation. award partial credit for partially correct explanations"
 }
 ```
@@ -598,7 +598,10 @@ give partial credit if you show your work.
 
 Suppose we have resources A, B, C and threads T1, T2, T3, T4. The total number of each resource as well as the current/max allocations for each thread are as follows:
 
-Total Allocation: A=5, B=6, C=7
+Total Allocation:
+| A | B | C |
+|---|---|---|
+| 5 | 6 | 7 |
 
 Current Allocation:
 | Thread | A | B | C |
@@ -734,7 +737,7 @@ Fill in sections [A], [B], and [C]:
   "tags": ["operating-systems", "virtual-memory", "page-tables"],
   "reference_materials": ["rust_reference.md"],
   "answer": "[A]:\nvpn[0] = vaddr >> 22;\nvpn[1] = zero(vaddr >> 12, 10, 32);\n\n[B]:\nptentry = get_word(pt + 4*vpn[i]);\nif ((ptentry & 1) == 0) {\n    page_fault_handler(vaddr);\n    return 0;\n}\npt = zero(ptentry, 0, 12);\n\n[C]:\nreturn pt + zero(vaddr, 12, 32);",
-  "llm_judge_instructions": "Grade each section separately and sum the points"
+  "llm_judge_instructions": "A is worth 2 points, B is worth 6 points and C is worth 2 points. Grade each section separately and sum the points"
 }
 ```
 

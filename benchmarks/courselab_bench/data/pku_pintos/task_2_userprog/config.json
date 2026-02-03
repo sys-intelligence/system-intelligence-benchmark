@@ -1,6 +1,6 @@
 {
-  "instance_id": "pku_pintos__userprog",
-  "course_id": "pku_pintos",
+  "instance_id": "pku_pintos_2025__userprog",
+  "course_id": "pku_pintos_2025",
   "timeout_minutes": 90,
   "tags": ["operating-systems", "c", "system-calls", "processes", "user-programs", "pintos"],
   "artifacts": [
