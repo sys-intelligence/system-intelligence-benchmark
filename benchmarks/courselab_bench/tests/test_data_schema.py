@@ -140,6 +140,13 @@ class TestTaskStructure:
                 files = list(starter_dir.rglob("*"))
                 assert len(files) > 0, f"{task_folder.name}: starter directory is empty"
 
+    def test_reference_solution_exists(self):
+        task_folders = get_task_folders(DATA_DIR)
+
+        for task_folder in task_folders:
+            sol_path = task_folder / "sol.sh"
+            assert sol_path.exists(), f"{task_folder.name} missing sol.sh reference solution"
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
