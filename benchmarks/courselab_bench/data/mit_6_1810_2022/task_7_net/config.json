@@ -1,0 +1,10 @@
+{
+  "instance_id": "mit_6_1810_2022__net",
+  "course_id": "mit_6_1810_2022",
+  "timeout_minutes": 60,
+  "tags": ["operating-systems", "c", "networking", "device-drivers", "e1000", "xv6", "risc-v", "kernel"],
+  "artifacts": [
+    "kernel/e1000.c",
+    "time.txt"
+  ]
+}

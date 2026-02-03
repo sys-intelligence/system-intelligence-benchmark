@@ -42,6 +42,13 @@
       "institution": "Peking University",
       "year": 2024,
       "num_tasks": 4
+    },
+    {
+      "course_id": "mit_6_1810_2022",
+      "name": "MIT 6.1810: Operating System Engineering",
+      "institution": "MIT",
+      "year": 2022,
+      "num_tasks": 10
     }
   ]
 }

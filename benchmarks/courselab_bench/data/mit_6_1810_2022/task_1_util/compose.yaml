@@ -1,0 +1,9 @@
+services:
+  default:
+    image: sysintelligence/xv6:latest
+    init: true
+    command: tail -f /dev/null
+    working_dir: /root/workspace
+    network_mode: bridge
+    cpus: '8.0'
+    mem_reservation: 8gb

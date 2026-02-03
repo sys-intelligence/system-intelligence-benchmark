@@ -1,0 +1,22 @@
+{
+  "instance_id": "mit_6_1810_2022__mmap",
+  "course_id": "mit_6_1810_2022",
+  "timeout_minutes": 60,
+  "tags": ["operating-systems", "c", "memory-mapping", "virtual-memory", "xv6", "risc-v", "kernel"],
+  "artifacts": [
+    "Makefile",
+    "kernel/defs.h",
+    "kernel/param.h",
+    "kernel/printf.c",
+    "kernel/proc.c",
+    "kernel/proc.h",
+    "kernel/riscv.h",
+    "kernel/syscall.c",
+    "kernel/syscall.h",
+    "kernel/sysproc.c",
+    "kernel/trap.c",
+    "user/user.h",
+    "user/usys.pl",
+    "time.txt"
+  ]
+}
