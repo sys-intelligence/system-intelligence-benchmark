@@ -1,139 +1,92 @@
-#!/usr/bin/env python3
-import subprocess
-import re
-from dataclasses import dataclass
-from typing import Iterable, Optional, Tuple
+"""Environment setup oracle for the Eurosys'25 EGWALKER bundle.
+
+Validates:
+  - Required tools and minimum versions where applicable.
+  - Repository directory exists.
+  - Ground-truth reference files exist.
+"""
+
+from __future__ import annotations
+
 from pathlib import Path
+from typing import Mapping, Sequence
 
-from utils import logger
+from evaluator.utils import EntryConfig, logger
+from evaluator.oracle_env_setup_primitives import (
+  DependencyVersionRequirement,
+  FilesystemPathRequirement,
+  OracleEnvSetupBase,
+  PathType,
+  Requirement,
+  VersionCompare,
+)
 
-
-Version = Tuple[int, int, int]
-
-
-@dataclass(frozen=True)
-class ToolRequirement:
-  name: str
-  cmd: list[str]
-  min_version: Optional[Version] = None
-  optional: bool = False
-
-
-MIN_RUST_VERSION: Version = (1, 78, 0)
+_REPO_KEY = "egwalker"
 
 
-TOOL_REQUIREMENTS: list[ToolRequirement] = [
-  ToolRequirement(
-    name="rustc",
-    cmd=["rustc", "--version"],
-    min_version=MIN_RUST_VERSION,
-  ),
-  ToolRequirement(
-    name="cargo",
-    cmd=["cargo", "--version"],
-  ),
-  ToolRequirement(
-    name="node",
-    cmd=["node", "--version"],
-  ),
-  ToolRequirement(
-    name="make",
-    cmd=["make", "--version"],
-    optional=True,
-  ),
-]
+def _required_path(paths: Mapping[str, Path], key: str, *, label: str) -> Path:
+  """Returns a required path from a mapping with a clear error."""
+  try:
+    return paths[key]
+  except KeyError as e:
+    raise ValueError(f"Missing {label}[{key!r}] in EntryConfig") from e
 
 
-class OracleEnvSetup:
+class OracleEnvSetup(OracleEnvSetupBase):
+  """Validates environment prerequisites for EGWALKER."""
 
-  def run_shell_command(
-    self,
-    cmd: Iterable[str],
-    cwd: Optional[Path] = None,
-  ) -> Tuple[int, str, str]:
-    """
-    Run a command and return (rc, stdout, stderr) tuple.
-    """
-    try:
-      cp = subprocess.run(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        cwd=str(cwd) if cwd is not None else None,
+  def __init__(self, *, config: EntryConfig, logger: logger) -> None:
+    super().__init__(logger)
+    self._config = config
+
+  def requirements(self) -> Sequence[Requirement]:
+    repo_root = _required_path(
+      self._config.repository_paths, self._config.name, label="repository_paths")
+
+    reqs: list[Requirement] = [
+      # Tooling.
+      DependencyVersionRequirement(
+        name="rustc",
+        command=("rustc", "--version"),
+        required_version=(1, 78, 0),
+        compare=VersionCompare.GEQ,
+      ),
+      DependencyVersionRequirement(
+        name="cargo",
+        command=("cargo", "--version"),
+        required_version=(1, 0, 0),
+        compare=VersionCompare.GEQ,
+      ),
+      DependencyVersionRequirement(
+        name="node",
+        command=("node", "--version"),
+        required_version=(0, 0, 0),
+        compare=VersionCompare.GEQ,
+      ),
+      DependencyVersionRequirement(
+        name="make",
+        command=("make", "--version"),
+        required_version=(0, 0, 0),
+        compare=VersionCompare.GEQ,
+        optional=True,
+      ),
+
+      # Repo directory.
+      FilesystemPathRequirement(
+        name="repo_root_exists",
+        path=repo_root,
+        path_type=PathType.DIRECTORY,
+      ),
+    ]
+
+    # Reference files (required).
+    for key, ref_path in sorted(self._config.ground_truth_paths.items()):
+      reqs.append(
+        FilesystemPathRequirement(
+          name=f"reference_{key}_exists",
+          path=ref_path,
+          path_type=PathType.FILE,
+        )
       )
-      return cp.returncode, cp.stdout or "", cp.stderr or ""
-    except FileNotFoundError:
-      return 127, "", ""
 
-  def parse_version(self, s: str) -> Optional[Version]:
-    """
-    Extract a version number from a string.
-    """
-    m = re.search(r"(?:^|\s)v?(\d+)\.(\d+)(?:\.(\d+))?", s)
-    if not m:
-      return None
-    major = int(m.group(1))
-    minor = int(m.group(2))
-    patch = int(m.group(3)) if m.group(3) is not None else 0
-    return (major, minor, patch)
-
-  def version_lt(self, a: Version, b: Version) -> bool:
-    return a < b
-
-  def check_tool(self, req: ToolRequirement) -> Tuple[Optional[str], Optional[str]]:
-    """
-    Check a single dependency requirement, including version.
-    """
-    rc, out, err = self.run_shell_command(req.cmd)
-    combined = (out + "\n" + err).strip()
-
-    if rc == 127:
-      if req.optional:
-        return None, f"{req.name} missing (optional)"
-      return f"{req.name} not found", None
-
-    if rc != 0:
-      if req.optional:
-        return None, f"{req.name} check failed (rc={rc}) (optional)"
-      return f"{req.name} check failed (rc={rc})", None
-
-    if req.min_version is not None:
-      v = self.parse_version(combined)
-      if v is None:
-        return f"{req.name} version parse failed", None
-      if self.version_lt(v, req.min_version):
-        return f"{req.name} too old (need >= {req.min_version[0]}.{req.min_version[1]}.{req.min_version[2]})", None
-
-    return None, None
-
-  def build_check(self):
-    """
-    Validate required dependnecies and environment setup.
-    """
-    problems: list[str] = []
-    warnings: list[str] = []
-
-    for req in TOOL_REQUIREMENTS:
-      problem, warning = self.check_tool(req)
-      if problem:
-        problems.append(problem)
-      if warning:
-        warnings.append(warning)
-
-    if problems:
-      return False, "; ".join(problems)
-
-    if warnings:
-      return True, "WARN: " + "; ".join(warnings)
-
-    return True, ""
-
-  def run(self):
-    ok, why = self.build_check()
-    label = "Environment"
-    if ok and why:
-      logger.info(f"{label}: PASS - {why}")
-      return ok
-    logger.info(f"{label}: {'PASS' if ok else 'FAIL' + (' - ' + why if why else '')}")
-    return ok
+    return reqs

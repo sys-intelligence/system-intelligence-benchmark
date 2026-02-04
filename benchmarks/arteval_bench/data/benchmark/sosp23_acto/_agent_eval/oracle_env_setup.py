@@ -1,208 +1,173 @@
-import os
-import re
-import shutil
-import subprocess
-from dataclasses import dataclass
-from typing import Iterable, List, Optional, Tuple
+#!/usr/bin/env python3
+"""Environment setup oracle for the SOSP'23 ACTO artifact.
+
+Validates:
+  - Required dependencies and minimum versions where applicable.
+  - Repository directory exists.
+  - Ground-truth reference files exist (required).
+  - Result files exist (optional; typically generated later).
+"""
+
+from __future__ import annotations
+from collections.abc import Mapping, Sequence
+from evaluator.oracle_env_setup_primitives import (
+  DependencyVersionRequirement,
+  EnvironmentVariableRequirement,
+  EnvQuantifier,
+  FilesystemPathRequirement,
+  OracleEnvSetupBase,
+  PathType,
+  Requirement,
+  VersionCompare,
+)
+from evaluator.utils import EntryConfig
 from pathlib import Path
-
-from utils import HOME, REPO_DIR
-from utils import logger
-
-VersionTuple = Tuple[int, ...]
+import logging
 
 
-@dataclass(frozen=True)
-class Dependency:
-  name: str
-  binary: str
-  cmd: Optional[list] = None
-  parse_regex: Optional[str] = None
-  require: Optional[VersionTuple] = None
-  compare: Optional[str] = None
+def _required_path(paths: Mapping[str, Path], key: str, *, label: str) -> Path:
+  """Returns a required path from a mapping with a clear error message.
+
+  Args:
+    paths: Mapping containing paths.
+    key: Required key.
+    label: Label used in error messages.
+
+  Returns:
+    The path from the mapping.
+
+  Raises:
+    ValueError: If the key is missing.
+  """
+  try:
+    return paths[key]
+  except KeyError as exc:
+    raise ValueError(f"Missing {label}[{key!r}] in EntryConfig") from exc
 
 
-DEPENDENCIES: List[Dependency] = [
+class OracleEnvSetup(OracleEnvSetupBase):
+  """Validates environment prerequisites for the ACTO _agent_eval bundle."""
 
-  # Basic tooling
-  Dependency(
-    name="git", binary="git"
-  ),
+  def __init__(self, *, config: EntryConfig, logger: logging.Logger) -> None:
+    super().__init__(logger)
+    self._config = config
 
-  # Docker, latest version is okay
-  Dependency(
-    name="docker", binary="docker",
-  ),
+  def requirements(self) -> Sequence[Requirement]:
+    """Returns an ordered list of requirements to validate."""
+    repo_root = _required_path(
+      self._config.repository_paths,
+      self._config.name,
+      label = "repository_paths",
+    )
 
-  # Python v3.8+
-  Dependency(
-    name="python3", binary="python3",
-    cmd=["python3", "--version"], parse_regex=r"Python\s+([0-9.]+)",
-    require=(3, 8), compare="gte",
-  ),
+    if not self._config.ground_truth_paths:
+      raise ValueError("EntryConfig.ground_truth_paths must be non-empty")
 
-  # pip3 for Python 3.8+
-  Dependency(
-    name="pip3", binary="pip3",
-  ),
+    home_dir = self._config.home_dir
+    venv_dir = home_dir / ".venv"
+    go_root = home_dir / "go"
+    go_bin = go_root / "bin"
 
-  # Go toolchain (golang package), latest STL version
-  Dependency(
-    name="go", binary="go",
-  ),
+    reqs: list[Requirement] = [
+        # Docker 23.0.0+
+        DependencyVersionRequirement(
+          name = "docker",
+          command = ("docker", "--version"),
+          required_version = (23, 0, 0),
+          compare = VersionCompare.GEQ,
+        ),
+        # pip 23.0.1+
+        DependencyVersionRequirement(
+          name = "pip3",
+          command = ("pip3", "--version"),
+          required_version = (23, 0, 1),
+          compare = VersionCompare.GEQ,
+        ),
+        # Python 3.8+
+        DependencyVersionRequirement(
+          name = "python3",
+          command = ("python3", "--version"),
+          required_version = (3, 8, 0),
+          compare = VersionCompare.GEQ,
+          version_regex = r"Python\s+([0-9.]+)",
+        ),
+        # Go 1.20+
+        DependencyVersionRequirement(
+          name = "go",
+          command = ("go", "version"),
+          required_version = (1, 20, 0),
+          compare = VersionCompare.GEQ,
+          version_regex = r"go(\d+\.\d+(?:\.\d+)?)",
+        ),
+        # kind 0.20.0+
+        DependencyVersionRequirement(
+          name = "kind",
+          command = ("kind", "version"),
+          required_version = (0, 20, 0),
+          compare = VersionCompare.GEQ,
+          version_regex = r"v([0-9.]+)",
+        ),
+        # kubectl 1.22.9+
+        DependencyVersionRequirement(
+          name = "kubectl",
+          command = ("kubectl", "version", "--client", "--short"),
+          required_version = (1, 22, 9),
+          compare = VersionCompare.GEQ,
+          version_regex = r"Client Version:\s+v?([0-9.]+)",
+        ),
+        # Directory checks
+        FilesystemPathRequirement(
+          name = "repo_root_exists",
+          path = repo_root,
+          path_type = PathType.DIRECTORY,
+        ),
+        FilesystemPathRequirement(
+          name = "venv_exists",
+          path = venv_dir,
+          path_type = PathType.DIRECTORY,
+        ),
+        FilesystemPathRequirement(
+          name = "go_root_exists",
+          path = go_root,
+          path_type = PathType.DIRECTORY,
+        ),
+        FilesystemPathRequirement(
+            name = "go_bin_exists",
+            path = go_bin,
+            path_type = PathType.DIRECTORY,
+        ),
+        # PATH checks for Go
+        EnvironmentVariableRequirement(
+          name = "PATH_contains_go_root",
+          env_var = "PATH",
+          expected = str(go_root),
+          quantifier = EnvQuantifier.CONTAINS,
+        ),
+        EnvironmentVariableRequirement(
+          name = "PATH_contains_go_bin",
+          env_var = "PATH",
+          expected = str(go_bin),
+          quantifier = EnvQuantifier.CONTAINS,
+        ),
+    ]
 
-  # Kind v0.20.0
-  Dependency(
-    name="kind", binary="kind",
-    cmd=["kind", "version"], parse_regex=r"v([0-9.]+)",
-    require=(0, 20, 0), compare="gte",
-  ),
+    for key, path in sorted(self._config.ground_truth_paths.items()):
+      reqs.append(
+          FilesystemPathRequirement(
+            name = f"ground_truth[{key}]",
+            path = path,
+            path_type = PathType.FILE,
+          )
+      )
 
-  # Kubectl v1.22.9
-  Dependency(
-    name="kubectl", binary="kubectl",
-    cmd=["kubectl", "version", "--client", "--short"],
-    parse_regex=r"Client Version:\s+v?([0-9.]+)",
-    require=(1, 22, 9), compare="gte",
-  ),
-]
+    for key, path in sorted(self._config.results_paths.items()):
+      reqs.append(
+          FilesystemPathRequirement(
+            name = f"results[{key}]",
+            optional = True,
+            path = path,
+            path_type = PathType.FILE,
+          )
+      )
 
-
-class OracleEnvSetup:
-
-  def __init__(self) -> None:
-    # Root of the cloned repositories
-    self.expected_root_dir = REPO_DIR
-
-    # Go paths that should be present in PATH
-    self.go_root = HOME / "go"
-    self.go_bin = self.go_root / "bin"
-
-    # Python virtual environment inside the repo
-    self.venv_dir = HOME / ".venv"
-
-  def run_shell_command(self, cmd: Iterable[str]) -> Tuple[int, str, str]:
-    """
-    Run a command and return (rc, stdout, stderr) tuple.
-    """
-    try:
-      cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-      return cp.returncode, cp.stdout or "", cp.stderr or ""
-    except FileNotFoundError:
-      return 127, "", ""
-
-  def parse_version_tuple(self, text: str) -> VersionTuple:
-    """
-    Extract the first version-like token from arbitrary text.
-    For example, for Java: '1.8.0_422' -> (1, 8, 0)
-    """
-    m = re.search(r"(\d+(?:\.\d+){0,3})", text)
-    return tuple(int(x) for x in m.group(1).split(".")) if m else ()
-
-  def extract_version(self, text: str, pattern: str) -> Tuple[VersionTuple, str]:
-    """
-    Apply regex pattern on a version string.
-    """
-    m = re.search(pattern, text, re.I)
-    if not m:
-      return (), "unknown"
-    ver_str = m.group(1)
-    return self.parse_version_tuple(ver_str), ver_str
-
-  def cmp_versions(self, found: VersionTuple, required: VersionTuple, mode: str) -> bool:
-    """
-    Compare versions either to be greater or equal to the reference.
-    """
-    if not found:
-      return False
-    f, r = list(found), list(required)
-    while len(f) < len(r):
-      f.append(0)
-    while len(r) < len(f):
-      r.append(0)
-    return (f == r) if mode == "eq" else (f >= r)
-
-  def paths_check(self):
-    """
-    Check that Python virtual environment is succesfully created 
-    and that Go-related paths are set properly.
-    """
-    problems: List[str] = []
-
-    # Check repositories exist
-    if not Path(self.expected_root_dir).exists():
-      problems.append(f"{dir} directory not found repository not cloned properly")
-
-    # Check Python virtual environment is created
-    if not Path(self.venv_dir).exists():
-      problems.append(".venv virtual environment missing (run 'python3 -m venv .venv')")
-
-    # Check Go directories exit
-    if not Path(self.go_root).exists():
-      problems.append("$HOME/go directory missing (install golang and configure GOPATH)")
-    if not Path(self.go_bin).exists():
-      problems.append("$HOME/go/bin directory missing (ensure Go tools are installed)")
-
-    # Check PATH contains Go path
-    path_env = os.environ.get("PATH", "")
-    go_root_str = str(self.go_root)
-    go_bin_str = str(self.go_bin)
-    if go_root_str not in path_env or go_bin_str not in path_env:
-      problems.append("PATH missing $HOME/go or $HOME/go/bin "
-                      "(export PATH=$HOME/go:$HOME/go/bin:$PATH)")
-
-    if problems:
-      return False, "; ".join(problems)
-    return True, ""
-
-  def check_dependency(self, dep: Dependency) -> Optional[str]:
-    """
-    Core method that checks whether a certain dependency of a version 
-    equal or greather than a reference version is installed.
-    """
-    if shutil.which(dep.binary) is None:
-      return f"{dep.name} missing"
-
-    # If no version information is required, presence is enough
-    if dep.cmd is None and dep.parse_regex is None and dep.require is None:
-      return None
-
-    rc, out, err = self.run_shell_command(dep.cmd or [])
-    text = (out + "\n" + err).strip()
-
-    if dep.parse_regex and dep.require and dep.compare:
-      ver_tuple, ver_str = self.extract_version(text, dep.parse_regex)
-      if not ver_tuple:
-        return f"{dep.name} version unreadable"
-      ok = self.cmp_versions(ver_tuple, dep.require, dep.compare)
-      cmp_word = "==" if dep.compare == "eq" else ">="
-      want = ".".join(map(str, dep.require))
-      return None if ok else f"{dep.name} {cmp_word} {want} not met (got {ver_str})"
-
-    return f"{dep.name} check misconfigured"
-
-  def prereqs_check(self):
-    problems: List[str] = []
-    for dep in DEPENDENCIES:
-      msg = self.check_dependency(dep)
-      if msg:
-        problems.append(msg)
-    if problems:
-      return False, "; ".join(problems)
-    return True, ""
-
-  def run(self):
-    results = []
-
-    ok, why = self.prereqs_check()
-    logger.info(f"Prerequisites: {'PASS' if ok else 'FAIL' + (' - ' + why if why else '')}")
-    results.append(ok)
-
-    ok, why = self.paths_check()
-    logger.info(f"Paths: {'PASS' if ok else 'FAIL' + (' - ' + why if why else '')}")
-    results.append(ok)
-
-    if all(results):
-      return True
-
-    return False
+    return tuple(reqs)
