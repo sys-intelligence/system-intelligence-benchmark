@@ -77,8 +77,11 @@ for attempt in $(seq 1 $MAX_ATTEMPTS); do
         btest_output=$(cat btest_output.txt)
         echo "$btest_output"
 
-        # Check if all functions passed
-        if echo "$btest_output" | grep -qE "ERROR|error|Error"; then
+        # Check if any function has a non-zero error count
+        # btest -g output has lines like: "Score Rating Errors Function" (header)
+        # and data lines like: "1 1 0 bitXor". We look for data lines where
+        # the Errors column (3rd field) is non-zero, skipping the header.
+        if echo "$btest_output" | awk 'NR>1 && /^[0-9]/ && $3 != 0 {found=1} END {exit !found}'; then
             echo "FAIL: btest detected errors in some functions"
             if [ $attempt -lt $MAX_ATTEMPTS ]; then
                 sleep 2
