@@ -1,0 +1,14 @@
+{
+  "instance_id": "cmu_15-213__proxy_lab",
+  "course_id": "cmu_15-213",
+  "timeout_minutes": 30,
+  "tags": ["c", "networking", "proxy", "concurrency", "cache"],
+  "artifacts": [
+    "proxy.c",
+    "csapp.c",
+    "csapp.h",
+    "Makefile",
+    "driver.sh",
+    "eval.log"
+  ]
+}
