@@ -1,8 +1,6 @@
 services:
   default:
     network_mode: host
-    image: xuafeng/swe-go-python:latest
+    image: buildpack-deps:jammy
     command: sleep infinity
     working_dir: /workspace
-    x-init:
-      - preprocess.sh

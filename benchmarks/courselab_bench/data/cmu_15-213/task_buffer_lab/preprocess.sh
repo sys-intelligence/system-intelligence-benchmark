@@ -4,9 +4,9 @@ set -euo pipefail
 echo "=== Setting up CMU 15-213 Buffer Lab ==="
 cd /workspace
 
-echo "Installing analysis tooling"
+echo "Installing 32-bit support and GDB"
 apt-get update
-apt-get install -y build-essential gcc-multilib libc6-i386 gdb binutils make python3 python3-pip
+apt-get install -y gcc-multilib libc6-i386 gdb
 
 echo "Making binaries executable"
 chmod +x bufbomb hex2raw makecookie
