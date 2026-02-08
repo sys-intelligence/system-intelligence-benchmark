@@ -1,0 +1,14 @@
+{
+  "instance_id": "cmu_15-213__shell_lab",
+  "course_id": "cmu_15-213",
+  "timeout_minutes": 30,
+  "tags": ["c", "shell", "signals", "process-control", "job-control"],
+  "artifacts": [
+    "tsh.c",
+    "tsh",
+    "trace*.txt",
+    "sdriver.pl",
+    "*.out",
+    "*.log"
+  ]
+}
