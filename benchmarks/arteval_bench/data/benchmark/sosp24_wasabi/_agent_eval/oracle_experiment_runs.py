@@ -1,121 +1,92 @@
-from collections import defaultdict
-import os
+from __future__ import annotations
+from dataclasses import dataclass
+from pathlib import Path
+import csv
 
-from utils import RESULTS_ROOT_DIR
-from utils import GROUND_TRUTH_FILE
-from utils import SIMILARITY_RATIO
+from evaluator.utils import EntryConfig
+from oracle_experiment_runs_primitives import (
+    OracleExperimentRunsBase,
+    ElementwiseSimilarityThresholdRequirement,
+)
 
-from utils import logger
+@dataclass(frozen=True)
+class _BugKey:
+  bug_type: str
+  benchmark: str
+  location: str
 
-class OracleExperimentRuns:
-  def __init__(self):
-    pass
+class OracleExperimentRuns(OracleExperimentRunsBase):
+  _ORACLE_NAME = "WasabiExperimentRuns"
 
-  def get_benchmark_name(self, loc):
-    """
-    Classifies the location based on its prefix.
-    """
-    if loc.startswith("org.apache.hadoop.hdfs") and "SecondaryNameNode.doWork" not in loc:
-      return "hdfs"
-    elif loc.startswith("org.apache.hadoop.yarn"):
-      return "yarn"
-    elif loc.startswith("org.apache.hadoop.mapreduce") or loc.startswith("org.apache.hadoop.mapred"):
-      return "mapreduce"
-    elif loc.startswith("org.apache.hadoop.hbase"):
-      return "hbase"
-    elif loc.startswith("org.apache.hadoop.hive"):
-      return "hive"
-    elif loc.startswith("org.apache.cassandra"):
-      return "cassandra"
-    elif loc.startswith("org.apache.hadoop") or "SecondaryNameNode.doWork" in loc:  # initialy found in hadoop-common, added here to match Table 3
-      return "hadoop"
-    elif loc.startswith("org.elasticsearch"):
-      return "elasticsearch"
-    else:
-      return "unknown"
+  def __init__(self, *, config: EntryConfig, logger) -> None:
+    super().__init__(logger=logger)
+    self._config = config
+    self._results_root = config.results_paths["results_root"]
+    self._gt_file = config.ground_truth_paths["bugs_ground_truth"]
+    self._threshold = config.similarity_ratio
 
-  def aggregate_bugs(self, root_dir):
-    """
-    Searches for bug report files and aggregates bugs based on their type and 
-    which application have been found in.
-    """
-    bugs = defaultdict(lambda: defaultdict(set))
-    unique = dict()
+    self._prefix_map = config.metadata.get("benchmark_prefix_map", [])
+    self._contains_rules = config.metadata.get("benchmark_contains_rules", [])
+    self._glob = config.metadata.get("results_file_glob", "*.csv")
 
-    for dirpath, _, files in os.walk(root_dir):
-      for file in files:
-        if file.endswith(".csv"):
-          file_path = os.path.join(dirpath, file)
-          
-          with open(file_path, 'r') as f:
-            for line in f:
-              if "how-bug" in line or "when-missing-" in line:
-                tokens = line.strip().split(",")
-        
-                bug_type = tokens[1]
-                bug_loc = tokens[2]
-                
-                key = bug_type + bug_loc
-                if key in unique:
-                  continue
-                unique[key] = "x"
+  def _classify_benchmark(self, loc: str) -> str:
+    for bench, needles in self._contains_rules:
+      if any(n in loc for n in needles):
+        return bench
+    for bench, prefixes in self._prefix_map:
+      if any(loc.startswith(p) for p in prefixes):
+        return bench
+    return "unknown"
 
-                benchmark = self.get_benchmark_name(bug_loc)       
-                bugs[bug_type][benchmark].add(bug_loc)
-  
-    return bugs
+  def _load_ground_truth(self) -> dict[tuple[str, str], set[str]]:
+    # key: (bug_type, benchmark) -> set(loc)
+    out: dict[tuple[str, str], set[str]] = {}
+    p = Path(self._gt_file)
+    with p.open() as f:
+      for line in f:
+        bench, bug_type, loc = line.strip().split(",", 2)
+        out.setdefault((bug_type, bench), set()).add(loc)
+    return out
 
-  def get_ground_truth_bugs(self, file_path: str):
-    """
-    Reads the ground truth values from a file into a dictionary.
-    """
-    ground_truth = defaultdict(lambda: defaultdict(set))
-    
-    try:
-      with open(file_path, 'r') as f:
-        for line in f:
-          tokens = line.strip().split(",")
-          benchmark = tokens[0]
-          bug_type = tokens[1]
-          retry_location = tokens[2]
-          ground_truth[bug_type][benchmark].add(retry_location)
-    except Exception:
-      logger.info(f"Cannot open {file_path} or file not present.")
-    
-    return ground_truth
+  def _load_observed(self) -> dict[tuple[str, str], set[str]]:
+    out: dict[tuple[str, str], set[str]] = {}
+    root = Path(self._results_root)
+    for csv_path in root.rglob(self._glob):
+      with csv_path.open(newline="") as f:
+        reader = csv.reader(f)
+        for row in reader:
+          if not row:
+            continue
+          line = ",".join(row)
+          if ("how-bug" not in line) and ("when-missing-" not in line):
+            continue
+          bug_type = row[1]
+          bug_loc = row[2]
+          bench = self._classify_benchmark(bug_loc)
+          out.setdefault((bug_type, bench), set()).add(bug_loc)
+    return out
 
-  def count_bugs(self, bugs, ground_truth):
-    """
-    Compares the total number of bugs found against the ground truth.
-    """
-    total_ground_truth = 0
-    total_found = 0
+  def requirements(self):
+    gt = self._load_ground_truth()
+    obs = self._load_observed()
 
-    for bug_type, benchmarks in ground_truth.items():
-      for benchmark, ground_truth_locations in benchmarks.items():
-        total_ground_truth += len(ground_truth_locations)
-        bug_locations = bugs.get(bug_type, {}).get(benchmark, set())
-        matching_locations = ground_truth_locations & bug_locations
-        total_found += len(matching_locations)
+    # Stable ordering over ground truth bug IDs
+    buckets = sorted(gt.keys())
 
-    if total_ground_truth == 0:
-      logger.info("No ground truth bugs available.")
-      return False
+    ref_counts = []
+    matched_counts = []
 
-    coverage = total_found / total_ground_truth
-    logger.info(f"Found {total_found} out of {total_ground_truth} ground truth bugs ({coverage:.2%}).")
+    for k in buckets:
+      gt_locs = gt[k]
+      obs_locs = obs.get(k, set())
+      ref_counts.append(float(len(gt_locs)))
+      matched_counts.append(float(len(gt_locs & obs_locs)))
 
-    passed = coverage >= SIMILARITY_RATIO
-    logger.info("Results reproduced: PASS" if passed else "Results reproduced: FAIL")
-    return passed
-
-
-  def run(self):
-    bugs = self.aggregate_bugs(str(RESULTS_ROOT_DIR))
-    ground_truth = self.get_ground_truth_bugs(str(GROUND_TRUTH_FILE))
-    passed = self.count_bugs(bugs, ground_truth)
-
-    if passed:
-      return True
-    
-    return False
+    return [
+      ElementwiseSimilarityThresholdRequirement(
+        name="ground-truth-coverage-by-bucket",
+        observed=matched_counts,
+        reference=ref_counts,
+        threshold=self._threshold,
+      ),
+    ]
