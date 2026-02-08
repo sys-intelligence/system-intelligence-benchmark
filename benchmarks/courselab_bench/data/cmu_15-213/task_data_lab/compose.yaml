@@ -1,7 +1,0 @@
-services:
-  default:
-    image: gcc:12
-    command: sleep infinity
-    working_dir: /workspace
-    x-init:
-      - preprocess.sh
