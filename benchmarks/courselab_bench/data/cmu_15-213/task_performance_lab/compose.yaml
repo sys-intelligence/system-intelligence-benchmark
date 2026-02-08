@@ -1,0 +1,9 @@
+services:
+  default:
+    image: gcc:12
+    init: true
+    command: tail -f /dev/null
+    working_dir: /workspace
+    network_mode: none
+    cpus: '2.0'
+    mem_limit: 512mb

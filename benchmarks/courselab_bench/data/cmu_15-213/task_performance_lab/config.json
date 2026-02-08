@@ -1,0 +1,9 @@
+{
+  "instance_id": "cmu_15-213__performance_lab",
+  "course_id": "cmu_15-213",
+  "timeout_minutes": 30,
+  "tags": ["c", "optimization", "cache", "performance", "systems-programming"],
+  "artifacts": [
+    "kernels.c"
+  ]
+}
