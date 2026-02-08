@@ -6,6 +6,13 @@
       "institution": "Demo University",
       "year": 2024,
       "num_tasks": 1
+    },
+    {
+      "course_id": "cmu_15-213",
+      "name": "Introduction to Computer Systems",
+      "institution": "Carnegie Mellon University",
+      "year": 2024,
+      "num_tasks": 1
     }
   ]
 }
