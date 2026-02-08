@@ -4,5 +4,3 @@ services:
     image: ubuntu:20.04
     command: sleep infinity
     working_dir: /workspace
-    x-init:
-      - preprocess.sh
