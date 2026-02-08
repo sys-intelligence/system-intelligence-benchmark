@@ -1,0 +1,9 @@
+services:
+  default:
+    image: ubuntu:22.04
+    init: true
+    command: sleep infinity
+    working_dir: /workspace
+    network_mode: bridge
+    cpus: '2'
+    mem_limit: 2048mb

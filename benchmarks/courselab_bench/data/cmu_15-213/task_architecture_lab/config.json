@@ -1,0 +1,20 @@
+{
+  "instance_id": "cmu_15-213__architecture_lab",
+  "course_id": "cmu_15-213",
+  "timeout_minutes": 90,
+  "tags": [
+    "computer-architecture",
+    "pipeline",
+    "assembly",
+    "performance",
+    "y86-64"
+  ],
+  "artifacts": [
+    "sim/pipe/ncopy.ys",
+    "sim/pipe/pipe-std.hcl",
+    "sim/pipe/pipe-full.hcl",
+    "sim/pipe/pipe-lf.hcl",
+    "sim/pipe/pipe-nt.hcl",
+    "sim/pipe/pipe-btfnt.hcl"
+  ]
+}
