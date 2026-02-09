@@ -3,6 +3,22 @@ set -e
 
 cd /workspace
 
+# Verify test files weren't modified
+echo "Verifying protected test files were not modified"
+if ! sha256sum -c /tmp/checksums/test4_txn_timestamp.sha256 > /dev/null 2>&1; then
+    echo "FAIL: test/concurrency/txn_timestamp_test.cpp was modified"
+    exit 1
+fi
+if ! sha256sum -c /tmp/checksums/test4_txn_scan.sha256 > /dev/null 2>&1; then
+    echo "FAIL: test/concurrency/txn_scan_test.cpp was modified"
+    exit 1
+fi
+if ! sha256sum -c /tmp/checksums/test4_txn_executor.sha256 > /dev/null 2>&1; then
+    echo "FAIL: test/concurrency/txn_executor_test.cpp was modified"
+    exit 1
+fi
+echo "Protected test files unchanged"
+
 # Build
 echo ""
 echo "=== Building ==="

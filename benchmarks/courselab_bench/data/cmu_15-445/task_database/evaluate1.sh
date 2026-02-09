@@ -3,6 +3,26 @@ set -e
 
 cd /workspace
 
+# Verify test files weren't modified
+echo "Verifying protected test files were not modified"
+if ! sha256sum -c /tmp/checksums/test1_arc_replacer.sha256 > /dev/null 2>&1; then
+    echo "FAIL: test/buffer/arc_replacer_test.cpp was modified"
+    exit 1
+fi
+if ! sha256sum -c /tmp/checksums/test1_disk_scheduler.sha256 > /dev/null 2>&1; then
+    echo "FAIL: test/storage/disk_scheduler_test.cpp was modified"
+    exit 1
+fi
+if ! sha256sum -c /tmp/checksums/test1_page_guard.sha256 > /dev/null 2>&1; then
+    echo "FAIL: test/buffer/page_guard_test.cpp was modified"
+    exit 1
+fi
+if ! sha256sum -c /tmp/checksums/test1_buffer_pool_manager.sha256 > /dev/null 2>&1; then
+    echo "FAIL: test/buffer/buffer_pool_manager_test.cpp was modified"
+    exit 1
+fi
+echo "Protected test files unchanged"
+
 # Build
 echo ""
 echo "=== Building ==="

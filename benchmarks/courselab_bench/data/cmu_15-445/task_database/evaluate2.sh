@@ -3,6 +3,26 @@ set -e
 
 cd /workspace
 
+# Verify test files weren't modified
+echo "Verifying protected test files were not modified"
+if ! sha256sum -c /tmp/checksums/test2_b_plus_tree_insert.sha256 > /dev/null 2>&1; then
+    echo "FAIL: test/storage/b_plus_tree_insert_test.cpp was modified"
+    exit 1
+fi
+if ! sha256sum -c /tmp/checksums/test2_b_plus_tree_sequential_scale.sha256 > /dev/null 2>&1; then
+    echo "FAIL: test/storage/b_plus_tree_sequential_scale_test.cpp was modified"
+    exit 1
+fi
+if ! sha256sum -c /tmp/checksums/test2_b_plus_tree_delete.sha256 > /dev/null 2>&1; then
+    echo "FAIL: test/storage/b_plus_tree_delete_test.cpp was modified"
+    exit 1
+fi
+if ! sha256sum -c /tmp/checksums/test2_b_plus_tree_concurrent.sha256 > /dev/null 2>&1; then
+    echo "FAIL: test/storage/b_plus_tree_concurrent_test.cpp was modified"
+    exit 1
+fi
+echo "Protected test files unchanged"
+
 # Build
 echo ""
 echo "=== Building ==="

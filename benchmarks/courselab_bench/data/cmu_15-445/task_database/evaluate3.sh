@@ -3,6 +3,14 @@ set -e
 
 cd /workspace
 
+# Verify test files weren't modified
+echo "Verifying protected test files were not modified"
+if ! sha256sum -c /tmp/checksums/test3_primer.sha256 > /dev/null 2>&1; then
+    echo "FAIL: test/sql/p3.00-primer.slt was modified"
+    exit 1
+fi
+echo "Protected test files unchanged"
+
 # Build
 echo ""
 echo "=== Building ==="
