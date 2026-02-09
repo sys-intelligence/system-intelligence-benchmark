@@ -1,0 +1,13 @@
+{
+  "instance_id": "cmu_15-445__database_task",
+  "course_id": "cmu_15-445",
+  "timeout_minutes": 60,
+  "tags": [
+    "multi-phase",
+    "cpp-programming",
+    "database-systems"
+  ],
+  "artifacts": []
+}
+
+
