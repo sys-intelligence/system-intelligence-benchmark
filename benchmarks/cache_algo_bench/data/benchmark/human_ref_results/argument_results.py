@@ -13,7 +13,6 @@ def aggregate_mr_test_by_algo_trace(jsonl_path):
             if mr_test is not None:
                 agg[key].append(mr_test)
 
-    # 计算平均值
     result = defaultdict(dict)
     for (algo, trace_type), values in agg.items():
         avg = sum(values) / len(values)
@@ -23,7 +22,7 @@ def aggregate_mr_test_by_algo_trace(jsonl_path):
 
 
 if __name__ == '__main__':
-    path_to_file = 'llm_results_eval.jsonl'  # 替换为你的文件路径
+    path_to_file = 'llm_results_eval.jsonl'  # Set to your file path
     result = aggregate_mr_test_by_algo_trace(path_to_file)
 
     for algo in sorted(result):

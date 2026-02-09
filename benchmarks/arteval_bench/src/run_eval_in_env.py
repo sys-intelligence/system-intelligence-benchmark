@@ -3,6 +3,7 @@
 import asyncio
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -13,6 +14,27 @@ from swerex.deployment.docker import DockerDeploymentConfig
 from swerex.runtime.abstract import BashAction, Command, CreateBashSessionRequest, UploadRequest
 
 from sdk.logger import logger
+
+
+def _parse_eval_score(output) -> int:
+    """Parse evaluation score from BashObservation or string output.
+
+    - If a line is a single digit (e.g. '4', '0'), use it (prefer last such line).
+    - If output contains 'Agent scores: {...}' (Oracle-style evaluator), count ': 1' as passed items.
+    - Otherwise return 0.
+    """
+    s = (getattr(output, "output", None) or str(output) or "").strip()
+    if not s:
+        return 0
+    lines = s.splitlines()
+    for line in reversed(lines):
+        t = line.strip()
+        if t.isdigit():
+            return int(t)
+    m = re.search(r"Agent scores:\s*\{[^}]*\}", s)
+    if m:
+        return m.group(0).count(": 1")
+    return 0
 
 
 def write_to_file(file_path, content):
@@ -202,7 +224,7 @@ async def run_eval_in_env(deployment, project_path, task_id, task, model, agent_
 
     if hasattr(runtime, "_config"):
         logger.info(f"Current RemoteRuntime timeout: {runtime._config.timeout}s")
-        # 48小时 = 172800 秒（与 Bash 命令超时保持一致）
+        # 48 hours = 172800s (aligned with Bash command timeout)
         runtime._config.timeout = 172800.0
         logger.info(f"Overriding RemoteRuntime timeout to {runtime._config.timeout}s (48 hours)")
 
@@ -227,11 +249,11 @@ async def run_eval_in_env(deployment, project_path, task_id, task, model, agent_
     )
     logger.info('Project files uploaded.')
     
-    # 对于 claude_sdk，删除评估脚本目录，避免 agent 看到评估逻辑
+    # For claude_sdk: remove eval script dirs so the agent cannot see evaluation logic
     is_claude_sdk = str(agent_path).endswith('claude_sdk')
     if is_claude_sdk:
         logger.info('Removing _agent_eval directories for claude_sdk to prevent answer leakage...')
-        # 递归查找并删除所有 _agent_eval 目录
+        # Recursively find and remove all _agent_eval directories
         await runtime.run_in_session(
             BashAction(command='find /repo -type d -name "_agent_eval" -exec rm -rf {} + 2>/dev/null || true', timeout=30.0)
         )
@@ -261,17 +283,16 @@ async def run_eval_in_env(deployment, project_path, task_id, task, model, agent_
     logger.info(await runtime.run_in_session(BashAction(command='cat /agent/runner.sh')))
     logger.info(await runtime.run_in_session(BashAction(command='/agent/install.sh')))
     
-    # 为 claude_sdk 设置必要的环境变量（从主进程传递到容器）
+    # Set required env vars for claude_sdk (passed from host into container)
     if is_claude_sdk:
         anthropic_api_key = os.environ.get('ANTHROPIC_API_KEY')
         if anthropic_api_key:
-            # 在容器的 bash session 中设置环境变量
-            # 使用单引号避免 shell 转义问题，但需要处理单引号本身
+            # Set env var in container bash session; use single quotes to avoid shell escaping
             escaped_key = anthropic_api_key.replace("'", "'\"'\"'")
             set_env_cmd = f"export ANTHROPIC_API_KEY='{escaped_key}'"
             logger.info('Setting ANTHROPIC_API_KEY in container...')
             logger.info(await runtime.run_in_session(BashAction(command=set_env_cmd)))
-            # 验证环境变量已设置
+            # Verify env var is set
             verify_cmd = 'echo "ANTHROPIC_API_KEY is set: $([ -n "$ANTHROPIC_API_KEY" ] && echo yes || echo no)"'
             verify_res = await runtime.run_in_session(BashAction(command=verify_cmd))
             logger.info(f'Environment variable verification: {verify_res}')
@@ -279,35 +300,30 @@ async def run_eval_in_env(deployment, project_path, task_id, task, model, agent_
             logger.warning('ANTHROPIC_API_KEY not found in host environment. Runner may fail.')
 
     logger.info('Running runner script...')
-    # 为 claude_sdk 提供更长超时和实时输出（不影响其他 agent）
-    # claude_sdk 需要 48 小时超时（172800 秒）
-    runner_timeout = 172800.0 if is_claude_sdk else 1200.0
+    # claude_sdk: longer timeout and live log streaming (other agents unchanged)
+    runner_timeout = 172800.0 if is_claude_sdk else 1200.0  # 48h for claude_sdk
 
     if is_claude_sdk:
-        # 为 claude_sdk 使用实时日志监控：后台运行 runner，定期读取日志文件
-        # 先清空日志文件
+        # Live log monitoring: run runner in background, poll log file periodically
         await runtime.run_in_session(BashAction(command='rm -f /agent/runner.live.log && touch /agent/runner.live.log', timeout=10.0))
-        
-        # 后台启动 runner，确保输出重定向到日志文件
-        # 使用 bash -c 确保重定向在后台运行前生效
+
         start_cmd = (
             f'bash -c "stdbuf -oL -eL /agent/runner.sh \\"{model}\\" \\"{task}\\" > /agent/runner.live.log 2>&1 & '
             'RUNNER_PID=$!; '
-            'sleep 1; '  # 等待一下确保进程启动
+            'sleep 1; '  # Ensure process has started
             'echo RUNNER_PID=$RUNNER_PID"'
         )
         start_res = await runtime.run_in_session(BashAction(command=start_cmd, timeout=30.0))
         start_output = str(getattr(start_res, "output", "")).strip()
-        
-        # 从输出中提取 PID
+
         pid = None
         for line in start_output.split('\n'):
             if 'RUNNER_PID=' in line:
                 pid = line.split('RUNNER_PID=', 1)[1].strip()
                 break
-        
+
         if not pid or not pid.isdigit():
-            # 如果无法获取 PID，等待一下再尝试通过进程名查找
+            # Fallback: find PID by process name after short delay
             await asyncio.sleep(2)
             ps_res = await runtime.run_in_session(
                 BashAction(command="ps aux | grep '[r]unner.py' | awk '{print $2}' | head -1", timeout=10.0)
@@ -315,53 +331,45 @@ async def run_eval_in_env(deployment, project_path, task_id, task, model, agent_
             pid = str(getattr(ps_res, "output", "")).strip()
         
         logger.info(f'claude_sdk runner started with pid: {pid}')
-        
-        # 等待一下，确保日志文件开始有内容
-        await asyncio.sleep(2)
-        
+
+        await asyncio.sleep(2)  # Allow log file to have content
+
         elapsed = 0.0
-        poll_interval = 10.0  # 每10秒轮询一次，更频繁地获取日志
+        poll_interval = 10.0  # Poll every 10s for live log
         run_results = None
-        last_log_content = ""  # 记录上次读取的日志内容，避免重复输出
+        last_log_content = ""  # Track last read content to avoid duplicate output
 
         while elapsed < runner_timeout:
             try:
-                # 读取完整的日志文件内容（用于比较是否有新内容）
                 log_res = await runtime.run_in_session(
                     BashAction(command='cat /agent/runner.live.log 2>/dev/null || echo ""', timeout=30.0)
                 )
                 current_log_content = str(getattr(log_res, "output", "")).strip()
-                
-                # 只输出新增的内容，避免重复
+
                 if current_log_content and current_log_content != last_log_content:
                     if last_log_content and current_log_content.startswith(last_log_content):
-                        # 只有新增内容，输出增量
                         new_content = current_log_content[len(last_log_content):].strip()
                         if new_content:
                             logger.info(f'[claude_sdk live log @ {elapsed:.0f}s ({elapsed/60:.1f} min)]\n{new_content}')
                     else:
-                        # 内容完全不同（可能是日志被清空重写），输出全部
                         logger.info(f'[claude_sdk live log @ {elapsed:.0f}s ({elapsed/60:.1f} min)]\n{current_log_content}')
                     last_log_content = current_log_content
                 elif elapsed % 300 == 0 and elapsed > 0:
-                    # 每5分钟输出一次进度，即使没有新日志
                     logger.info(f'[claude_sdk still running @ {elapsed:.0f}s ({elapsed/60:.1f} min), no new output]')
             except Exception as e:
                 logger.info(f'Failed to read claude_sdk live log: {e}')
 
-            # 检查进程是否仍在运行
             if pid and pid.isdigit():
                 ps_res = await runtime.run_in_session(
                     BashAction(command=f'ps -p {pid} >/dev/null 2>&1; echo $?', timeout=10.0)
                 )
                 ps_code = str(getattr(ps_res, "output", "")).strip()
                 if ps_code != "0":
-                    # 进程结束，获取退出码
                     wait_res = await runtime.run_in_session(
                         BashAction(command=f'wait {pid} 2>/dev/null; echo $?', timeout=30.0)
                     )
                     exit_code_str = str(getattr(wait_res, "output", "")).strip()
-                    # 创建模拟的 run_results
+
                     class MockResult:
                         def __init__(self, code):
                             self.exit_code = int(code) if code.isdigit() else 0
@@ -370,13 +378,11 @@ async def run_eval_in_env(deployment, project_path, task_id, task, model, agent_
                     logger.info(f'claude_sdk runner finished with exit code: {run_results.exit_code}')
                     break
             else:
-                # 如果无法通过 PID 检查，尝试通过进程名检查
                 ps_res = await runtime.run_in_session(
                     BashAction(command="ps aux | grep '[r]unner.py' | wc -l", timeout=10.0)
                 )
                 proc_count = str(getattr(ps_res, "output", "")).strip()
                 if proc_count == "0" or not proc_count.isdigit() or int(proc_count) == 0:
-                    # 进程已结束
                     logger.info('claude_sdk runner process not found, assuming finished')
                     class MockResult:
                         def __init__(self):
@@ -385,12 +391,11 @@ async def run_eval_in_env(deployment, project_path, task_id, task, model, agent_
                     run_results = MockResult()
                     break
 
-            # 未结束，继续等待
             await asyncio.sleep(poll_interval)
             elapsed += poll_interval
 
         if run_results is None:
-            # 超时，尝试杀掉进程并获取最终日志
+            # Timeout: try to kill process and capture final log
             if pid and pid.isdigit():
                 try:
                     await runtime.run_in_session(BashAction(command=f'kill -TERM {pid} 2>/dev/null || kill -9 {pid} 2>/dev/null || true', timeout=10.0))
@@ -411,21 +416,18 @@ async def run_eval_in_env(deployment, project_path, task_id, task, model, agent_
     logger.info(f"agent's run results: {run_results}")
     logger.info('Runner script finished.')
 
-    # 对于 claude_sdk，在评估阶段开始前上传评估脚本
+    # For claude_sdk: upload eval scripts before running evaluation
     if is_claude_sdk:
         logger.info('Uploading _agent_eval directories for evaluation (claude_sdk)...')
-        # 递归查找项目目录下的所有 _agent_eval 目录
         eval_dirs = []
         for root, dirs, files in os.walk(project_path):
             if '_agent_eval' in dirs:
                 eval_source_path = os.path.join(root, '_agent_eval')
-                # 计算相对于 project_path 的相对路径
                 rel_path = os.path.relpath(eval_source_path, project_path)
                 eval_dirs.append((eval_source_path, rel_path))
-        
+
         if eval_dirs:
             for eval_source_path, rel_path in eval_dirs:
-                # 上传到容器的对应位置
                 target_eval_path = os.path.join('/repo', rel_path)
                 logger.info(f'Uploading _agent_eval from {eval_source_path} to {target_eval_path}')
                 try:
@@ -450,7 +452,7 @@ async def run_eval_in_env(deployment, project_path, task_id, task, model, agent_
             'project_path': project_path,
             'agent_run_results': run_results.output if hasattr(run_results, 'output') else str(run_results),
             'test_method': test_method,
-            'score': int(test_output),
+            'score': _parse_eval_score(test_output),
             'status': 'success',
         }
     except Exception as e:
@@ -464,22 +466,19 @@ async def run_eval_in_env(deployment, project_path, task_id, task, model, agent_
             'status': f'error: {str(e)}',
         }
 
-    # 对于 claude_sdk，保留容器不停止，便于后续检查
+    # For claude_sdk: keep container running for inspection
     if is_claude_sdk:
         logger.info('=' * 80)
         logger.info('Keeping Docker container running for claude_sdk (for debugging purposes).')
-        
-        # 尝试获取容器信息
+
         container_id = "unknown"
         container_name = "unknown"
         try:
-            # 从容器内部获取容器 ID
             container_id_res = await runtime.run_in_session(
                 BashAction(command='cat /etc/hostname 2>/dev/null || hostname 2>/dev/null || echo "unknown"', timeout=10.0)
             )
             container_id = str(getattr(container_id_res, "output", "")).strip()
-            
-            # 尝试从 /proc/self/cgroup 获取 Docker 容器 ID
+
             try:
                 docker_info_res = await runtime.run_in_session(
                     BashAction(command='cat /proc/self/cgroup 2>/dev/null | grep docker | head -1 | cut -d/ -f3 | cut -c1-12 || echo ""', timeout=10.0)
@@ -489,8 +488,7 @@ async def run_eval_in_env(deployment, project_path, task_id, task, model, agent_
                     container_id = docker_container_id
             except Exception:
                 pass
-            
-            # 尝试从 deployment 对象获取容器信息
+
             if hasattr(deployment, '_container_id'):
                 container_id = deployment._container_id
             elif hasattr(deployment, 'container_id'):
@@ -512,13 +510,11 @@ async def run_eval_in_env(deployment, project_path, task_id, task, model, agent_
         logger.info(f'  NOTE: Container will remain running. To stop it manually, use: docker stop {container_id}')
         logger.info(f'  WARNING: Remember to clean up containers to save storage space!')
         logger.info('=' * 80)
-        
-        # 将容器信息添加到结果中
+
         result['container_id'] = container_id
         result['container_name'] = container_name
         result['container_kept'] = True
     else:
-        # 其他 agent 正常停止容器
         await deployment.stop()
         result['container_kept'] = False
     

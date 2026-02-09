@@ -15,3 +15,19 @@ venv/
 # Outputs
 outputs/
 logs/
+repro_results-*/
+
+# Runtime / trace artifacts (do not commit)
+*execution_trace*.json
+*agent_execution_traces*.json
+*_Split_Summary.json
+
+# Local copies and backups
+* copy*.jsonl
+*_copy_*.jsonl
+*.backup
+
+# Downloaded / generated in benchmark data
+**/go*.linux-amd64.tar.gz
+**/kubernetes_config/
+**/k8s_util/lib/
