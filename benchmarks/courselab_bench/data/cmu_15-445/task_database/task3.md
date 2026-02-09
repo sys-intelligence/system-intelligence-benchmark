@@ -31,6 +31,8 @@ Please read this section carefully because you will need to construct your own S
 
 BusTub's architecture is as follows:
 
+![](https://15445.courses.cs.cmu.edu/fall2025/project3/img/project-structure.svg)
+
 In the public BusTub repository, we provide a full query processing layer. You can use the BusTub shell to execute SQL queries, much like in other database systems. Use the following command to compile and run the BusTub shell:
 
 ```bash
@@ -111,6 +113,8 @@ The result of `EXPLAIN` provides an overview of the transformation process withi
 
 Next, the binder AST is processed by the planner, which will produce an appropriate query plan. In this case, the query plan is a tree of two nodes, with data flowing from the leaves to the root:
 
+![](https://15445.courses.cs.cmu.edu/fall2025/project3/img/mock_scan.svg)
+
 After that, the optimizer will optimize the query plan. In this case, it removes the projection because it is redundant.
 
 Let's consider a more complex example:
@@ -127,6 +131,8 @@ Agg { types=[max], aggregates=[#0.1], group_by=[#0.0] }
 ```
 
 For this example, the optimized query plan is:
+
+![](https://15445.courses.cs.cmu.edu/fall2025/project3/img/more_complex_example.svg)
 
 In this project, you will need to construct SQL queries to test each of your executor's implementations. `EXPLAIN` is extremely helpful for you to know if a SQL query is using a specific executor.
 
@@ -485,7 +491,7 @@ At this point, you should pass SQLLogicTests - #14 to #15.
 
 ---
 
-## Task #4: External Merge Sort + Limit Executors + Window Functions
+# Task #4: External Merge Sort + Limit Executors + Window Functions
 
 You will complete your implementation in the following files:
 
@@ -498,57 +504,188 @@ You will complete your implementation in the following files:
 * `src/include/execution/executors/window_function_executor.h`
 * `src/execution/window_function_executor.cpp`
 
-### External Merge Sort
+You need to implement `IndexScanExecutor` in `Task #1` before starting this task. If there is an index over a table, the query processing layer will automatically pick it for sorting. In other cases, you will need a special sort executor to do this, which, in our case, is the external merge sort executor.
 
-BusTub will use a `SortPlanNode` for all `ORDER BY` operators (unless it matches an index).
-`EXPLAIN SELECT * FROM __mock_table_1 ORDER BY colA ASC, colB DESC NULLS FIRST;`
+The limit executor will be much easier to implement than the external merge sort executor. Therefore, feel free to implement the limit executor first if you are stuck on the external merge sort executor. You should however be aware that we won't test the limit executor without the external merge sort executor.
 
-You must follow the **external merge sort** algorithm: store intermediate results in temporary pages and merge sort recursively. Assume sort keys are unique for this task (no ties) but support `NULL` values.
-
-You are allowed to use `std::sort` to sort tuples fitting within one sort page, but **NOT** on all tuples. Your `IntermediateResultPage` layout should be compact. Pages must be deleted after the merge sort is done. We only test two-way merge sort.
-
-**Hint:** Use the helper class `TupleComparator` in `execution_common.h`.
-**Hint:** Use page guards to handle pinning/unpinning and evictability.
-
-### Limit
-
-The `LimitPlanNode` specifies the number of tuples that query will generate.
-`EXPLAIN SELECT * FROM __mock_table_1 LIMIT 10;`
-The `LimitExecutor` constrains the number of output tuples from its child executor.
-
-### Window Functions
-
-A window function conceptual model:
-
-1. Split data based on `PARTITION BY`.
-2. In each partition, sort by `ORDER BY`.
-3. In each partition, iterate over each tuple and compute the function over the frame.
-
-For this task, you do not need to handle window frames. You only need to implement `PARTITION BY` and `ORDER BY` clauses. BusTub ensures all window functions within a query have the same `ORDER BY` clauses.
-
-Apart from aggregation functions, you will need to implement `RANK`.
+For all `ORDER BY` clauses, we assume every sort key will only appear once. You do not need to worry about ties in sorting. You will also have to support sorting columns with NULL values with external merge sort.
 
 ---
+
+## External Merge Sort
+
+Except in the case that the `ORDER BY` attributes matches the keys of an index, BusTub will use a `SortPlanNode` for all `ORDER BY` operators.
+
+`EXPLAIN SELECT * FROM __mock_table_1 ORDER BY colA ASC, colB DESC NULLS FIRST;`
+
+This plan node does not change schema (i.e., the output schema is the same as the input schema). You can extract sort keys from `order_bys`. If the query does not include a sort direction in the `ORDER BY` clause (i.e., `ASC`, `DESC`), then the sort mode will be `default` (which is `ASC`). If the query does not specify a `NULLS FIRST` or `NULLS LAST` option in the `ORDER BY` clause, then the placement of NULL values will use `default`, which is `NULLS FIRST` for ascending order and `NULLS LAST` for descending order.
+
+One important assumption about the external merge sort is that the entries in a table will **NOT** be able to fit in memory. Therefore, you need to follow what you learned in the lecture: store the intermediate sorting results in temporary pages and do merge sort recursively based on the sorted results of the previous round.
+
+Similar to HashJoin, a specific page format will be needed for the intermediate sorting results. You should design the page layout and implement the read/write methods for the page. You may choose to reuse the same layout as the `IntermediateResultPage` used in HashJoin, or define a new one if needed.
+
+Your implementation of `IntermediateResultPage` must be able to support sorting tuples containing `VARCHAR` attributes. To simplify your implementation of the page, the tuples containing `VARCHAR` attributes will **never be larger than the page size**, i.e. you do not have to worry about storing a single tuple across two `IntermediateResultPages`. If the current page does not fit the tuple, you can just get a new page and store it there.
+
+You will then implement the merge sort algorithm. It is not hard to do an in-memory merge sort. But when it involves the disk, you should carefully think of how you manipulate the sorted tuples via the page interfaces and the buffer pool. It is worth noting that the page that's no longer in use (i.e. from the previous round of merge sort) should be deleted, or you will have a bunch of "zombie" pages that will never be referred to but still exist in the buffer pool.
+
+It's important that your are doing the merge sort **externally** (not storing all data purely in memory). You are allowed to use `std::sort` to sort tuples fitting within one sort page, but NOT on all tuples. Also, your `IntermediateResultPage` layout should be compact, i.e. as little fragmentation as possible. You should also make sure that the pages are actually deleted after the merge sort is done.
+
+Also, we will only test on **two-way external merge sort** this semester even though `ExternalMergeSortExecutor` is templated. Therefore, feel free to implement a two-way merge sort algorithm instead of a k-way one.
+
+**Hint:** For comparison of tuples based on the sort key, we provide a helper class `TupleComparator` in `execution_common.h`. You can fill out its implementation in `execution_common.cpp`.
+
+**Hint:** To better understand what to do and where to start for `IntermediateResultPage`, you can take a look at the layout of the index pages you worked on in project 2 (e.g. a `char` array can be used as the start of page data). It would be helpful to think of how your executor will call the read/write methods.
+
+**Hint:** You don't really need to manually manipulate the "write-to-disk" part when doing the external merge sort. The buffer pool manager will handle this for you. Remember what you implemented in P1: the page guard will automatically pin and unpin a page, as well as setting the evictability. Just make proper use of the page guard and you will not be worrying too much for page manipulation in this project.
+
+---
+
+## Limit
+
+The `LimitPlanNode` specifies the number of tuples that query will generate. Consider the following example:
+
+`EXPLAIN SELECT * FROM __mock_table_1 LIMIT 10;`
+
+The `LimitExecutor` constrains the number of output tuples from its child executor. If the number of tuples produced by its child executor is less than the limit specified in the plan node, this executor has no effect and yields all of the tuples that it receives.
+
+This plan node does not change schema (i.e., the output schema is the same as the input schema). You do **not** need to support offsets.
+
+---
+
+## Window Functions
+
+In general, window functions have three parts: partition by, order by, and window frames. All three are optional, so multiple combinations of these features make the window function daunting at first. However, the conceptual model for a window function helps make it easier to understand. The conceptual model is the following:
+
+![](https://15445.courses.cs.cmu.edu/fall2025/project3/img/window_function_execution_model.jpg)
+
+* Split the data based on the conditions in the partition by clause.
+* Then, in each partition, sort by the order by clause.
+* Then, in each partition (now sorted), iterate over each tuple. For each tuple, we compute the boundary condition for the frame for that tuple. Each frame has a start and end (specified by the window frame clause). The window function is computed on the tuples in each frame, and we output what we have computed in each frame.
+
+The diagram below shows the general execution model of the window function.
+
+Let's dive deeper with a few examples using the following table:
+
+```sql
+CREATE TABLE t (user_name VARCHAR(1), dept_name VARCHAR(16), salary INT);
+INSERT INTO t VALUES ('a', 'dept1', 100);
+INSERT INTO t VALUES ('b', 'dept1', 200);
+INSERT INTO t VALUES ('c', 'dept1', 300);
+INSERT INTO t VALUES ('e', 'dept2', 100);
+INSERT INTO t VALUES ('d', 'dept2', 50);
+INSERT INTO t VALUES ('f', 'dept2', 60);
+
+```
+
+**Example #1** The below example calculates a moving average of the salary for each department. You can consider it as first sort the rows for each partition by name and then calculate the average of the row before the current row, current row and the row after current row.
+
+```sql
+bustub> SELECT user_name, dept_name, AVG(salary) OVER \
+  (PARTITION BY dept_name ORDER BY user_name ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) \
+  FROM t;
++-----------+-----------+-----------------------------+
+| user_name | dept_name | salary                      |
++-----------+-----------+-----------------------------+
+| a         | dept1     | 150                         |
+| b         | dept1     | 200                         |
+| c         | dept1     | 250                         |
+| d         | dept2     | 75                          |
+| e         | dept2     | 70                          |
+| f         | dept2     | 80                          |
++-----------+-----------+-----------------------------+
+
+```
+
+**Example #2** The query below calculates a moving average of the salary for each department. Different from previous example, when window frames are omitted and order by clauses not omitted, it calculates from the first row to the current row for each partition.
+
+```sql
+bustub> SELECT user_name, dept_name, AVG(salary) OVER (PARTITION BY dept_name ORDER BY user_name) FROM t;
++-----------+-----------+-----------------------------+
+| user_name | dept_name | salary                      |
++-----------+-----------+-----------------------------+
+| a         | dept1     | 100                         |
+| b         | dept1     | 150                         |
+| c         | dept1     | 200                         |
+| d         | dept2     | 50                          |
+| e         | dept2     | 75                          |
+| f         | dept2     | 70                          |
++-----------+-----------+-----------------------------+
+
+```
+
+**Example #3** This query show that when order by and window frames are both omitted, it calculates from the first row to the last row for each partition, which means the results within the partition should be the same.
+
+```sql
+bustub> SELECT user_name, dept_name,AVG(salary) OVER (PARTITION BY dept_name) FROM t;
++-----------+-----------+-----------------------------+
+| user_name | dept_name | salary                      |
++-----------+-----------+-----------------------------+
+| a         | dept1     | 200                         |
+| b         | dept1     | 200                         |
+| c         | dept1     | 200                         |
+| e         | dept2     | 70                          |
+| d         | dept2     | 70                          |
+| f         | dept2     | 70                          |
++-----------+-----------+-----------------------------+
+bustub> SELECT user_name, dept_name, AVG(salary) OVER () FROM t;
++-----------+-----------+-----------------------------+
+| user_name | dept_name | salary                      |
++-----------+-----------+-----------------------------+
+| a         | dept1     | 135                         |
+| b         | dept1     | 135                         |
+| c         | dept1     | 135                         |
+| e         | dept2     | 135                         |
+| d         | dept2     | 135                         |
+| f         | dept2     | 135                         |
++-----------+-----------+-----------------------------+
+
+```
+
+For this task, you do **not** need to handle window frames. As in the above examples, you only need to implement `PARTITION BY` and `ORDER BY` clauses. You may notice that the `ORDER BY` clauses also change the order of non-window function columns. This is not necessary as the output order is not guaranteed and depends on the implementation. For simplicity, BusTub ensures that all window functions within a query have the same `ORDER BY` clauses. This means the following queries are **not** supported in BusTub and your implementation does not need to handle them:
+
+`SELECT SUM(v1) OVER (ORDER BY v1), SUM(v1) OVER (ORDER BY v2) FROM t1;`
+`SELECT SUM(v1) OVER (ORDER BY v1), SUM(v2) OVER () FROM t1;`
+
+The test case will not check the order of output rows as long as columns within each row are matched. Therefore, you can sort the tuples first before doing the calculations when there are `ORDER BY` clauses, and do not change the order of tuples coming from the child executor when there are no order by clauses.
+
+You can implement the executor in the following steps:
+
+1. Sort the tuples as indicated in `ORDER BY`.
+2. Generate the initial value for each partition
+3. Combine values for each partition and record the value for each row.
+
+You may reuse the code from sort executors to complete step 1 and the code from aggregation executor to complete step 2 and step 3.
+
+Apart from aggregation functions implemented in previous tasks, you will need to implement `RANK` as well. The BusTub planner ensures that `ORDER BY` clause is not empty if `RANK` window function is present. Be aware that there might be ties and please refer to test cases for the expected behavior.
+
 
 ## Additional Information
 
+This section provides some additional information on other system components in BusTub that you will need to interact in order to complete this project.
+
 ### System Catalog
 
-`src/include/catalog/catalog.h`. Use `Catalog::GetTable()` and `Catalog::GetIndex()`.
+A database maintains an internal catalog to keep track of meta-data about the database. In this project, you will interact with the system catalog to query information regarding tables, indexes, and their schemas.
+
+The entirety of the catalog implementation is in `src/include/catalog/catalog.h` . You should pay particular attention to the member functions `Catalog::GetTable()` and `Catalog::GetIndex()`. You will use these functions in the implementation of your executors to query the catalog for tables and indexes.
 
 ### Index Updates
 
-For `Insert`, `Update`, and `Delete`, modify all indexes for the table. Use `Catalog::GetTableIndexes()`.
+For the table modification executors (**InsertExecutor**, **UpdateExecutor**, and **DeleteExecutor**) you must modify all indexes for the table targeted by the operation. You may find the `Catalog::GetTableIndexes()` function useful for querying all of the indexes defined for a particular table. Once you have the `IndexInfo` instance for each of the table's indexes, you can invoke index modification operations on the underlying index structure.
+
+In this project, we use your implementation of b-plus tree index from **Project #2** as the underlying data structure for all index operations. Therefore, successful completion of this project relies on a working implementation of the b-plus tree.
 
 ### Optimizer Rule Implementation Guide
 
-Optimizer rules construct optimized plans in a bottom-up way. Recursively apply rules to children before applying to the current node.
+The BusTub optimizer is a rule-based optimizer. Most optimizer rules construct optimized plans in a bottom-up way. Because the query plan has this tree structure, before applying the optimizer rules to the current plan node, you want to first recursively apply the rules to its children.
 
----
+At each plan node, you should determine if the source plan structure matches the one you are trying to optimize, and then check the attributes in that plan to see if it can be optimized into the target optimized plan structure.
 
-## Instructions
+In the public BusTub repository, we already provide the implementation of several optimizer rules. Please take a look at them as reference.
 
-### Testing
+## Testing
+
+We will use **SQLLogicTest** to perform testing and benchmarking. To use it,
 
 ```bash
 make -j$(nproc) sqllogictest
@@ -556,15 +693,40 @@ make -j$(nproc) sqllogictest
 
 ```
 
-### Formatting
+You can use the **bustub-sqllogictest** program to run **slt** files. Remember to recompile **sqllogictest** before doing any testing. In this project, we provide ALL test cases to you. There are no hidden tests. The test cases are located at **test/sql/** .
+
+---
+
+## Formatting
+
+Your code must follow the **Google C++ Style Guide**. We use **Clang** to automatically check the quality of your source code. Your project grade will be **zero** if your submission fails any of these checks.
+
+Execute the following commands to check your syntax. The **format** target will automatically correct your code. The **check-lint** and **check-clang-tidy-p3** targets will print errors and instruct you how to fix it to conform to our style guide.
 
 ```bash
-make format
-make check-lint
-make check-clang-tidy-p3
+$ make format
+$ make check-lint
+$ make check-clang-tidy-p3
 
 ```
 
-### Memory Leaks
+---
 
-Use LLVM Address Sanitizer (ASAN) and Leak Sanitizer (LSAN). Configure CMake in debug mode.
+## Memory Leaks
+
+For this project, we use **LLVM Address Sanitizer (ASAN) and Leak Sanitizer (LSAN)** to check for memory errors. To enable ASAN and LSAN, configure CMake in debug mode and run tests as you normally would. If there is memory error, you will see a memory error report. Note that macOS **only supports address sanitizer without leak sanitizer**.
+
+In some cases, address sanitizer might affect the usability of the debugger. In this case, you might need to disable all sanitizers by configuring the CMake project with:
+
+```bash
+$ cmake -DCMAKE_BUILD_TYPE=Debug -DBUSTUB_SANITIZER= ..
+
+```
+
+---
+
+## Development Hints
+
+You can use **BUSTUB_ASSERT** for assertions in debug mode. Note that the statements within **BUSTUB_ASSERT** will NOT be executed in release mode. If you have something to assert in all cases, use **BUSTUB_ENSURE** instead.
+
+If you are having compilation problems, running **make clean** does not completely reset the compilation process. You will need to delete your build directory and run **cmake ..** again before you rerun **make**.

@@ -84,6 +84,8 @@ When a transaction commits, it is assigned a monotonically-increasing **commit t
 
 Here is an example of a table heap and version chain after several writes / updates to 4 tuples in the table heap (A, B, C, D):
 
+![](https://15445.courses.cs.cmu.edu/fall2025/project4/img/1-1-ts.png)
+
 In this diagram, A1 refers to the first version of tuple A, and A3 refers to third version of tuple A. A4 refers to the fourth version of tuple A, and it is also the most recent or "true" version of tuple A. B4 and C4 are actually the third version of tuples B and C respectively, and we are only notating it like this for the sake of the explanation below.
 
 The timestamps (ts=#) refer to the commit timestamps of the transactions that each of the tuples belong to. So [A1, B1, C1] belong to the transaction with commit timestamp = 1 (which we can shorthand refer to as transaction 1), and [A3, B3, D3] belong to the transaction with commit timestamp = 3 (transaction 3). The most recent committed transaction in this diagram is the transaction with commit timestamp = 4 with [A4, B4, C4].
@@ -113,6 +115,8 @@ You should pass all test cases in the `TxnTimestampTest` suite at this point.
 BusTub stores transaction data in three places: the table heap, the transaction manager, and inside each transaction's workspace. The table heap always contains the latest tuple data. The transaction manager stores a pointer to the latest undo log for every tuple (`PageVersionInfo`). Transactions store the undo logs that they create, which record how a transaction has modified a tuple.
 
 Below is a representation of the same diagram as above, but with the `PageVersionInfo` struct included and the undo logs located in a specific transaction's workspace. The dotted lines in the diagram are not pointers, but rather are logical connections via the transaction manager.
+
+![](https://15445.courses.cs.cmu.edu/fall2025/project4/img/2-1-storage-format.png)
 
 To retrieve a tuple at any given read timestamp, you will need to (1) fetch all modifications (aka. undo logs) that happened after the given timestamp, and (2) roll back those modifications (“undo” the undo logs) from the latest version of the tuple to recover the past version of that tuple.
 
@@ -155,14 +159,19 @@ In this task, you will implement the tuple reconstruction algorithm via the `Rec
 4. A list of undo logs in order of most recent modification to oldest modification.
 
 Here is an example of reconstructing a tuple:
+![](https://15445.courses.cs.cmu.edu/fall2025/project4/img/2-2-undo-log.png)
 
 Base tuples (under "latest version in table heap") always store a value for every column in their schema (or in other words, they are complete and valid tuples). Undo logs, however, only contain the columns that were changed by an operation. Undo logs also have an `is_delete` flag that represents the deletion of the entire tuple.
 
 Both the base tuple metadata and the undo logs will have `is_delete` flags, and they will not always be equal. In task 4.2, you will have to "insert" a tuple into an existing RID, and therefore you will need this `is_delete` flag in your `UndoLog` to perform this kind of operation (imagine inserting and deleting the same exact tuple in a cycle). An example of the `is_delete` flag works is illustrated below. Make sure you understand that these undo logs are going backwards in time. As an exercise, try to figure out the sequence of operations that could have led to this specific version chain:
 
+![](https://15445.courses.cs.cmu.edu/fall2025/project4/img/2-2-undo-log-with-del.png)
+
 `ReconstructTuple` should apply all modifications provided to the function without looking at the timestamp in the metadata or undo logs. It does not need to access data other than the ones provided in the function parameter list. In other words, make sure you are not passing too many undo logs to `ReconstructTuple`.
 
 Below is an illustration of the structure of `UndoLog`:
+
+![](https://15445.courses.cs.cmu.edu/fall2025/project4/img/2-4-undo-log-format.png)
 
 `UndoLog` represents a partial modification to some tuple (at some point in time determined by the `ts_` field). The `modified_fields_` member in `UndoLog` is a vector of `bool` that has the same length as the number of columns in the table schema. If one of the booleans is set to true, it indicates that the corresponding field in the tuple has been updated by that `UndoLog`. For example, if the 3rd element (index 2) of the `modified_fields_` vector is set to true, then that means the third column of the tuple was updated.
 
@@ -208,6 +217,8 @@ Here's our final example for `SeqScanExecutor`. To make our illustration easier 
 
 Let's take a look at the following example, where we traverse the version chain to collect the undo logs to construct the tuples that the user requests:
 
+![](https://15445.courses.cs.cmu.edu/fall2025/project4/img/2-3-seqscan.png)
+
 Suppose we have a transaction with ID 9 and read timestamp of 3. `txn9` has not yet committed (due to the presence of the temporary transaction timestamp 1009). The result of a sequential scan in `txn9` of the table should be: `[(A, 9), (B, 9), (C, 2), (D, 9)]`. For all of the tuples except `(C, 2)`, transaction 9 was the one that already modified them, so it does not need to traverse the undo logs. However, `(C, 2)` has a commit timestamp of 4, which is greater than our read timestamp of 3. Transaction 9 then knows to traverse the undo logs to find the first version of this tuple that has a commit timestamp less than or equal to 3.
 
 Consider some other transaction that has a read timestamp of 4. The result of a sequential scan of this transaction will be: `[(A, 3), (B, 3), (C, 4)]`. For `(A, 3)` and `(B, 3)`, the table heap contains a pending update from `txn9`, so the transaction will need to traverse the version chain to get the last update before/at timestamp 4. `(C, 4)` is the latest update at read timestamp 4. `(D, 9)` is a pending update by transaction 9, and since it does not have a version chain, we do not need to return it. In general, if there are no previous versions of a tuple at a given read timestamp, then the transaction should treat it as if the tuple does not exist.
@@ -227,6 +238,8 @@ In this section, you will need to implement the data modification executors. Thi
 ### 3.1 Insert Executor
 
 Your insert executor implementation should be similar to the one in Project #3. You can create a new tuple in the table heap, and you will need to correctly construct the tuple's metadata. The timestamp in the table heap should be set to the transaction temporary timestamp, as described in Task 2.2. You should also add the RID to the write set via `AppendWriteSet` at this point. Here is a simple illustration of `txn9` inserting (D, 3) into the table:
+
+![](https://15445.courses.cs.cmu.edu/fall2025/project4/img/3-1-insert.png)
 
 We have provided the helper functions `UpdateTupleInPlace` and `UpdateUndoLink` to update the tuple in the table heap and the undo link respectively. These functions mimic an atomic compare-and-swap operation, where you will need to provide a check function. The pseudo code for the two functions are as below:
 
@@ -259,6 +272,8 @@ Only one transaction is allowed to execute the `Commit` function at a time, and 
 4. Set the transaction to the `COMMITTED` state.
 5. Update the commit timestamp of the transaction.
 6. Update `last_committed_ts_` (you can do the `.fetch_add(1)` here).
+
+![](https://15445.courses.cs.cmu.edu/fall2025/project4/img/3-2-commit.png)
 
 You should have implemented most of the above logic as a part of task 1, so you will just need to add the iterating table logic.
 
@@ -335,6 +350,8 @@ Your update executor should be implemented as a pipeline breaker: it should firs
 
 At this point, all test cases are single-threaded, and therefore you do not need to think hard about race conditions that might occur during the update / delete process. The only condition for detecting write-write conflict is to check the timestamp of the base tuple metadata.
 
+![](https://15445.courses.cs.cmu.edu/fall2025/project4/img/3-4-write-conflict.png)
+
 Let's go through the example above, where we show the 3 different cases you will need to handle before making any changes.
 
 1. In case (1), `txn10` has deleted the (A, 2) tuple and has not committed yet. Suppose `txn9` has a read timestamp of 3. `txn9` can then still read the old version of the tuple (A, 2).
@@ -350,13 +367,21 @@ After checking the write-write conflict (you should write a helper function for 
 
 Here's an example illustrating a delete:
 
+![](https://15445.courses.cs.cmu.edu/fall2025/project4/img/3-4-delete.png)
+
 Here's an example illustrating an update:
+
+![](https://15445.courses.cs.cmu.edu/fall2025/project4/img/3-4-update.png)
 
 Make sure you understand these diagrams before you start implementing your executors. If you have any questions, please ask us for clarifications!
 
 In the example below, `txn9` first updates the tuple to (A, 4), then to (A, 5), then to (B, 5), then to (A, 5), and then finally deletes it. Throughout the process, `txn9` keeps exactly one `UndoLog` for the tuple. When we update (B, 5) to (A, 5), we could have gone all the way back to the beginning of the transaction to compute the partial update (_, 5) (since combining all of the deltas gets you from (A,3) to (A, 5)). However, we recommend simply adding modifications to the existing `UndoLog` (so that it has the full change (A, 5)), which will make it easier to handle concurrency issues. In other words, make sure you only add / update data in the undo log, and do not remove data.
 
+![](https://15445.courses.cs.cmu.edu/fall2025/project4/img/3-4-update-2.png)
+
 In this next example, `txn9` inserts a tuple, makes several modifications, and then removes it. In this case, you can directly modify the table heap tuple without generating any undo logs.
+
+![](https://15445.courses.cs.cmu.edu/fall2025/project4/img/3-4-update-3.png)
 
 We have set the commit timestamp to 0 at the end because this tuple is inserted by `txn9` and removed by `txn9`, which means that it never actually existed. If the version chain did contain undo logs, it should be set to the actual commit timestamp instead of 0 so that the undo logs can be accessed with a transaction with lower read timestamp. You could also just ignore this case and follow the usual commit logic. As long as you can read the correct data at each timestamp, this does not matter until Task #4.4.
 
@@ -381,6 +406,8 @@ You will need to traverse the table heap and the version chain to identify undo 
 
 The example below illustrates the case where the watermark timestamp is 3 and we have `txn1`, `txn2`, and `txn9` committed. `txn1`'s undo logs are no longer accessible because every undo log with commit timestamp 1 has been overwritten by updates with commit timestamps less than or equal to 3. Thus we can directly remove `txn1`. `txn2`'s undo log for tuple (A, 2) is not accessible, but its undo log for tuple (C, 2) is still accessible because there has been no additional updates, so we cannot remove it right now.
 
+![](https://15445.courses.cs.cmu.edu/fall2025/project4/img/3-5-garbage-collection.png)
+
 After removing `txn1`, there will be dangling pointers to a removed undo log, as indicated in dashed lines. You **DO NOT** need to update the previous undo log to modify the dangling pointer and make it an invalid pointer, and it is fine to leave it there for this project. If everything in your implementation is correct, your sequential scan executor should never even attempt to dereference these dangling pointers, as they are below the watermark. However, we still recommend you to add some asserts in your code to ensure this will never happen.
 
 At this point, you should pass the `TxnExecutorTest`.
@@ -393,11 +420,15 @@ You can choose which design you want to implement in this task.
 
 #### Implementation #1
 
+![](https://15445.courses.cs.cmu.edu/fall2025/project4/img/5-abort-2.png)
+
 In this example, we are going to abort `txn9`. You can simply undo the tuple and set the table heap to the original value. This is easier to implement and will leave your version chain with two items with timestamp 3. Your sequential scan / index scan executor should correctly handle this situation after the transaction is aborted.
 
 With this implementation, aborted transactions will have undo logs in the version chain, and cannot be immediately reclaimed in garbage collection.
 
 #### Implementation #2
+
+![](https://15445.courses.cs.cmu.edu/fall2025/project4/img/5-abort.png)
 
 In this example, aborting `txn9` will atomically link the undo link to the previous version and update the table heap. You will need to use `UpdateTupleAndUndoLink` / `GetTupleAndUndoLink` to update / read tuples and undo links atomically. With this implementation, you do not need to wait until the watermark before removing the aborted transaction from the transaction map.
 
@@ -437,6 +468,8 @@ Between steps (1) and (3), it is possible that other transactions are doing the 
 
 In this example, let us go through `txn9` attempting to insert A, B, and C separately (assuming the only column of the tuple is the primary key). Assume that A already exists in the index, and C has been inserted by an uncommitted transaction. We have removed the `PageVersionInfo` structure in the diagram for clarity.
 
+![](https://15445.courses.cs.cmu.edu/fall2025/project4/img/4-1-insert-index.png)
+
 1. **Inserting A:** the key already exists in the index, violating the uniqueness requirement for primary key, thus aborting the transaction.
 2. **Inserting B:** as there is no conflict in the index, first create a tuple in the table heap, and then insert the RID of the newly-created tuple into the index.
 3. **Inserting C:** we assume here that there is another `txn10` also trying to insert C. `txn9` first detects no conflict in the index and creates a tuple in the table heap. Then, in the background, `txn10` does (2) and (3), creating a tuple and updating the index. When `txn9` tries inserting into the index in step (4), there will be a unique key violation reported by the index, and therefore `txn9` should go into the `TAINTED` state.
@@ -453,6 +486,8 @@ Once an entry is created in the index, it will always point to the same RID and 
 
 In this example, tuple (B, 2) has been deleted by a transaction with commit timestamp 3. We **DO NOT** remove the entry from the index when a tuple is deleted, and therefore the index may point to a deletion marker, and will **ALWAYS** point to the same RID once it is there. When `txn9` inserts (B, 3) into the table with the insert executor, it should **NOT** create a new tuple. Instead, it should update the deletion marker to the inserted tuple, as if it were an update.
 
+![](https://15445.courses.cs.cmu.edu/fall2025/project4/img/4-2-update-index.png)
+
 You will also need to think about other race conditions at this point. For example, if multiple transactions are updating the `UndoLink` at the same time. You should correctly abort some of them and let exactly one of them proceed without losing any data. Starting from this task, you will need to use the atomic helper function `UpdateTupleAndUndoLink`/`GetTupleAndUndoLink` and pass in the check function to avoid race conditions.
 
 You should observe in the above example, there will be a small amount of time when the table heap contains a (deleted) tuple with the same timestamp as the first undo log. Your sequential scan executor should also handle this case correctly after you have implemented updates and deletes.
@@ -463,11 +498,19 @@ You will need to handle when the primary key gets updated. In this case, the upd
 
 Let us go through the case where `txn9` is executing `UPDATE table SET col1 = col1 + 1` in order, where `col1` is the primary key. `txn9` first inserts (2, B) (along with any tuples that have new primary keys) into the table:
 
+![](https://15445.courses.cs.cmu.edu/fall2025/project4/img/4-3-update-pk.png)
+
 Now we start updating the table with `col1 = col1 + 1`, where we delete all tuples that will be updated:
+
+![](https://15445.courses.cs.cmu.edu/fall2025/project4/img/4-3-update-pk-2.png)
 
 Next, we insert the updated tuple back to the table with new primary keys:
 
+![](https://15445.courses.cs.cmu.edu/fall2025/project4/img/4-3-update-pk-3.png)
+
 Finally, we commit the changes:
+
+![](https://15445.courses.cs.cmu.edu/fall2025/project4/img/4-3-update-pk-4.png)
 
 That's all there is to it!
 
