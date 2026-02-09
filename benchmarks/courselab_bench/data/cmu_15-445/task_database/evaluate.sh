@@ -1,0 +1,1 @@
+# This is a dummy evaluate script to pass the CI test. Real evaluate script is in evaluate1.sh, evaluate2.sh, evaluate3.sh, evaluate4.sh
