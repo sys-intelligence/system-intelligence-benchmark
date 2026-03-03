@@ -14,18 +14,13 @@ MODEL_NAME="$1"
 AGENT="${2:-agent_based}"
 NEW_MODEL_NAME="${MODEL_NAME//\//_}"
 
-# Activate venv if it exists
-if [ -d ".venv" ]; then
-    source .venv/bin/activate
+if [ ! -x ".venv/bin/python" ]; then
+    echo "==> .venv is missing. Run ./install.sh first."
+    exit 1
 fi
 
 echo "==> Start to run SysMoBench"
-python3 src/main.py \
+uv run --no-sync python -m src.main \
     --model_name "${MODEL_NAME}" \
     --agent "${AGENT}" \
     --max_iterations 3
-
-# Deactivate if we activated
-if [ -d ".venv" ]; then
-    deactivate
-fi

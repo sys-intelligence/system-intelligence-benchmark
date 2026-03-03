@@ -2,28 +2,24 @@
 
 set -e  # Exit immediately on error.
 
+if ! command -v uv >/dev/null 2>&1; then
+    echo "==> uv not found. Installing uv..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+fi
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+export UV_CACHE_DIR="${UV_CACHE_DIR:-${REPO_ROOT}/.uv-cache}"
+
 # if .venv does not exist, create it
 if [ -d ".venv" ]; then
     echo "==> .venv already exists, skipping creation."
 else
     echo "==> Creating .venv directory..."
-
-    python3 -m venv .venv
-    source .venv/bin/activate
-    
-    if [ ! -d "SWE-agent" ]; then
-        echo "==> Install SWE-agent and its dependencies..."
-        git clone https://github.com/SWE-agent/SWE-agent.git
-        cd SWE-agent
-        git checkout 0c27f286303a939aa868ad2003bc4b6776771791
-        pip install --editable .
-        sweagent --help
-        cd ..
-    else
-        echo "==> SWE-agent repository already exists, skipping clone."
-    fi
-    
-    deactivate
+    uv venv .venv
 fi
+
+uv sync --extra dev
+uv run --no-sync sweagent --help >/dev/null
 
 echo "==> ArtEvalBench environment is set up successfully."

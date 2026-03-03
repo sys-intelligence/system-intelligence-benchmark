@@ -2,6 +2,9 @@
 
 set -e
 
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+export UV_CACHE_DIR="${UV_CACHE_DIR:-${REPO_ROOT}/.uv-cache}"
+
 # Clone submodule to SREGym-applications if no file in sregym_core/SREGym-applications
 if [ ! -f "sregym_core/SREGym-applications/README.md" ]; then
     echo "==> Cloning SREGym-applications..."
@@ -165,5 +168,5 @@ fi
 cd -
 
 source sregym_core/.venv/bin/activate
-# uv pip install -r requirements.txt
+uv sync --python sregym_core/.venv/bin/python --extra dev
 deactivate
