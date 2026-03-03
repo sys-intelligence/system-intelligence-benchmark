@@ -2,7 +2,7 @@
 name = "arteval-bench"
 version = "0.1.0"
 description = "ArtEval benchmark package"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 dependencies = [
   "system-intelligence-sdk>=0.1.0",
   "requests",
