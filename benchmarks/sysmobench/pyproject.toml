@@ -1,0 +1,25 @@
+[project]
+name = "sysmobench-bench"
+version = "0.1.0"
+description = "SysMoBench SDK adapter package"
+requires-python = ">=3.9"
+dependencies = [
+  "system-intelligence-sdk>=0.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+  "ruff>=0.6.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.10.4,<0.11.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "src"
+module-root = ""
+
+[tool.uv.sources]
+system-intelligence-sdk = { workspace = true }

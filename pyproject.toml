@@ -1,3 +1,110 @@
+[project]
+name = "system-intelligence-sdk"
+version = "0.1.0"
+description = "Reusable SDK for System Intelligence Benchmark"
+readme = "sdk/README.md"
+requires-python = ">=3.9"
+authors = [{ name = "System Intelligence Team" }]
+license = { text = "MIT" }
+keywords = ["benchmark", "llm", "sdk", "evaluation"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+dependencies = [
+  "litellm>=1.77.5",
+  "sentence-transformers>=4.0.1",
+  "scikit-learn>=1.6.1",
+  "tomli>=2.0.1; python_version < '3.11'",
+]
+
+[project.urls]
+Homepage = "https://github.com/sys-intelligence/system-intelligence-benchmark"
+Repository = "https://github.com/sys-intelligence/system-intelligence-benchmark"
+Issues = "https://github.com/sys-intelligence/system-intelligence-benchmark/issues"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+  "ruff>=0.6.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.10.4,<0.11.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "sdk"
+module-root = ""
+
+[tool.uv.workspace]
+members = [
+  "benchmarks/arteval_bench",
+  "benchmarks/cache_algo_bench",
+  "benchmarks/courseexam_bench",
+  "benchmarks/courselab_bench",
+  "benchmarks/example_bench",
+  "benchmarks/sregym",
+  "benchmarks/sysmobench",
+  "benchmarks/toposense_bench",
+]
+
+[tool.system_intelligence]
+sdk_package = "system-intelligence-sdk"
+
+[[tool.system_intelligence.benchmark_packages]]
+name = "arteval-bench"
+path = "benchmarks/arteval_bench"
+entry = "src/core/main.py"
+depends_on = ["system-intelligence-sdk"]
+
+[[tool.system_intelligence.benchmark_packages]]
+name = "cache-algo-bench"
+path = "benchmarks/cache_algo_bench"
+entry = "src/main.py"
+depends_on = ["system-intelligence-sdk"]
+
+[[tool.system_intelligence.benchmark_packages]]
+name = "courseexam-bench"
+path = "benchmarks/courseexam_bench"
+entry = "run_eval.py"
+depends_on = ["system-intelligence-sdk"]
+
+[[tool.system_intelligence.benchmark_packages]]
+name = "courselab-bench"
+path = "benchmarks/courselab_bench"
+entry = "run_eval.py"
+depends_on = ["system-intelligence-sdk"]
+
+[[tool.system_intelligence.benchmark_packages]]
+name = "example-bench"
+path = "benchmarks/example_bench"
+entry = "src/main.py"
+depends_on = ["system-intelligence-sdk"]
+
+[[tool.system_intelligence.benchmark_packages]]
+name = "sregym-bench"
+path = "benchmarks/sregym"
+entry = "src/main.py"
+depends_on = ["system-intelligence-sdk"]
+
+[[tool.system_intelligence.benchmark_packages]]
+name = "sysmobench-bench"
+path = "benchmarks/sysmobench"
+entry = "src/main.py"
+depends_on = ["system-intelligence-sdk"]
+
+[[tool.system_intelligence.benchmark_packages]]
+name = "toposense-bench"
+path = "benchmarks/toposense_bench"
+entry = "src/main.py"
+depends_on = ["system-intelligence-sdk"]
+
 [tool.ruff]
 line-length = 120
 target-version = "py39"

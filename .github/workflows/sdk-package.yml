@@ -1,0 +1,44 @@
+name: SDK Package
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'sdk/**'
+      - 'pyproject.toml'
+      - '.github/workflows/sdk-package.yml'
+  pull_request:
+    paths:
+      - 'sdk/**'
+      - 'pyproject.toml'
+      - '.github/workflows/sdk-package.yml'
+  workflow_dispatch:
+
+jobs:
+  build-sdk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Build SDK package
+        run: uv build --package system-intelligence-sdk --wheel --sdist
+
+      - name: Verify package metadata
+        run: uvx twine check dist/system_intelligence_sdk-*
+
+      - name: Upload SDK dist artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdk-dist
+          path: dist/*
+          retention-days: 14

@@ -38,6 +38,9 @@ System Intelligence Benchmark currently includes the following example benchmark
 - **SDK** (`sdk/`) - Software development kit providing evaluators, LLM interfaces, and utility functions
 - **Documentation** (`doc/`) - Guides and documentation for using and contributing to System Intelligence Benchmark
 
+For the canonical repository boundaries and migration direction, see [doc/project_structure.md](doc/project_structure.md).
+For SDK packaging and release flow, see [doc/sdk_packaging.md](doc/sdk_packaging.md).
+
 ### Prerequisites
 
 - Python 3.9+
@@ -145,4 +148,3 @@ trademarks or logos is subject to and must follow
 [Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 Any use of third-party trademarks or logos are subject to those third-party's policies.
-

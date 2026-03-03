@@ -1,0 +1,33 @@
+[project]
+name = "cache-algo-bench"
+version = "0.1.0"
+description = "Cache algorithm benchmark package"
+requires-python = ">=3.9"
+dependencies = [
+  "system-intelligence-sdk>=0.1.0",
+  "requests",
+  "azure-identity",
+  "colorlog",
+  "numpy",
+  "matplotlib",
+  "openbox",
+  "logging-config",
+  "tomli>=2.0.1; python_version < '3.11'",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+  "ruff>=0.6.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.10.4,<0.11.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "src"
+module-root = ""
+
+[tool.uv.sources]
+system-intelligence-sdk = { workspace = true }
