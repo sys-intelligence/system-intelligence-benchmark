@@ -3,10 +3,7 @@
 import argparse
 import json
 import os
-import sys
 from datetime import datetime
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
 
 from sdk.utils import set_llm_endpoint_from_config
 

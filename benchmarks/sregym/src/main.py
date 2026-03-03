@@ -1,20 +1,23 @@
 import argparse
 import datetime
+import importlib.util
 import json
 import os
-import sys
+from pathlib import Path
 
-# Add parent directory to path to allow importing sregym_core
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
+SREGYM_MAIN_PATH = Path(__file__).resolve().parent.parent / "sregym_core" / "main.py"
 
-try:
-    from sregym_core.main import main as sregym_main
-except ImportError:
-    # In case sregym_core is not found in parent, try explicit path
-    sys.path.append(
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "../sregym_core"))
-    )
-    from sregym_core.main import main as sregym_main
+
+def _load_sregym_main():
+    spec = importlib.util.spec_from_file_location("sregym_core_main", SREGYM_MAIN_PATH)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Failed to load SREGym core entry from {SREGYM_MAIN_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.main
+
+
+sregym_main = _load_sregym_main()
 
 
 def main(input_file: str, output_dir: str, model_name: str, agent_name: str):

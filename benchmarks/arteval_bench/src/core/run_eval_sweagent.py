@@ -1,7 +1,6 @@
-import sys
+import json
+import os
 import subprocess
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
 
 from patch_evaluator import pacth_eval
 

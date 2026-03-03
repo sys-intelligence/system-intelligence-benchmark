@@ -3,17 +3,10 @@
 import argparse
 import json
 import os
-import sys
 from datetime import datetime
 from pathlib import Path
 
-# Add paths
-SDK_ROOT = Path(__file__).parent.parent.parent.parent
 SYSMOBENCH_CORE = Path(__file__).parent.parent / "sysmobench_core"
-SRC_ROOT = Path(__file__).parent
-sys.path.insert(0, str(SDK_ROOT))
-sys.path.insert(0, str(SYSMOBENCH_CORE))
-sys.path.insert(0, str(SRC_ROOT))
 
 # Import SDK
 from sdk.utils import set_llm_endpoint_from_config  # noqa: E402
@@ -22,8 +15,8 @@ set_llm_endpoint_from_config(str(Path(__file__).parent.parent / 'env.toml'))
 # Import SysMoBench
 from tla_eval.tasks.loader import TaskLoader  # noqa: E402
 from tla_eval.methods import get_method  # noqa: E402
-from executor import SysMoExecutor  # noqa: E402
-from evaluator import SysMoEvaluator  # noqa: E402
+from .executor import SysMoExecutor  # noqa: E402
+from .evaluator import SysMoEvaluator  # noqa: E402
 
 import logging
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
