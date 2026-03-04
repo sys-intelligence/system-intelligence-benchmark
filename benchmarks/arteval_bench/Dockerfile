@@ -37,6 +37,7 @@ RUN set -eux; \
  rm -rf .venv; \
  uv venv .venv; \
  uv pip install --python .venv/bin/python "$SDK_WHEEL" "$BENCH_WHEEL"; \
- .venv/bin/python -c "import importlib.metadata as m; print(m.version('sweagent'))"
+ .venv/bin/python src/core/sweagent_compat.py >/dev/null; \
+ .venv/bin/sweagent --help >/dev/null
 
 CMD ["bash"]

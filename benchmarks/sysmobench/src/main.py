@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -15,6 +16,11 @@ set_llm_endpoint_from_config(str(Path(__file__).parent.parent / 'env.toml'))
 # Import SysMoBench
 from tla_eval.tasks.loader import TaskLoader  # noqa: E402
 from tla_eval.methods import get_method  # noqa: E402
+if __package__ in (None, ''):
+    # Allow `python benchmarks/sysmobench/src/main.py ...` by setting package context.
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    __package__ = 'src'
+
 from .executor import SysMoExecutor  # noqa: E402
 from .evaluator import SysMoEvaluator  # noqa: E402
 

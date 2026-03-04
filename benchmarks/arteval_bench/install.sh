@@ -20,6 +20,7 @@ else
 fi
 
 uv sync --extra dev
+uv run --no-sync python src/core/sweagent_compat.py >/dev/null
 uv run --no-sync sweagent --help >/dev/null
 
 echo "==> ArtEvalBench environment is set up successfully."

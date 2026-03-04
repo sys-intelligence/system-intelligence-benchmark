@@ -4,11 +4,12 @@ import argparse
 import json
 import os
 from datetime import datetime
+from pathlib import Path
 
 from sdk.logger import logger
 from sdk.utils import set_llm_endpoint_from_config
 
-set_llm_endpoint_from_config('env.toml')
+set_llm_endpoint_from_config(str(Path(__file__).resolve().parents[2] / 'env.toml'))
 
 from run_eval_in_env import run_eval
 from utils import get_task

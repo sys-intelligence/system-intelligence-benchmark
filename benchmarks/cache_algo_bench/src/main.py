@@ -4,10 +4,11 @@ import argparse
 import json
 import os
 from datetime import datetime
+from pathlib import Path
 
 from sdk.utils import set_llm_endpoint_from_config
 
-set_llm_endpoint_from_config('env.toml')
+set_llm_endpoint_from_config(str(Path(__file__).resolve().parent.parent / 'env.toml'))
 
 from cache_simulator.run_simulatorcache import simulate  # noqa: E402
 

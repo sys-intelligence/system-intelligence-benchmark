@@ -2,9 +2,10 @@
 name = "sysmobench-bench"
 version = "0.1.0"
 description = "SysMoBench SDK adapter package"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 dependencies = [
   "system-intelligence-sdk>=0.1.0",
+  "sysmobench>=1.0.0",
 ]
 
 [project.optional-dependencies]
@@ -23,3 +24,4 @@ module-root = ""
 
 [tool.uv.sources]
 system-intelligence-sdk = { workspace = true }
+sysmobench = { path = "sysmobench_core" }

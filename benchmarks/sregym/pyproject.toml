@@ -2,9 +2,10 @@
 name = "sregym-bench"
 version = "0.1.0"
 description = "SREGym benchmark package"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 dependencies = [
   "system-intelligence-sdk>=0.1.0",
+  "sregym>=0.0.1; python_version >= '3.12'",
 ]
 
 [project.optional-dependencies]
@@ -23,3 +24,4 @@ module-root = ""
 
 [tool.uv.sources]
 system-intelligence-sdk = { workspace = true }
+sregym = { path = "sregym_core" }
