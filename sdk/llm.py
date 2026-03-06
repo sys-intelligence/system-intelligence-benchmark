@@ -80,7 +80,7 @@ class LLM:
             try:
                 retry -= 1
                 time.sleep(timeout)
-                response = completion(messages=self.messages, **self.parameters)
+                response = completion(messages=self.messages, drop_params=True, **self.parameters)
                 ans = response.choices[0].message.content
             except Exception as e:
                 logger.info('%s', e)
