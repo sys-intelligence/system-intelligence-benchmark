@@ -14,9 +14,34 @@ set_llm_endpoint_from_config(str(Path(__file__).resolve().parents[2] / 'env.toml
 from run_eval_in_env import run_eval
 from utils import get_task
 
-def main(file_path, model, agent, save_path):
+BENCH_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _resolve_agent_path(agent_name_or_path: str) -> str:
+    built_in_agents = {
+        'claudecode': BENCH_ROOT / 'src' / 'core' / 'agents' / 'claudecode',
+        'openhand': BENCH_ROOT / 'src' / 'core' / 'agents' / 'openhand',
+        'minisweagent': BENCH_ROOT / 'src' / 'core' / 'agents' / 'minisweagent',
+    }
+    if agent_name_or_path in built_in_agents:
+        return str(built_in_agents[agent_name_or_path])
+    return str(Path(agent_name_or_path).expanduser().resolve())
+
+
+def _normalize_task_file_for_uploaded_repo(artifact_dir: str, task_file: str) -> str:
+    # Uploaded folder is mounted as /repo, so remove duplicated leading artifact dir when present.
+    prefix = f'{artifact_dir}/'
+    if task_file.startswith(prefix):
+        return task_file[len(prefix) :]
+    return task_file
+
+
+def main(file_path, model, agent, save_path, task_filter=None):
     """Main function for running the benchmark."""
     logger.info(f'Using model: {model}, agent: {agent}')
+    results = []
+    result_file = Path(save_path) / 'result.jsonl'
+
     with open(file_path) as f:
         for line in f:
             if not line.strip():
@@ -28,44 +53,82 @@ def main(file_path, model, agent, save_path):
                 logger.info(f'Skipping invalid JSON line: {line}')
                 continue
 
-            deployment = item.get('docker_env', None)
-            project_path = f"./data/benchmark/{item.get('artifact_dir', None)}"
-            task_file = item.get('artifact_readme', None)
-            task_id = item.get('artifact_id', None)
-            test_method = item.get('evaluator', None)
+            task_id = item.get('artifact_id')
+            if task_filter and task_id != task_filter:
+                continue
 
-            task = get_task(task_file)
+            artifact_dir = item.get('artifact_dir')
+            if not artifact_dir:
+                logger.info('Skipping entry without artifact_dir: %s', item)
+                continue
 
-            result = run_eval(
-                deployment=deployment,
-                project_path=project_path,
-                task_id=task_id,
-                task=task,
-                model=model,
-                agent_path=agent,
-                test_method=test_method,
-                save_path=save_path,
-            )
-            with open(f'{save_path}/result.jsonl', 'a+', encoding='utf-8') as fw:
+            task_file = item.get('artifact_readme')
+            if not task_file:
+                logger.info('Skipping entry without artifact_readme: %s', item)
+                continue
+
+            deployment = item.get('docker_env') or item.get('docer_env')
+            expected_score = item.get('expected_score')
+            project_path = str((BENCH_ROOT / 'data' / 'benchmark' / artifact_dir).resolve())
+            test_method = item.get('evaluator')
+            normalized_task_file = _normalize_task_file_for_uploaded_repo(artifact_dir, task_file)
+
+            task = get_task(normalized_task_file)
+
+            logger.info('Running task_id=%s project_path=%s', task_id, project_path)
+
+            try:
+                result = run_eval(
+                    deployment=deployment,
+                    project_path=project_path,
+                    task_id=task_id,
+                    task=task,
+                    model=model,
+                    agent_path=agent,
+                    test_method=test_method,
+                    save_path=save_path,
+                )
+            except Exception as e:
+                logger.exception('Task %s failed during evaluation', task_id)
+                result = {
+                    'task_id': task_id,
+                    'project_path': project_path,
+                    'test_method': test_method,
+                    'score': 0,
+                    'status': f'error: {str(e)}',
+                }
+
+            result['artifact_id'] = task_id
+            result['expected_score'] = expected_score
+            results.append(result)
+            with open(result_file, 'a+', encoding='utf-8') as fw:
                 fw.write(json.dumps(result) + '\n')
 
     success_count = 0
-    total_count = 0
-    with open(f'{save_path}/result.jsonl', encoding='utf-8') as f:
-        for line in f:
-            result = json.loads(line.strip())
-            if result.get('status') == 'success':
-                score_count += (result.get('score') == item.get('expected_score', -1))
-            total_count += 1
+    matched_expected_count = 0
+    total_count = len(results)
+    for result in results:
+        if result.get('status') == 'success':
+            success_count += 1
+            expected = result.get('expected_score')
+            if expected is not None and result.get('score') == expected:
+                matched_expected_count += 1
+
     logger.info(f'Test run completed: {success_count}/{total_count} tasks succeeded.')
-    summary_data = {'final_score': success_count / total_count, 'total_tasks': total_count}
+    summary_data = {
+        'final_score': (matched_expected_count / total_count) if total_count else 0.0,
+        'success_rate': (success_count / total_count) if total_count else 0.0,
+        'total_tasks': total_count,
+        'succeeded_tasks': success_count,
+        'matched_expected_score_tasks': matched_expected_count,
+    }
 
     with open(os.path.join(save_path, 'avg_score.json'), 'w', encoding='utf-8') as summary_file:
         json.dump(summary_data, summary_file, indent=4)
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='example benchmark')
+    parser = argparse.ArgumentParser(description='arteval benchmark')
     parser.add_argument(
         '-i',
         '--input_file',
@@ -93,7 +156,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     model_name = args.model_name
-    agent = args.agent
+    agent = _resolve_agent_path(args.agent)
     input_file = args.input_file
     save_path = args.save_path
     task = args.task
@@ -105,9 +168,10 @@ if __name__ == '__main__':
         timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         save_path = os.path.join('./outputs', f'env_setup_project__{str_model_name}__{args.agent}__{timestamp}')
 
-    if agent == 'claudecode':
-        agent = './src/agents/claudecode'
+    if not Path(agent).exists():
+        raise FileNotFoundError(f'Agent path does not exist: {agent}')
+
     save_path = os.path.abspath(os.path.expanduser(save_path))
     os.makedirs(save_path, exist_ok=True)
 
-    main(input_file, model_name, agent, save_path)
+    main(input_file, model_name, agent, save_path, task_filter=task)
