@@ -16,15 +16,22 @@ jobs:
       # If one benchmark fails, continue running the others
       fail-fast: false
       matrix:
-        benchmark:
-          - example_bench
-          - toposense_bench
-          - courselab_bench
-          - courseexam_bench
+        include:
+          - benchmark: example_bench
+            package: example-bench
+          - benchmark: toposense_bench
+            package: toposense-bench
+          - benchmark: courselab_bench
+            package: courselab-bench
+          - benchmark: courseexam_bench
+            package: courseexam-bench
           # TODO: For now, we comment out other benchmarks as they have no tests
-          # - arteval_bench
-          # - cache_bench
-          # - course_project_bench
+          # - benchmark: arteval_bench
+          #   package: arteval-bench
+          # - benchmark: cache_bench
+          #   package: cache-bench
+          # - benchmark: course_project_bench
+          #   package: course-project-bench
 
     steps:
     - name: Checkout code
@@ -33,25 +40,16 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: '3.11'
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
 
     - name: Install dependencies
-      working-directory: benchmarks/${{ matrix.benchmark }}
       run: |
-        python -m venv env${{ matrix.benchmark }}
-        source env${{ matrix.benchmark }}/bin/activate
-        pip install --upgrade pip
-        pip install pytest
-        if [ -f requirements.txt ]; then
-          pip install -r requirements.txt
-        fi
-        if [ -f pyproject.toml ]; then
-          pip install -e ".[dev]"
-        fi
-        deactivate
+        uv sync --frozen --package "${{ matrix.package }}" --extra dev
 
     - name: Run tests
       run: |
-        source benchmarks/${{ matrix.benchmark }}/env${{ matrix.benchmark }}/bin/activate
-        pytest benchmarks/${{ matrix.benchmark }}/tests -v
-        deactivate
+        uv run --frozen --no-sync --package "${{ matrix.package }}" \
+          pytest benchmarks/${{ matrix.benchmark }}/tests -v

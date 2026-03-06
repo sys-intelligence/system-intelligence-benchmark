@@ -1467,9 +1467,17 @@ dependencies = [
     { name = "system-intelligence-sdk" },
 ]
 
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "inspect-ai", specifier = ">=0.3.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6.0" },
     { name = "system-intelligence-sdk", editable = "." },
 ]
 
