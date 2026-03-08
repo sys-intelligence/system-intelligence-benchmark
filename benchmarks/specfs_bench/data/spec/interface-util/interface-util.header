@@ -1,0 +1,8 @@
+inode, common, util
+int check_file(struct inode *inum);
+void check_unlock (struct inode* parent, struct inode* src, struct inode* dst);
+int check_ins(struct inode *cur, char *name);
+int check_dir(struct inode *inum);
+int check_src_exist_dst_delete(struct inode *srcdir, struct inode *dstdir, char *srcname, char *dstname);
+int check_del(struct inode *cur, char *name);
+int check_open(struct inode *inum, unsigned mode);

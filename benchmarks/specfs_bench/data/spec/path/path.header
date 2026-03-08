@@ -1,0 +1,3 @@
+inode, common, util
+struct inode* locate(struct inode* cur, char* path[]);
+struct inode* locate_hold(struct inode *cur, char *path[]);
