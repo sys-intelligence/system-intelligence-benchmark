@@ -21,17 +21,16 @@ class JudgeResult:
     raw_judge_response: str
 
 
-class SpecFsJudgeEvaluator:
+class JudgeEvaluator:
     """Evaluate generated C code against ground truth using an LLM judge."""
 
-    def __init__(self, model_name: str, system_prompt: str, user_template: str) -> None:
+    def __init__(self, model_name: str, prompt_template: str) -> None:
         self.model_name = model_name
-        self.system_prompt = system_prompt
-        self.user_template = user_template
+        self.prompt_template = prompt_template
 
     def _build_prompt(self, spec_text: str, generated_code: str, ground_truth_code: str) -> str:
         return (
-            self.user_template.replace('{{SPEC_CONTENT}}', spec_text)
+            self.prompt_template.replace('{{SPEC_CONTENT}}', spec_text)
             .replace('{{GENERATED_CODE}}', generated_code)
             .replace('{{GROUND_TRUTH_CODE}}', ground_truth_code)
         )
@@ -61,7 +60,7 @@ class SpecFsJudgeEvaluator:
 
     def eval_case(self, spec_text: str, generated_code: str, ground_truth_code: str) -> JudgeResult:
         """Judge one generated file."""
-        llm = LLM(engine=self.model_name, system_prompt=self.system_prompt, temperature=0.0, json_format=True)
+        llm = LLM(engine=self.model_name, temperature=0.0, json_format=True)
         prompt = self._build_prompt(spec_text=spec_text, generated_code=generated_code, ground_truth_code=ground_truth_code)
         raw_response = llm.query(prompt)
 

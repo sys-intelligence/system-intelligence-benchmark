@@ -1,3 +1,5 @@
+"""Main entry point for the SpecFS benchmark."""
+
 from __future__ import annotations
 
 import argparse
@@ -14,10 +16,7 @@ from sdk.executor import SimpleExecutor
 from sdk.logger import logger
 from sdk.utils import set_llm_endpoint_from_config
 
-from evaluator import SpecFsJudgeEvaluator
-
-GEN_DEFAULT_SYSTEM_PROMPT = 'You are an expert C systems programmer. Return robust, compilable C code only.'
-JUDGE_DEFAULT_SYSTEM_PROMPT = 'You are a strict and fair C code reviewer and benchmark judge.'
+from evaluator import JudgeEvaluator
 
 
 def resolve_config_path(benchmark_root: Path) -> Path | None:
@@ -68,13 +67,13 @@ def run_generation(
     spec_root: Path,
     output_dir: Path,
     model_name: str,
-    generation_user_template: str,
+    generation_prompt_template: str,
 ) -> list[dict[str, Any]]:
     """Run spec-to-code generation for each spec file."""
     generated_root = output_dir / 'generated'
     generated_root.mkdir(parents=True, exist_ok=True)
 
-    executor = SimpleExecutor(model_name, GEN_DEFAULT_SYSTEM_PROMPT)
+    executor = SimpleExecutor(model_name, "")
     results: list[dict[str, Any]] = []
 
     for index, spec_path in enumerate(spec_files, start=1):
@@ -83,7 +82,7 @@ def run_generation(
         output_code_path.parent.mkdir(parents=True, exist_ok=True)
 
         spec_text = read_text(spec_path)
-        prompt = generation_user_template.replace('{{SPEC_CONTENT}}', spec_text)
+        prompt = generation_prompt_template.replace('{{SPEC_CONTENT}}', spec_text)
 
         record: dict[str, Any] = {
             'index': index,
@@ -97,6 +96,7 @@ def run_generation(
             generated_code = executor.run(prompt, lang='c')
             output_code_path.write_text(generated_code, encoding='utf-8')
             record['generated_chars'] = len(generated_code)
+            executor.LLM.reset()
         except Exception as exc:  # noqa: BLE001
             record['status'] = 'generation_error'
             record['error'] = str(exc)
@@ -111,13 +111,12 @@ def run_judging(
     generation_results: list[dict[str, Any]],
     code_root: Path,
     judge_model_name: str,
-    judge_user_template: str,
+    judge_prompt_template: str,
 ) -> list[dict[str, Any]]:
     """Run LLM judge over generated code and ground truth code."""
-    evaluator = SpecFsJudgeEvaluator(
+    evaluator = JudgeEvaluator(
         model_name=judge_model_name,
-        system_prompt=JUDGE_DEFAULT_SYSTEM_PROMPT,
-        user_template=judge_user_template,
+        prompt_template=judge_prompt_template,
     )
 
     judge_results: list[dict[str, Any]] = []
@@ -248,8 +247,8 @@ def main(args: argparse.Namespace) -> None:
 
     generation_prompt_file = current_dir / 'genspec_prompt.md'
     judge_prompt_file = current_dir / 'judge_prompt.md'
-    generation_user_template = load_prompt(generation_prompt_file)
-    judge_user_template = load_prompt(judge_prompt_file)
+    generation_prompt = load_prompt(generation_prompt_file)
+    judge_prompt = load_prompt(judge_prompt_file)
 
     logger.info('Discovered %s spec files.', len(spec_files))
 
@@ -258,7 +257,7 @@ def main(args: argparse.Namespace) -> None:
         spec_root=spec_root,
         output_dir=output_dir,
         model_name=args.model_name,
-        generation_user_template=generation_user_template,
+        generation_prompt_template=generation_prompt,
     )
     write_jsonl(output_dir / 'generation_results.jsonl', generation_results)
 
@@ -268,7 +267,7 @@ def main(args: argparse.Namespace) -> None:
             generation_results=generation_results,
             code_root=code_root,
             judge_model_name=args.judge_model_name,
-            judge_user_template=judge_user_template,
+            judge_prompt_template=judge_prompt,
         )
         write_jsonl(output_dir / 'judge_results.jsonl', judge_results)
 
