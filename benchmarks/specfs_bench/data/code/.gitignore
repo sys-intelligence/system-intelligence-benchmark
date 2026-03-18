@@ -1,0 +1,7 @@
+atomfs-fuse
+
+compile_commands.json
+
+*.o
+
+.cache
