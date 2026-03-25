@@ -3,6 +3,11 @@
 System Intelligence Benchmark is a comprehensive benchmark suite for evaluating the performance of Large Language Models (LLMs) and AI systems across critical system capabilities. It features tutorial, example benchmarks and offers both CLI tools and an SDK for further development.
 
 
+
+> [!Important]
+> **CourseExam and CourseLab have moved.** Active development for these two benchmarks now lives at [sys-intelligence/syscoursebench](https://github.com/sys-intelligence/syscoursebench) (public) and [sys-intelligence/syscoursebench-private](https://github.com/sys-intelligence/syscoursebench-private) (private). The legacy code remains here temporarily as an archive.
+
+
 > [!Note]  
 > ## Private Contributions
 > This repository contains the public portion of the benchmark dataset. We also maintain a private fork that is not publicly accessible. If you would like to contribute exams or labs to the benchmark while keeping them private and confidential, please contribute via our private repository instead.
