@@ -1,4 +1,6 @@
 # Course Lab Benchmark
+> [!IMPORTANT]  
+> This folder is **archived**. Please see [syscoursebench-public](https://github.com/sys-intelligence/syscoursebench-public) for the latest version and contribute there.
 
 Evaluate AI agents on systems programming lab assignments.
 
