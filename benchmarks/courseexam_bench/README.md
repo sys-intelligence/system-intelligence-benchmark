@@ -1,4 +1,6 @@
-# Course Exam Benchmark
+# Course Exam Benchmark (Archived)
+> [!IMPORTANT]  
+> This folder is **archived**. Please see [syscoursebench-public](https://github.com/sys-intelligence/syscoursebench-public) for the latest version and contribute there.
 
 A benchmark for evaluating AI agents on systems course exam questions. This benchmark tests AI agents' ability to answer technical exam questions covering topics like operating systems, distributed systems, databases, and networking.
 
