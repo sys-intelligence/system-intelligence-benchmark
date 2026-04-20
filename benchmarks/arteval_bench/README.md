@@ -1,4 +1,7 @@
-# ArtEvalBench
+# ArtEvalBench (Archived)
+
+> [!IMPORTANT]  
+> We are refactoring this benchamrk. The new one will be avaiavle at [https://github.com/sys-intelligence/aebench](https://github.com/sys-intelligence/aebench).
 
 `ArtEvalBench` is a benchmark for evaluating AI agents against Artifact Evaluation (AE) tasks ([why artifact evaluation?](WHY.md)). We believe that, despite the complexity of the AE process, AI agents can be succesfully trained to automatically evaluate artifacts that accompany research papers.
 
