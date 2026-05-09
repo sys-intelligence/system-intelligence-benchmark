@@ -8,8 +8,6 @@ System Intelligence Benchmark is a comprehensive benchmark suite for evaluating 
 >
 > The private repository is access-controlled. To gain access, please reach out on our [Slack channel](https://join.slack.com/t/sys-intelligence/shared_invite/zt-3hpkgr2aa-NnuPxUbyHr45S89DFi_N1A).
 
-
-
 ## Benchmark Overview
 A benchmark is a standard or point of reference against which things may be compared or assessed. In the context of AI and LLMs, benchmarks are essential for evaluating model capabilities, guiding research directions, and measuring progress. As shown in the below figure, a benchmark can comprise four abstractions: task set, environment, executor, and evaluator. Each task is associated with a specific environment, wherein the executor generates a solution that is subsequently assessed by the evaluator, which returns the evaluation metrics. You can see [benchmark_abstraction.md](doc/benchmark_abstract.md) for details.
 <img src="doc/benchmark.png" alt="Dashboard Screenshot" width="600"/>
@@ -19,14 +17,15 @@ To advance benchmark development, a modular and extensible benchmark framework i
 
 ### Benchmarks
 
-System Intelligence Benchmark currently includes the following example benchmarks. Each benchmark assesses specific capabilities across multiple levels within a given research direction. Some benchmarks **are still under development** — we're actively updating them. Stay tuned!
+System Intelligence Benchmark currently includes the following benchmarks. Each benchmark assesses specific capabilities across multiple levels within a given research direction. Some benchmarks **are still under development** — we're actively updating them. Stay tuned!
 
-- **System Education Benchmark** ([SysEduBench](https://github.com/sys-intelligence/sysedubench-public)) - Assesses AI capability on system courses (exams and labs). 
+- **System Education Benchmark** ([SysEduBench](https://github.com/sys-intelligence/sysedubench-public)) - Assesses AI capability on foundation courses of computing systems. 
 - **System Artifact Benchmark** ([AEBench](https://github.com/sys-intelligence/aebench-dev)) - Evaluates AI performance on artifact evaluation
-- **System Modeling Benchmark** ([SysMoBench](benchmarks/sysmobench/)) - Evaluates an agent's ability to produce correct TLA+ models for real-world concurrent and distributed systems, covering system capabilities across system comprehension, abstraction, and potentially tool fluency.
-- **System Management - SRE** ([SREGym](benchmarks/sregym)) - A Benchmarking Platform for Site Reliability Engineering (SRE) Agents.
-- **Formal Verification** ([verus-proof-synthesis](https://github.com/sys-intelligence/verus-proof-synthesis)) - Evaluate LLM on Verus proof synthesis.
 - **SpecFS Benchmark** ([SpecFs](https://github.com/sys-intelligence/system-intelligence-benchmark/tree/main/benchmarks/specfs_bench)) - Evaluates whether LLMs can translate specifications of file system modules into correct, modular C implementations.
+- **System Modeling Benchmark** ([SysMoBench](benchmarks/sysmobench/)) - Evaluates an agent's ability to produce correct TLA+ models for real-world concurrent and distributed systems, covering system capabilities across system comprehension, abstraction, and potentially tool fluency.
+- **Formal Verification** ([verus-proof-synthesis](https://github.com/sys-intelligence/verus-proof-synthesis)) - Evaluate LLM on Verus proof synthesis.
+- **System Management - SRE** ([SREGym](benchmarks/sregym)) - A Benchmarking Platform for Site Reliability Engineering (SRE) Agents.
+
 - **TopoSense Benchmark** ([TopoSenseBench](benchmarks/toposense_bench/)) - Evaluates Semantic-Spatial Sensor Scheduling (S³) capabilities in large-scale IoT digital twins (5,250 queries across 2,510 cameras)
 
 ## Quick Start
@@ -92,8 +91,8 @@ We welcome community contributions to enrich existing benchmarks (e.g., by addin
 
 ### Contribute to Existing Benchmarks
 The easiest way to contribute is to add more tasks to existing benchmarks. Currently, the following are highly recommended. You can simply follow the provided guidelines to submit your data—once that’s done, you’re all set.
-- **SysEduBench**: If you are a professor teaching one or more system courses, we highly recommend contributing **your exam problems** and **coding tasks** to [SysEduBench](https://github.com/sys-intelligence/sysedubench-public).
-- **AEBench**: If you are a researcher submitting artifacts, or an AE chair involved in artifact evaluation, we highly recommend contributing **more system artifacts** to [AEBench](https://github.com/sys-intelligence/aebench-dev).
+- **SysEduBench**: If you are a professor teaching one or more system courses, we highly recommend contributing **your close-book exams** and **programming assignments** to [SysEduBench](https://github.com/sys-intelligence/sysedubench-public).
+- **AEBench**: If you are a researcher or AE chair involved in artifact evaluation, we strongly encourage you to contribute your **system artifacts** to to [AEBench](https://github.com/sys-intelligence/aebench-dev).
 
 In addition, you can also help review the existing benchmarks to propose improvement ideas or directly enhance them—for example, by adding more advanced evaluators or incorporating improved metrics.
 
