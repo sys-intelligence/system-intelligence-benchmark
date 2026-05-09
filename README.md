@@ -21,6 +21,7 @@ System Intelligence Benchmark currently includes the following benchmarks. Each 
 - **System Education Benchmark** ([SysEduBench](https://github.com/sys-intelligence/sysedubench-public)) - Assesses AI capability on foundation courses of computing systems. 
 - **System Artifact Benchmark** ([AEBench](https://github.com/sys-intelligence/aebench-dev)) - Evaluates AI performance on artifact evaluation
 - **SpecFS Benchmark** ([SpecFs](https://github.com/sys-intelligence/system-intelligence-benchmark/tree/main/benchmarks/specfs_bench)) - Evaluates whether LLMs can translate specifications of file system modules into correct, modular C implementations.
+- **System Building Benchmark** (TBD.)
 - **System Modeling Benchmark** ([SysMoBench](benchmarks/sysmobench/)) - Evaluates an agent's ability to produce correct TLA+ models for real-world concurrent and distributed systems, covering system capabilities across system comprehension, abstraction, and potentially tool fluency.
 - **Formal Verification** ([verus-proof-synthesis](https://github.com/sys-intelligence/verus-proof-synthesis)) - Evaluate LLM on Verus proof synthesis.
 - **System Management - SRE** ([SREGym](benchmarks/sregym)) - A Benchmarking Platform for Site Reliability Engineering (SRE) Agents.
@@ -82,14 +83,14 @@ You can find more detailed usage guides in the CLI [README.md](cli/README.md).
 
 ## Contribute to Benchmarks
 
-We welcome community contributions to enrich existing benchmarks (e.g., by adding more exam/labs problems to the System Exam/Lab benchmark and more system artifacts to System Artifact and System Modeling benchmark), port your existing benchmarks, and more importantly to create new system intelligence benchmarks with our framework. See below for detailed instructions. We believe that such collective community efforts will advance AI to its next level and help realize System Intelligence, unlocking the potential of AI-driven computing system innovations. If you are interested in contributing or already have good system benchmarks, please let us know. We have set up a [slack channel](https://join.slack.com/t/sys-intelligence/shared_invite/zt-3hpkgr2aa-NnuPxUbyHr45S89DFi_N1A) at sys-intelligence.slack.com.
+We welcome community contributions to enrich existing benchmarks (e.g., by adding more exam/labs problems to the [SysEduBench](https://github.com/sys-intelligence/sysedubench-public) and more system artifacts to [AEBench](https://github.com/sys-intelligence/aebench-dev) and [SysMoBench](https://github.com/specula-org/SysMoBench)), port your existing benchmarks, and more importantly to create new system intelligence benchmarks. See below for detailed instructions. We believe that such collective community efforts will advance AI to its next level and help realize System Intelligence, unlocking the potential of AI-driven computing system innovations. If you are interested in contributing or already have good system benchmarks, please let us know. We have set up a **[slack channel](https://join.slack.com/t/sys-intelligence/shared_invite/zt-3hpkgr2aa-NnuPxUbyHr45S89DFi_N1A)** at sys-intelligence.slack.com.
 
 > [!NOTE] 
 > We suggest getting starting by walking through the basic concept of a AI benchmark: [Benchmark Abstraction](doc/benchmark_abstract.md). After understanding the basic concept, you can decide whether to Contribute to Existing Benchmarks, Porting Existing Benchmarks, or Creating New Benchmarks.
 
 ### Contributing to Existing Benchmarks
-The easiest way to contribute is to add more tasks to existing benchmarks. Currently, the following are highly recommended. You can simply follow the provided guidelines to submit your data—once that’s done, you’re all set.
-- **SysEduBench**: If you are a professor teaching one or more system courses, we highly recommend contributing **your close-book exams** and **programming assignments** to [SysEduBench](https://github.com/sys-intelligence/sysedubench-public).
+The easiest way to contribute is to add more tasks to existing benchmarks. You can simply follow the provided guidelines to submit your data—once that’s done, you’re all set. Currently, the following are highly recommended.
+- **SysEduBench**: If you are a professor/instructor/TA teaching system courses, we highly recommend contributing **your close-book exams** and **programming assignments** to [SysEduBench](https://github.com/sys-intelligence/sysedubench-public).
 - **AEBench**: If you are a researcher or AE chair involved in artifact evaluation, we strongly encourage you to contribute your **system artifacts** to to [AEBench](https://github.com/sys-intelligence/aebench-dev).
 
 In addition, you can also help review the existing benchmarks to propose improvement ideas or directly enhance them—for example, by adding more advanced evaluators or incorporating improved metrics.
