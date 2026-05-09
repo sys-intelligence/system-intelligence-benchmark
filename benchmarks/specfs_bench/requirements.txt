@@ -1,0 +1,4 @@
+litellm==1.77.5
+requests
+azure-identity
+tomli
