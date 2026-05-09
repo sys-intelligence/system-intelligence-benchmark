@@ -1,4 +1,4 @@
-# Course Exam Benchmark (Archived)
+# CourseExam Benchmark (Archived)
 > [!IMPORTANT]  
 > This folder is **archived** and merged into **[SysEduBench](https://github.com/sys-intelligence/sysedubench-public)**. Please see [**sysedubench-public**](https://github.com/sys-intelligence/sysedubench-public) for the latest version and contribute there.
 
