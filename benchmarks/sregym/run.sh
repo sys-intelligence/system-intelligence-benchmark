@@ -12,11 +12,14 @@ fi
 MODEL_ID="${1:-gpt-4o}"
 AGENT_NAME="${2:-stratus}"  # Default to "stratus" if not provided
 
-source sregym_core/.venv/bin/activate
+if [ ! -x "sregym_core/.venv/bin/python" ]; then
+    echo "==> sregym_core/.venv is missing. Run ./install.sh first."
+    exit 1
+fi
+
+export PYTHONPATH="$(pwd)/sregym_core:${PYTHONPATH:-}"
 
 echo "==> Start to run SREGym"
-python src/main.py \
-    --agent "${AGENT_NAME}" \
-    --model "${MODEL_ID}" 
-    
-deactivate
+uv run --python sregym_core/.venv/bin/python --no-sync python src/main.py \
+    --agent_name "${AGENT_NAME}" \
+    --model_name "${MODEL_ID}" 

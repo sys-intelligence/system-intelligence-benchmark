@@ -2,15 +2,28 @@
 name = "courselab-bench"
 version = "0.1.0"
 requires-python = ">=3.10"
-dependencies = ["inspect-ai>=0.3.0"]
+dependencies = [
+    "inspect-ai>=0.3.0",
+    "system-intelligence-sdk>=0.1.0",
+]
 description = "A benchmark for evaluating AI agents on systems programming labs"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Tarek Elsayed", email = "tareknaser360@gmail.com" }]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.6.0",
+]
 
-[tool.hatch.build.targets.wheel]
-packages = ["courselab"]
+[build-system]
+requires = ["uv_build>=0.10.4,<0.11.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+system-intelligence-sdk = { workspace = true }
+
+[tool.uv.build-backend]
+module-name = "courselab"
+module-root = ""

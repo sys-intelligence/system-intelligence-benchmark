@@ -10,7 +10,7 @@ from typing import Optional
 from tla_eval.config import get_configured_model
 from tla_eval.models.base import GenerationResult
 
-from evaluator import EvaluationOutcome, SysMoEvaluator
+from .evaluator import EvaluationOutcome, SysMoEvaluator
 
 
 logger = logging.getLogger(__name__)

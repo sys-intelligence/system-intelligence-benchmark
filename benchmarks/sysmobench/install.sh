@@ -2,6 +2,15 @@
 
 set -e
 
+if ! command -v uv >/dev/null 2>&1; then
+    echo "==> uv not found. Installing uv..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+fi
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+export UV_CACHE_DIR="${UV_CACHE_DIR:-${REPO_ROOT}/.uv-cache}"
+
 # Ensure Java is available for TLA+ SANY/TLC.
 if ! command -v java >/dev/null 2>&1; then
     echo "==> Java not found. Installing OpenJDK 17..."
@@ -24,21 +33,18 @@ echo "==> Installing SysMoBench dependencies..."
 # Create (or reuse) the benchmark virtual environment.
 if [ ! -d ".venv" ]; then
     echo "==> Creating .venv directory..."
-    python3 -m venv .venv
+    uv venv .venv
 fi
 
-source .venv/bin/activate
-
-python -m pip install --upgrade pip
-pip install -r requirements.txt
+uv sync --extra dev
 
 # Install sysmobench_core as editable so sysmobench/sysmobench-setup CLI entrypoints exist.
-pip install -e sysmobench_core
+source .venv/bin/activate
+uv pip install -e sysmobench_core
+deactivate
 
 # Download TLA+ tools (tla2tools.jar, CommunityModules, etc.).
 echo "==> Downloading TLA+ tools..."
-python3 sysmobench_core/tla_eval/setup_cli.py
-
-deactivate
+uv run --no-sync python sysmobench_core/tla_eval/setup_cli.py
 
 echo "==> SysMoBench environment is set up successfully."

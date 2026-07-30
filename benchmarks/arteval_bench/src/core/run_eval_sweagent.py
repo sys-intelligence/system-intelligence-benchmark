@@ -1,9 +1,9 @@
-import sys
+import json
+import os
 import subprocess
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
-
 from patch_evaluator import pacth_eval
+from sweagent_compat import build_sweagent_env
 
 from sdk.logger import logger
 
@@ -32,7 +32,7 @@ def run(task_id, repo_path, problem_path, test_method, image, save_path):
     ]
 
     logger.info('Executing sweagent command...')
-    subprocess.run(command, check=True, timeout=600)
+    subprocess.run(command, check=True, timeout=600, env=build_sweagent_env())
 
     logger.info('\n\n==========================')
     logger.info(f'Patch file expected at: {patch_file}')

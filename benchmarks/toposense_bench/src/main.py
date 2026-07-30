@@ -5,15 +5,11 @@ Run TopoSense-Bench Evaluation.
 import argparse
 import json
 import os
-import sys
 from datetime import datetime
 
 import pandas as pd
 from datasets import load_dataset
 from tqdm import tqdm
-
-# Add parent directory to path to import the shared SDK
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../")))
 
 from loguru import logger
 from sdk.executor import SimpleExecutor

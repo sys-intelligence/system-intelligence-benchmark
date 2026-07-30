@@ -69,20 +69,14 @@ Directly inject the framework's config into the upstream benchmark's initializat
 
 ```python
 # src/main.py
-import sys
 from pathlib import Path
-
-# Add paths
-SDK_ROOT = Path(__file__).parent.parent.parent.parent
-BENCHMARK_CORE = Path(__file__).parent.parent / "benchmark_core"
-sys.path.insert(0, str(SDK_ROOT))
-sys.path.insert(0, str(BENCHMARK_CORE))
 
 # Inject framework config
 from sdk.utils import set_llm_endpoint_from_config
 set_llm_endpoint_from_config(str(Path(__file__).parent.parent / 'env.toml'))
 
-# Now import upstream - it will use framework's LLM config
+# Now import upstream - it will use framework's LLM config.
+# Upstream package should be installed via pyproject/dependency manager.
 from tla_eval.config import get_configured_model
 ```
 
@@ -199,4 +193,3 @@ git subtree pull --prefix benchmarks/your_benchmark/benchmark_core \
 git subtree push --prefix benchmarks/your_benchmark/benchmark_core \
     benchmark-upstream feature-branch
 ```
-

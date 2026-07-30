@@ -19,20 +19,22 @@ NEW_MODEL_NAME="${MODEL_NAME//\//_}"
 # export OPENAI_BASE_URL="http://localhost:2327/v1"
 # export OPENAI_API_KEY="EMPTY"
 
-source .venv/bin/activate
+if [ ! -x ".venv/bin/python" ]; then
+    echo "==> .venv is missing. Run ./install.sh first."
+    exit 1
+fi
+
 echo "==> Start to run ArtEvalBench"
 # Note that if you benchmark has multiple tasks, you need to add --task <task> 
 # in your code to enable task selection.
 # sweagent --help
-# python src/main.py \
+# python src/core/main.py \
 #     --task "test"
     # --save_path "./outputs/systemcourseproject__${NEW_MODEL_NAME}__$(date +"%Y-%m-%d_%H-%M-%S")" \
 
-python src/main_setup.py
-    # --model "$MODEL_NAME" \
+uv run --no-sync python src/core/main.py \
+    --model_name "${MODEL_NAME}"
     # --save_path "./outputs/systemcourseproject__${NEW_MODEL_NAME}__$(date +"%Y-%m-%d_%H-%M-%S")" \
 
-# python src/main_setup.py \
+# uv run --no-sync python src/core/main.py \
 #     --input_json "./data/benchmark/course_lab_task_examples.jsonl" 
-
-deactivate

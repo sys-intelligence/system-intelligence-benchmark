@@ -1,12 +1,9 @@
 """Test SysMoBench core functionality."""
 
-import sys
 import os
 from pathlib import Path
 
-# Setup paths
 SYSMOBENCH_CORE = Path(__file__).parent.parent / "sysmobench_core"
-sys.path.insert(0, str(SYSMOBENCH_CORE))
 
 from tla_eval.tasks.loader import TaskLoader
 from tla_eval.methods.base import GenerationOutput

@@ -19,12 +19,14 @@ NEW_MODEL_NAME="${MODEL_NAME//\//_}"
 # export OPENAI_BASE_URL="http://localhost:2327/v1"
 # export OPENAI_API_KEY="EMPTY"
 
-source .venv/bin/activate
+if [ ! -x ".venv/bin/python" ]; then
+    echo "==> .venv is missing. Run ./install.sh first."
+    exit 1
+fi
+
 echo "==> Start to run ExampleBench"
 # Note that if you benchmark has multiple tasks, you need to add --task <task> 
 # in your code to enable task selection.
-python src/main.py \
+uv run --no-sync python src/main.py \
     --model_name "${MODEL_NAME}"
     # --save_path "./outputs/examplebench__${NEW_MODEL_NAME}__$(date +"%Y-%m-%d_%H-%M-%S")" \
-    
-deactivate

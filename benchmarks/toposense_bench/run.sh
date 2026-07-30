@@ -20,4 +20,9 @@ echo "🚀 Starting TopoSense-Bench evaluation..."
 echo "🤖 Model: $MODEL_NAME"
 
 # Run the main evaluation script
-python src/main.py --model_name "$MODEL_NAME"
+if [ ! -x ".venv/bin/python" ]; then
+    echo "==> .venv is missing. Run ./install.sh first."
+    exit 1
+fi
+
+uv run --no-sync python src/main.py --model_name "$MODEL_NAME"

@@ -4,12 +4,7 @@ This module tests that SysMoBench can properly integrate with the SDK.
 We only test SDK features that SysMoBench actually uses.
 """
 
-import sys
 from pathlib import Path
-
-# Add SDK to path (following other benchmarks' pattern)
-SDK_ROOT = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(SDK_ROOT))
 
 from sdk.utils import set_llm_endpoint_from_config
 

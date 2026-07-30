@@ -11,9 +11,10 @@ fi
 
 pip install mini-swe-agent
 
-export AZURE_API_KEY="XXXX"
-export AZURE_API_BASE="XXXX"
-export ANTHROPIC_API_KEY="sk-XXXX"
+if [ -z "${AZURE_API_KEY:-}" ] && [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+    echo "Neither AZURE_API_KEY nor ANTHROPIC_API_KEY is set"
+    exit 1
+fi
 
 
 mini -t "$2" -m "$1" -y -o agent_trajectory.json

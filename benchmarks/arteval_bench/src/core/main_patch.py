@@ -3,15 +3,13 @@
 import argparse
 import json
 import os
-import sys
 from datetime import datetime
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
+from pathlib import Path
 
 from sdk.logger import logger
 from sdk.utils import set_llm_endpoint_from_config
 
-set_llm_endpoint_from_config('env.toml')
+set_llm_endpoint_from_config(str(Path(__file__).resolve().parents[2] / 'env.toml'))
 
 from run_eval_sweagent import run  # noqa: E402
 

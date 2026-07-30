@@ -1,13 +1,10 @@
 import os
-import sys
-
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import random
 
 random.seed(42)  # set the random seed before importing `My` to enable reproduction
 import importlib
 
-import My
+from . import My
 
 
 class CacheObj:

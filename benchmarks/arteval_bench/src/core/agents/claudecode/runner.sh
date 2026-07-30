@@ -10,5 +10,9 @@ if [ $# -ne 2 ]; then
     exit 1
 fi
 
-export ANTHROPIC_API_KEY="sk-XXXX"
+if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+    echo "ANTHROPIC_API_KEY is not set"
+    exit 1
+fi
+
 claude -p "$2" --model "$1" --output-format json

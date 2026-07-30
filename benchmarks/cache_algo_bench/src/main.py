@@ -3,15 +3,12 @@
 import argparse
 import json
 import os
-import sys
 from datetime import datetime
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
-
+from pathlib import Path
 
 from sdk.utils import set_llm_endpoint_from_config
 
-set_llm_endpoint_from_config('env.toml')
+set_llm_endpoint_from_config(str(Path(__file__).resolve().parent.parent / 'env.toml'))
 
 from cache_simulator.run_simulatorcache import simulate  # noqa: E402
 
