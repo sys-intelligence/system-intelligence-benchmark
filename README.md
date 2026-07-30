@@ -25,6 +25,7 @@ System Intelligence Benchmark currently includes the following benchmarks. Each 
 - **System Modeling Benchmark** ([SysMoBench](benchmarks/sysmobench/)) - Evaluates an agent's ability to produce correct TLA+ models for real-world concurrent and distributed systems, covering system capabilities across system comprehension, abstraction, and potentially tool fluency.
 - **Formal Verification** ([verus-proof-synthesis](https://github.com/sys-intelligence/verus-proof-synthesis)) - Evaluate LLM on Verus proof synthesis.
 - **System Management - SRE** ([SREGym](benchmarks/sregym)) - A Benchmarking Platform for Site Reliability Engineering (SRE) Agents.
+- **Rust Memory Safety** ([RustMizan](https://github.com/sys-intelligence/system-intelligence-benchmark/tree/main)) - A compilable, contamination-aware benchmarking framework for Rust vulnerability analysis.
 - **TopoSense Benchmark** ([TopoSenseBench](benchmarks/toposense_bench/)) - Evaluates Semantic-Spatial Sensor Scheduling (S³) capabilities in large-scale IoT digital twins (5,250 queries across 2,510 cameras)
 
 ## Quick Start
