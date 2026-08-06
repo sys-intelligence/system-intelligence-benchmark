@@ -29,7 +29,29 @@ def load_dataset(
         if task_ids and instance_id not in task_ids:
             continue
 
-        task_description = (task_folder / "task.md").read_text()
+        # Check for multi-round task (task1.md, task2.md, etc.)
+        multi_round = False
+        num_rounds = 0
+        round_tasks = {}
+        
+        # Check if task1.md exists
+        if (task_folder / "task1.md").exists():
+            multi_round = True
+            # Find all taskX.md files
+            for i in range(1, 100):  # Support up to 99 rounds
+                task_file = task_folder / f"task{i}.md"
+                if task_file.exists():
+                    round_tasks[i] = task_file.read_text()
+                    num_rounds = i
+                else:
+                    break
+        
+        # Use single task.md if not multi-round
+        if not multi_round:
+            task_description = (task_folder / "task.md").read_text()
+        else:
+            # For multi-round tasks, use task1.md as initial input
+            task_description = round_tasks[1]
 
         preprocess_path = task_folder / "preprocess.sh"
         setup_script = preprocess_path.read_text() if preprocess_path.exists() else None
@@ -55,17 +77,27 @@ def load_dataset(
                 f"compose.yaml required but not found in {task_folder}"
             )
 
+        metadata = {
+            "task_folder": str(task_folder.absolute()),
+            "course_id": config.get("course_id"),
+            "artifacts": config.get("artifacts", []),
+            "tags": config.get("tags", []),
+        }
+        
+        # Add multi-round information if applicable
+        if multi_round:
+            metadata["multi_round"] = True
+            metadata["num_rounds"] = num_rounds
+            metadata["round_tasks"] = round_tasks
+        else:
+            metadata["multi_round"] = False
+
         samples.append(
             Sample(
                 id=instance_id,
                 input=task_description,
                 target="success",
-                metadata={
-                    "task_folder": str(task_folder.absolute()),
-                    "course_id": config.get("course_id"),
-                    "artifacts": config.get("artifacts", []),
-                    "tags": config.get("tags", []),
-                },
+                metadata=metadata,
                 sandbox=SandboxEnvironmentSpec(
                     type="docker",
                     config=str(compose_file.absolute()),

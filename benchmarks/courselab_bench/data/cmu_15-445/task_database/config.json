@@ -1,0 +1,23 @@
+{
+  "instance_id": "cmu_15-445__database_task",
+  "course_id": "cmu_15-445",
+  "timeout_minutes": 60,
+  "tags": [
+    "multi-phase",
+    "cpp-programming",
+    "database-systems"
+  ],
+  "artifacts": [
+    "src/buffer/arc_replacer.cpp",
+    "src/buffer/disk_scheduler.cpp",
+    "src/buffer/page_guard.cpp",
+    "src/buffer/buffer_pool_manager.cpp",
+    "src/storage/disk_manager.cpp",
+    "src/storage/page/page_guard.cpp",
+    "src/storage/page/page_guard.h",
+    "src/storage/page/page_id.h",
+    "src/storage/page/page_lock.h"
+  ]
+}
+
+

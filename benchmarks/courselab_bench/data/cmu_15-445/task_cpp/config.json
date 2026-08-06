@@ -1,0 +1,15 @@
+{
+  "instance_id": "cmu_15-445__count_min_sketch",
+  "course_id": "cmu_15-445",
+  "timeout_minutes": 30,
+  "tags": [
+    "concurrency",
+    "cpp-programming",
+    "database-systems",
+    "algorithms"
+  ],
+  "artifacts": [
+    "src/primer/count_min_sketch.cpp",
+    "src/primer/count_min_sketch.h"
+  ]
+}
